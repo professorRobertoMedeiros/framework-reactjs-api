@@ -5,7 +5,7 @@
  * exportando todas as classes, interfaces e funções que podem ser
  * usadas por projetos que implementam este framework como dependência.
  */
-export { BaseModel } from './core/domain/models/BaseModel';
+export { BaseModel, Entity, Column, Id, UniqueIndex, BusinessIndex, ColumnStage2 as Column5, IdStage2 as Id5 } from './core/domain/models/BaseModel';
 export { UserModel } from './core/domain/models/UserModel';
 export { ProductModel } from './core/domain/models/ProductModel';
 export { AuthMiddleware } from './core/auth/AuthMiddleware';

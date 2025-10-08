@@ -29,7 +29,7 @@ export function Entity(tableName: string) {
   };
 }
 
-// Decorador Column
+// Decorador Column (versão original)
 export function Column(options: ColumnOptions) {
   return function (target: any, propertyKey: string) {
     const existingColumns = Reflect.getMetadata(COLUMN_META_KEY, target.constructor) || {};
@@ -38,12 +38,33 @@ export function Column(options: ColumnOptions) {
   };
 }
 
+// Decorador Column compatível com TypeScript 5.0+
+export function ColumnStage2(options: ColumnOptions) {
+  return function(target: any, context: ClassFieldDecoratorContext) {
+    const propertyKey = context.name as string;
+    const existingColumns = Reflect.getMetadata(COLUMN_META_KEY, target.constructor) || {};
+    existingColumns[propertyKey] = options;
+    Reflect.defineMetadata(COLUMN_META_KEY, existingColumns, target.constructor);
+  };
+}
+
 // Decorador Id (alias para Column com primaryKey = true)
 export function Id() {
-  return function (target: any, propertyKey: string) {
+  return function(target: any, propertyKey: string) {
     const options: ColumnOptions = { type: 'SERIAL', primaryKey: true };
     return Column(options)(target, propertyKey);
   };
+}
+
+// Nova versão do decorador Id compatível com TypeScript 5.0+
+export function IdStage2(target: any, context: ClassFieldDecoratorContext) {
+  const options: ColumnOptions = { type: 'SERIAL', primaryKey: true };
+  const propertyKey = context.name as string;
+  
+  // Aplicar o decorador de coluna
+  const existingColumns = Reflect.getMetadata(COLUMN_META_KEY, target.constructor) || {};
+  existingColumns[propertyKey] = options;
+  Reflect.defineMetadata(COLUMN_META_KEY, existingColumns, target.constructor);
 }
 
 // Decorador UniqueIndex

@@ -7,7 +7,13 @@
  */
 
 // Core
-export { BaseModel } from './core/domain/models/BaseModel';
+export { 
+  BaseModel, 
+  // Decoradores originais
+  Entity, Column, Id, UniqueIndex, BusinessIndex,
+  // Decoradores compatíveis com TypeScript 5.0+
+  ColumnStage2 as Column5, IdStage2 as Id5
+} from './core/domain/models/BaseModel';
 export { UserModel } from './core/domain/models/UserModel';
 export { ProductModel } from './core/domain/models/ProductModel';
 

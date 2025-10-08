@@ -7,8 +7,10 @@
   "files": [
     "dist",
     "bin",
+    "examples",
     "README.md",
-    "MANUAL.md"
+    "MANUAL.md",
+    "DECORATORS.md"
   ],
   "bin": {
     "framework-reactjs-api-migrate": "./bin/migration-runner.js",

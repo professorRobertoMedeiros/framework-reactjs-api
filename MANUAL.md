@@ -13,6 +13,7 @@ Este manual serve como guia completo para uso do framework ReactJS API como depe
    - [Implementação de Repositórios](#implementação-de-repositórios)
    - [Desenvolvimento de Casos de Uso](#desenvolvimento-de-casos-de-uso)
    - [Autenticação](#autenticação)
+   - [Compatibilidade de Decoradores](#compatibilidade-de-decoradores)
 6. [Ferramentas CLI](#ferramentas-cli)
 7. [Padrões de Design](#padrões-de-design)
 8. [Exemplos Completos](#exemplos-completos)
@@ -652,6 +653,40 @@ const token = await authService.login('usuario@exemplo.com', 'senha123');
 // Verificação de token
 const userInfo = await authService.verify(token);
 ```
+
+### Compatibilidade de Decoradores
+
+O framework oferece suporte a diferentes versões do TypeScript, incluindo TypeScript 4.x com decoradores experimentais e TypeScript 5.0+ com a nova sintaxe de decoradores.
+
+Para TypeScript 4.x:
+```typescript
+import { BaseModel, Entity, Column, Id } from 'framework-reactjs-api';
+
+@Entity('produtos')
+export class ProdutoModel extends BaseModel {
+  @Id()
+  id: number = 0;
+  
+  @Column({ type: 'VARCHAR', length: 100 })
+  nome: string = '';
+}
+```
+
+Para TypeScript 5.0+:
+```typescript
+import { BaseModel, Entity, Column5 as Column, Id5 as Id } from 'framework-reactjs-api';
+
+@Entity('produtos')
+export class ProdutoModel extends BaseModel {
+  @Id
+  id: number = 0;
+  
+  @Column({ type: 'VARCHAR', length: 100 })
+  nome: string = '';
+}
+```
+
+Para mais detalhes sobre compatibilidade de decoradores, consulte o arquivo `DECORATORS.md`.
 
 ## Ferramentas CLI
 

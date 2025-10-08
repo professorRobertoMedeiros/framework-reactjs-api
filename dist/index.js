@@ -7,10 +7,19 @@
  * usadas por projetos que implementam este framework como dependência.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ProductService = exports.ProductRepository = exports.ProductBusiness = exports.UserRepository = exports.UserService = exports.UserBusiness = exports.scaffoldUseCase = exports.syncSchema = exports.runMigration = exports.BaseRepository = exports.Operator = exports.QueryBuilder = exports.CustomORM = exports.AuthService = exports.AuthMiddleware = exports.ProductModel = exports.UserModel = exports.BaseModel = void 0;
+exports.ProductService = exports.ProductRepository = exports.ProductBusiness = exports.UserRepository = exports.UserService = exports.UserBusiness = exports.scaffoldUseCase = exports.syncSchema = exports.runMigration = exports.BaseRepository = exports.Operator = exports.QueryBuilder = exports.CustomORM = exports.AuthService = exports.AuthMiddleware = exports.ProductModel = exports.UserModel = exports.Id5 = exports.Column5 = exports.BusinessIndex = exports.UniqueIndex = exports.Id = exports.Column = exports.Entity = exports.BaseModel = void 0;
 // Core
 var BaseModel_1 = require("./core/domain/models/BaseModel");
 Object.defineProperty(exports, "BaseModel", { enumerable: true, get: function () { return BaseModel_1.BaseModel; } });
+// Decoradores originais
+Object.defineProperty(exports, "Entity", { enumerable: true, get: function () { return BaseModel_1.Entity; } });
+Object.defineProperty(exports, "Column", { enumerable: true, get: function () { return BaseModel_1.Column; } });
+Object.defineProperty(exports, "Id", { enumerable: true, get: function () { return BaseModel_1.Id; } });
+Object.defineProperty(exports, "UniqueIndex", { enumerable: true, get: function () { return BaseModel_1.UniqueIndex; } });
+Object.defineProperty(exports, "BusinessIndex", { enumerable: true, get: function () { return BaseModel_1.BusinessIndex; } });
+// Decoradores compatíveis com TypeScript 5.0+
+Object.defineProperty(exports, "Column5", { enumerable: true, get: function () { return BaseModel_1.ColumnStage2; } });
+Object.defineProperty(exports, "Id5", { enumerable: true, get: function () { return BaseModel_1.IdStage2; } });
 var UserModel_1 = require("./core/domain/models/UserModel");
 Object.defineProperty(exports, "UserModel", { enumerable: true, get: function () { return UserModel_1.UserModel; } });
 var ProductModel_1 = require("./core/domain/models/ProductModel");
