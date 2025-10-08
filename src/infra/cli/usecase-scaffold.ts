@@ -1,6 +1,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Função para geração de scaffolding de casos de uso
+export function scaffoldUseCase(modelName: string): void {
+  // Implementação
+  createScaffolding(toPascalCase(modelName));
+}
+
 // Função para converter nome em kebab-case (para pastas)
 function toKebabCase(str: string): string {
   return str
@@ -18,8 +24,8 @@ function toPascalCase(str: string): string {
 
 // Modelo para criar repositório
 function generateRepositoryTemplate(modelName: string): string {
-  return `import { CustomORM } from '../db/CustomORM';
-import { ${modelName}Model } from '../../core/domain/models/${modelName}Model';
+  return `import { CustomORM } from '@framework/infra/db/CustomORM';
+import { ${modelName}Model } from '@framework/core/domain/models/${modelName}Model';
 
 // Interface para o repository de ${modelName.toLowerCase()}s
 export interface I${modelName}Repository {
@@ -93,8 +99,8 @@ export class ${modelName}Repository implements I${modelName}Repository {
 
 // Modelo para criar business
 function generateBusinessTemplate(modelName: string): string {
-  return `import { ${modelName}Model } from '../../core/domain/models/${modelName}Model';
-import { I${modelName}Repository, ${modelName}Repository } from '../../infra/repository/${modelName}Repository';
+  return `import { ${modelName}Model } from '@framework/core/domain/models/${modelName}Model';
+import { I${modelName}Repository, ${modelName}Repository } from './repository/${modelName}Repository';
 
 // Interface para o business de ${modelName.toLowerCase()}s
 export interface I${modelName}Business {
@@ -115,7 +121,8 @@ export class ${modelName}Business implements I${modelName}Business {
   }
 
   // Importar os domínios
-  private domains = require('../domains/${modelName}Dom');
+  // Importar domínios
+  private domains = require('./domains/${modelName}Dom');
 
   // Converter modelo para Dom
   private toDom(model: ${modelName}Model): ${modelName}Dom {
@@ -393,32 +400,80 @@ export class ${modelName}Service implements I${modelName}Service {
 // Função principal para criar scaffolding
 function createScaffolding(modelName: string) {
   try {
-    // Verificar se o modelo existe
-    const modelPath = path.join(process.cwd(), 'src', 'core', 'domain', 'models', `${modelName}Model.ts`);
+    // Possíveis locais onde o modelo pode estar
+    const possibleModelPaths = [
+      path.join(process.cwd(), 'src', 'core', 'domain', 'models', `${modelName}Model.ts`),
+      path.join(process.cwd(), 'src', 'models', `${modelName}Model.ts`),
+      path.join(process.cwd(), 'models', `${modelName}Model.ts`),
+      path.join(process.cwd(), 'src', 'core', 'domain', 'models', `${modelName}Model.js`),
+      path.join(process.cwd(), 'src', 'models', `${modelName}Model.js`),
+      path.join(process.cwd(), 'models', `${modelName}Model.js`)
+    ];
     
-    if (!fs.existsSync(modelPath)) {
-      console.error(`\x1b[31mErro: O modelo ${modelName}Model.ts não existe no diretório src/core/domain/models/\x1b[0m`);
+    // Verifica se o modelo existe em algum dos possíveis caminhos
+    const modelPath = possibleModelPaths.find(path => fs.existsSync(path));
+    
+    if (!modelPath) {
+      console.error(`\x1b[31mErro: O modelo ${modelName}Model.ts não foi encontrado em nenhum diretório conhecido.\x1b[0m`);
+      console.error(`\x1b[33mCaminhos verificados:\n- src/core/domain/models/\n- src/models/\n- models/\x1b[0m`);
       return;
     }
 
     // Caminhos para criar arquivos
     const kebabCaseName = toKebabCase(modelName);
-    const repositoryPath = path.join(process.cwd(), 'src', 'infra', 'repository', `${modelName}Repository.ts`);
-    const useCaseDirPath = path.join(process.cwd(), 'src', 'use-cases', kebabCaseName);
+    
+    // Criar estrutura de diretórios
+    const srcDir = path.join(process.cwd(), 'src');
+    
+    // Verificar se existe diretório src
+    const hasSrcDir = fs.existsSync(srcDir);
+    
+    // Definir caminhos baseados na estrutura existente
+    const baseDir = hasSrcDir ? srcDir : process.cwd();
+    
+    // Verificar se existe pasta use-cases ou usecases
+    const useCasesDir = fs.existsSync(path.join(baseDir, 'use-cases')) 
+      ? path.join(baseDir, 'use-cases') 
+      : path.join(baseDir, 'usecases');
+    
+    // Criar diretórios se não existirem
+    if (!fs.existsSync(useCasesDir)) {
+      fs.mkdirSync(useCasesDir, { recursive: true });
+    }
+    
+    // Definir caminhos para os arquivos
+    const useCaseDirPath = path.join(useCasesDir, kebabCaseName);
+    const repositoryDirPath = path.join(useCaseDirPath, 'repository');
+    const domainsDirPath = path.join(useCaseDirPath, 'domains');
+    const repositoryPath = path.join(repositoryDirPath, `${modelName}Repository.ts`);
     const businessPath = path.join(useCaseDirPath, `${modelName}Business.ts`);
     const servicePath = path.join(useCaseDirPath, `${modelName}Service.ts`);
+    const domainPath = path.join(domainsDirPath, `${modelName}Dom.ts`);
 
     // Verificar idempotência (não sobrescrever se já existir)
     const filesToCreate = [
       { path: repositoryPath, content: generateRepositoryTemplate(modelName), name: `${modelName}Repository.ts` },
       { path: businessPath, content: generateBusinessTemplate(modelName), name: `${modelName}Business.ts` },
-      { path: servicePath, content: generateServiceTemplate(modelName), name: `${modelName}Service.ts` }
+      { path: servicePath, content: generateServiceTemplate(modelName), name: `${modelName}Service.ts` },
+      { path: domainPath, content: generateDomainTemplate(modelName), name: `${modelName}Dom.ts` }
     ];
 
-    // Criar diretório use-case se não existir
+    // Criar diretórios necessários
     if (!fs.existsSync(useCaseDirPath)) {
       fs.mkdirSync(useCaseDirPath, { recursive: true });
-      console.log(`\x1b[32mDiretório criado: src/use-cases/${kebabCaseName}\x1b[0m`);
+      console.log(`\x1b[32mDiretório criado: ${path.relative(process.cwd(), useCaseDirPath)}\x1b[0m`);
+    }
+    
+    // Criar diretório de repositório
+    if (!fs.existsSync(repositoryDirPath)) {
+      fs.mkdirSync(repositoryDirPath, { recursive: true });
+      console.log(`\x1b[32mDiretório criado: ${path.relative(process.cwd(), repositoryDirPath)}\x1b[0m`);
+    }
+    
+    // Criar diretório de domínios
+    if (!fs.existsSync(domainsDirPath)) {
+      fs.mkdirSync(domainsDirPath, { recursive: true });
+      console.log(`\x1b[32mDiretório criado: ${path.relative(process.cwd(), domainsDirPath)}\x1b[0m`);
     }
 
     // Criar cada arquivo se não existir

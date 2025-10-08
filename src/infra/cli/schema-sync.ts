@@ -31,45 +31,55 @@ async function runMigrations() {
 }
 
 // Função para sincronizar esquema com base nos modelos
-async function syncSchema() {
+export async function syncSchema() {
   console.log('\x1b[34m=== Framework TypeScript DDD - Sincronização de Esquema ===\x1b[0m');
   
   try {
     // Inicializar ORM
     const orm = initializeORM();
     
-    // Diretório de modelos
-    const modelsDir = path.join(process.cwd(), 'src', 'core', 'domain', 'models');
+    // Tentar encontrar diretório de modelos (diferentes estruturas possíveis)
+    const possibleModelsPaths = [
+      path.join(process.cwd(), 'src', 'core', 'domain', 'models'),
+      path.join(process.cwd(), 'src', 'models'),
+      path.join(process.cwd(), 'models')
+    ];
+    
+    // Usar o primeiro diretório de modelos que existir
+    const modelsDir = possibleModelsPaths.find(dir => fs.existsSync(dir));
+    
+    if (!modelsDir) {
+      console.error('\x1b[31mErro: Diretório de modelos não encontrado. Verifique sua estrutura de projeto.\x1b[0m');
+      process.exit(1);
+    }
     
     // Carregar e registrar todos os modelos encontrados
-    console.log('\x1b[33mCarregando modelos...\x1b[0m');
+    console.log(`\x1b[33mCarregando modelos de ${modelsDir}...\x1b[0m`);
     
     let hasErrors = false;
     const files = fs.readdirSync(modelsDir);
     
     for (const file of files) {
-      if (file.endsWith('Model.ts') && file !== 'BaseModel.ts') {
+      const isModelFile = file.endsWith('Model.ts') || file.endsWith('Model.js');
+      const isNotBaseModel = file !== 'BaseModel.ts' && file !== 'BaseModel.js';
+      
+      if (isModelFile && isNotBaseModel) {
         try {
-          // Caminho relativo para importação
-          const relativePath = path.relative(
-            process.cwd(),
-            path.join(modelsDir, file)
-          ).replace('.ts', '');
-          
-          const modulePath = `../../${relativePath}`;
+          const absoluteModulePath = path.join(modelsDir, file);
+          const moduleName = file.replace(/\.(ts|js)$/, '');
           console.log(`\x1b[33mCarregando modelo: ${file}\x1b[0m`);
+
+          // Importa o modelo
+          const modelModule = require(absoluteModulePath);
+          const modelName = Object.keys(modelModule).find(key => key.includes('Model'));
           
-          // Importar dinamicamente o modelo
-          // Note: Isso funciona apenas em runtime. Para desenvolvimento,
-          // importações estáticas são preferíveis.
-          // Por exemplo, no caso do UserModel:
-          if (file === 'UserModel.ts') {
-            const { UserModel } = require('../../core/domain/models/UserModel');
-            orm.registerModel(UserModel as typeof BaseModel);
-            console.log(`\x1b[32mModelo ${file} registrado com sucesso!\x1b[0m`);
+          if (!modelName) {
+            console.warn(`\x1b[31mNenhuma classe Model encontrada em ${file}\x1b[0m`);
+            continue;
           }
-          // Adicione outros modelos conforme necessário
           
+          const Model = modelModule[modelName];
+          const model = new Model();
         } catch (error) {
           console.error(`\x1b[31mErro ao carregar modelo ${file}:\x1b[0m`, error);
           hasErrors = true;

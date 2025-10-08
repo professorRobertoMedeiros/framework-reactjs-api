@@ -1,43 +1,27 @@
 /**
  * Framework ReactJS API - Exportações públicas
- * 
+ *
  * Este arquivo atua como ponto de entrada central para o framework,
  * exportando todas as classes, interfaces e funções que podem ser
  * usadas por projetos que implementam este framework como dependência.
  */
-
-// Core
-export { BaseModel } from '../src/core/domain/models/BaseModel';
-export { UserModel } from '../src/core/domain/models/UserModel';
-
-// Autenticação
-export { AuthMiddleware } from '../src/core/auth/AuthMiddleware';
-export { AuthService } from '../src/core/auth/AuthService';
-
-// Infraestrutura
-export { CustomORM } from '../src/infra/db/CustomORM';
-export { QueryBuilder, Operator } from '../src/infra/db/query/QueryBuilder';
-
-// Repository Base
-export { 
-  BaseRepository, 
-  IRepository, 
-  PaginationOptions, 
-  PaginatedResult 
-} from '../src/infra/repository/BaseRepository';
-
-// Utilitários de Migração
-export { runMigration } from '../src/infra/cli/migration-runner';
-export { syncSchema } from '../src/infra/cli/schema-sync';
-export { scaffoldUseCase } from '../src/infra/cli/usecase-scaffold';
-
-// User Use Case
-export { IUserBusiness, UserBusiness } from '../src/use-cases/user/UserBusiness';
-export { IUserService, UserService, UserServiceResponse } from '../src/use-cases/user/UserService';
-export { IUserRepository, UserRepository } from '../src/use-cases/user/repository/UserRepository';
-export { CreateUserDom, UpdateUserDom, UserDom } from '../src/use-cases/user/domains/UserDom';
-
-// Product Use Case
-export { IProductBusiness, ProductBusiness } from '../src/use-cases/product/ProductBusiness';
-export { IProductRepository, ProductRepository } from '../src/use-cases/product/repository/ProductRepository';
-export { CreateProductDom, UpdateProductDom, ProductDom } from '../src/use-cases/product/domains/ProductDom';
+export { BaseModel } from './core/domain/models/BaseModel';
+export { UserModel } from './core/domain/models/UserModel';
+export { ProductModel } from './core/domain/models/ProductModel';
+export { AuthMiddleware } from './core/auth/AuthMiddleware';
+export { AuthService } from './core/auth/AuthService';
+export { CustomORM } from './infra/db/CustomORM';
+export { QueryBuilder, Operator } from './infra/db/query/QueryBuilder';
+export { BaseRepository, IRepository, PaginationOptions, PaginatedResult } from './infra/repository/BaseRepository';
+import { runMigration } from './infra/cli/migration-runner';
+import { syncSchema } from './infra/cli/schema-sync';
+import { scaffoldUseCase } from './infra/cli/usecase-scaffold';
+export { runMigration, syncSchema, scaffoldUseCase };
+export { IUserBusiness, UserBusiness } from './use-cases/user/UserBusiness';
+export { IUserService, UserService, UserServiceResponse } from './use-cases/user/UserService';
+export { IUserRepository, UserRepository } from './use-cases/user/repository/UserRepository';
+export { CreateUserDom, UpdateUserDom, UserDom } from './use-cases/user/domains/UserDom';
+export { IProductBusiness, ProductBusiness } from './use-cases/product/ProductBusiness';
+export { IProductRepository, ProductRepository } from './use-cases/product/repository/ProductRepository';
+export { ProductService } from './use-cases/product/ProductService';
+export { CreateProductDom, UpdateProductDom, ProductDom } from './use-cases/product/domains/ProductDom';

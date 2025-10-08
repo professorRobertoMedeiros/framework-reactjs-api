@@ -90,12 +90,26 @@ if (result.success) {
   console.log(result.data.users);
 }
 ```
-### 4. Criando Novos Casos de Uso
+### 4. Utilizando as Ferramentas CLI
 
-Utilize o CLI integrado para criar novos casos de uso:
+O framework inclui ferramentas de linha de comando que podem ser executadas diretamente:
+
+#### Criar novos casos de uso (scaffolding):
 
 ```bash
-npx framework-reactjs-api scaffold NomeEntidade
+npx framework-reactjs-api-scaffold NomeEntidade
+```
+
+#### Executar migrações de banco de dados:
+
+```bash
+npx framework-reactjs-api-migrate
+```
+
+#### Sincronizar esquema do banco de dados:
+
+```bash
+npx framework-reactjs-api-sync
 ```
 
 ## Extensão do Framework

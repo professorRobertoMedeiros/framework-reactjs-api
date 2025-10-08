@@ -66,12 +66,12 @@ export class AuthService {
    */
   public generateToken(payload: TokenPayload, options: TokenOptions = {}): string {
     // Opções padrão
-    const defaultOptions: TokenOptions = {
-      expiresIn: '24h', // Token expira em 24 horas por padrão
+    const defaultOptions = {
+      expiresIn: '24h' // Token expira em 24 horas por padrão
     };
 
     // Mesclar opções padrão com opções fornecidas
-    const tokenOptions = { ...defaultOptions, ...options };
+    const tokenOptions = { ...defaultOptions, ...options } as jwt.SignOptions;
 
     // Gerar e retornar token
     return jwt.sign(payload, this.jwtSecret, tokenOptions);

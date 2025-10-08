@@ -6,16 +6,23 @@
   "types": "dist/index.d.ts",
   "files": [
     "dist",
+    "bin",
     "README.md",
     "MANUAL.md"
   ],
+  "bin": {
+    "framework-reactjs-api-migrate": "./bin/migration-runner.js",
+    "framework-reactjs-api-sync": "./bin/schema-sync.js",
+    "framework-reactjs-api-scaffold": "./bin/usecase-scaffold.js"
+  },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
     "prepublishOnly": "npm run build",
+    "postinstall": "npm run build && chmod +x ./bin/*.js",
     "scaffold": "ts-node src/infra/cli/usecase-scaffold.ts",
     "migration:run": "ts-node src/infra/cli/migration-runner.ts",
-    "schema:sync": "ts-node src/infra/cli/schema-sync.ts",
+    "schema:sync": "ts-node src/infra/cli/schema-sync.ts sync",
     "docs:manual": "cat MANUAL.md",
     "test": "jest"
   },

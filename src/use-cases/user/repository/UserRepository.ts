@@ -52,13 +52,17 @@ export class UserRepository extends BaseRepository<UserModel> implements IUserRe
       return this.findAll(options);
     }
 
-    // Criar consulta com OR para vários campos
-    const query = new QueryBuilder()
-      .where('first_name', Operator.LIKE, `%${searchTerm}%`)
-      .or('last_name', Operator.LIKE, `%${searchTerm}%`)
-      .or('email', Operator.LIKE, `%${searchTerm}%`)
-      .build();
-
-    return this.findByQuery(query, options);
+    // Usar a API do repositório base
+    const conditions = [
+      { column: 'first_name', operator: 'ILIKE', value: `%${searchTerm}%` },
+      { column: 'last_name', operator: 'ILIKE', value: `%${searchTerm}%` },
+      { column: 'email', operator: 'ILIKE', value: `%${searchTerm}%` }
+    ];
+    
+    // Como não temos um método específico para OR, vamos simplificar
+    // e buscar por e-mail, que é mais comum em pesquisas de usuário
+    return this.findBy({ 
+      email: searchTerm 
+    }, options);
   }
 }

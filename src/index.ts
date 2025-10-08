@@ -9,6 +9,7 @@
 // Core
 export { BaseModel } from './core/domain/models/BaseModel';
 export { UserModel } from './core/domain/models/UserModel';
+export { ProductModel } from './core/domain/models/ProductModel';
 
 // Autenticação
 export { AuthMiddleware } from './core/auth/AuthMiddleware';
@@ -27,9 +28,11 @@ export {
 } from './infra/repository/BaseRepository';
 
 // Utilitários de Migração
-export { runMigration } from './infra/cli/migration-runner';
-export { syncSchema } from './infra/cli/schema-sync';
-export { scaffoldUseCase } from './infra/cli/usecase-scaffold';
+import { runMigration } from './infra/cli/migration-runner';
+import { syncSchema } from './infra/cli/schema-sync';
+import { scaffoldUseCase } from './infra/cli/usecase-scaffold';
+
+export { runMigration, syncSchema, scaffoldUseCase };
 
 // User Use Case
 export { IUserBusiness, UserBusiness } from './use-cases/user/UserBusiness';
@@ -40,4 +43,5 @@ export { CreateUserDom, UpdateUserDom, UserDom } from './use-cases/user/domains/
 // Product Use Case
 export { IProductBusiness, ProductBusiness } from './use-cases/product/ProductBusiness';
 export { IProductRepository, ProductRepository } from './use-cases/product/repository/ProductRepository';
+export { ProductService } from './use-cases/product/ProductService';
 export { CreateProductDom, UpdateProductDom, ProductDom } from './use-cases/product/domains/ProductDom';

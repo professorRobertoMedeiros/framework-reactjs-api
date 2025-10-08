@@ -1,4 +1,4 @@
-import { BaseModel, Entity, Column, Id } from '../../core/domain/models/BaseModel';
+import { BaseModel, Entity, Column, Id } from './BaseModel';
 
 @Entity('products')
 export class ProductModel extends BaseModel {
@@ -50,4 +50,18 @@ export class ProductModel extends BaseModel {
     nullable: true
   })
   updated_at?: Date;
+
+  // Implementação requerida por BaseModel
+  toJSON(): Record<string, any> {
+    return {
+      id: this.id,
+      name: this.name,
+      description: this.description,
+      price: this.price,
+      stock: this.stock,
+      active: this.active,
+      created_at: this.created_at,
+      updated_at: this.updated_at
+    };
+  }
 }
