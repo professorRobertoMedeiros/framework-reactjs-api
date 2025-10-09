@@ -4,7 +4,6 @@ node_modules/
 .pnp.js
 
 # Arquivos de compilação/distribuição
-/dist
 /build
 /lib
 
