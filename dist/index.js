@@ -7,7 +7,7 @@
  * usadas por projetos que implementam este framework como dependência.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ProductService = exports.ProductRepository = exports.ProductBusiness = exports.UserRepository = exports.UserService = exports.UserBusiness = exports.scaffoldUseCase = exports.syncSchema = exports.runMigration = exports.BaseRepository = exports.Operator = exports.QueryBuilder = exports.CustomORM = exports.AuthService = exports.AuthMiddleware = exports.ProductModel = exports.UserModel = exports.Id5 = exports.Column5 = exports.BusinessIndex = exports.UniqueIndex = exports.Id = exports.Column = exports.Entity = exports.BaseModel = void 0;
+exports.ProductService = exports.ProductRepository = exports.ProductBusiness = exports.UserRepository = exports.UserService = exports.UserBusiness = exports.scaffoldUseCase = exports.syncSchema = exports.runMigration = exports.BaseRepository = exports.Operator = exports.QueryBuilder = exports.initializeORM = exports.CustomORM = exports.AuthService = exports.AuthMiddleware = exports.ProductModel = exports.UserModel = exports.Id5 = exports.Column5 = exports.BusinessIndex = exports.UniqueIndex = exports.Id = exports.Column = exports.Entity = exports.BaseModel = void 0;
 // Core
 var BaseModel_1 = require("./core/domain/models/BaseModel");
 Object.defineProperty(exports, "BaseModel", { enumerable: true, get: function () { return BaseModel_1.BaseModel; } });
@@ -33,6 +33,7 @@ Object.defineProperty(exports, "AuthService", { enumerable: true, get: function 
 // Infraestrutura
 var CustomORM_1 = require("./infra/db/CustomORM");
 Object.defineProperty(exports, "CustomORM", { enumerable: true, get: function () { return CustomORM_1.CustomORM; } });
+Object.defineProperty(exports, "initializeORM", { enumerable: true, get: function () { return CustomORM_1.initializeORM; } });
 var QueryBuilder_1 = require("./infra/db/query/QueryBuilder");
 Object.defineProperty(exports, "QueryBuilder", { enumerable: true, get: function () { return QueryBuilder_1.QueryBuilder; } });
 Object.defineProperty(exports, "Operator", { enumerable: true, get: function () { return QueryBuilder_1.Operator; } });

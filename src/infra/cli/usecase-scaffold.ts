@@ -24,8 +24,8 @@ function toPascalCase(str: string): string {
 
 // Modelo para criar repositório
 function generateRepositoryTemplate(modelName: string): string {
-  return `import { CustomORM } from '@framework/infra/db/CustomORM';
-import { ${modelName}Model } from '@framework/core/domain/models/${modelName}Model';
+  return `import { CustomORM } from 'framework-reactjs-api';
+import { ${modelName}Model } from '../models/${modelName}Model';
 
 // Interface para o repository de ${modelName.toLowerCase()}s
 export interface I${modelName}Repository {
@@ -99,7 +99,7 @@ export class ${modelName}Repository implements I${modelName}Repository {
 
 // Modelo para criar business
 function generateBusinessTemplate(modelName: string): string {
-  return `import { ${modelName}Model } from '@framework/core/domain/models/${modelName}Model';
+  return `import { ${modelName}Model } from '../models/${modelName}Model';
 import { I${modelName}Repository, ${modelName}Repository } from './repository/${modelName}Repository';
 
 // Interface para o business de ${modelName.toLowerCase()}s
@@ -397,6 +397,94 @@ export class ${modelName}Service implements I${modelName}Service {
 }`;
 }
 
+// Modelo para criar arquivo de rotas
+function generateRoutesTemplate(modelName: string): string {
+  return `import express from 'express';
+import { ${modelName}Service } from './${modelName}Service';
+import { AuthMiddleware } from 'framework-reactjs-api';
+
+// Criação do roteador para ${modelName}
+const ${modelName.toLowerCase()}Router = express.Router();
+const ${modelName.toLowerCase()}Service = new ${modelName}Service();
+
+// Middleware de autenticação para rotas protegidas
+const authMiddleware = AuthMiddleware.verifyToken;
+
+// Rota para buscar todos os registros (GET /api/${modelName.toLowerCase()}s)
+${modelName.toLowerCase()}Router.get('/', async (req, res) => {
+  const page = req.query.page ? parseInt(req.query.page as string) : 1;
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+
+  const result = await ${modelName.toLowerCase()}Service.getAll(page, limit);
+  
+  if (result.success) {
+    return res.status(200).json(result);
+  } else {
+    return res.status(500).json(result);
+  }
+});
+
+// Rota para buscar um registro específico (GET /api/${modelName.toLowerCase()}s/:id)
+${modelName.toLowerCase()}Router.get('/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const result = await ${modelName.toLowerCase()}Service.getById(id);
+  
+  if (result.success) {
+    return res.status(200).json(result);
+  } else {
+    if (result.error === 'NOT_FOUND') {
+      return res.status(404).json(result);
+    }
+    return res.status(500).json(result);
+  }
+});
+
+// Rota para criar um novo registro (POST /api/${modelName.toLowerCase()}s) - Protegida
+${modelName.toLowerCase()}Router.post('/', authMiddleware, async (req, res) => {
+  const data = req.body;
+  const result = await ${modelName.toLowerCase()}Service.create(data);
+  
+  if (result.success) {
+    return res.status(201).json(result);
+  } else {
+    return res.status(400).json(result);
+  }
+});
+
+// Rota para atualizar um registro (PUT /api/${modelName.toLowerCase()}s/:id) - Protegida
+${modelName.toLowerCase()}Router.put('/:id', authMiddleware, async (req, res) => {
+  const id = parseInt(req.params.id);
+  const data = req.body;
+  const result = await ${modelName.toLowerCase()}Service.update(id, data);
+  
+  if (result.success) {
+    return res.status(200).json(result);
+  } else {
+    if (result.error === 'NOT_FOUND') {
+      return res.status(404).json(result);
+    }
+    return res.status(400).json(result);
+  }
+});
+
+// Rota para excluir um registro (DELETE /api/${modelName.toLowerCase()}s/:id) - Protegida
+${modelName.toLowerCase()}Router.delete('/:id', authMiddleware, async (req, res) => {
+  const id = parseInt(req.params.id);
+  const result = await ${modelName.toLowerCase()}Service.delete(id);
+  
+  if (result.success) {
+    return res.status(200).json(result);
+  } else {
+    if (result.error === 'NOT_FOUND') {
+      return res.status(404).json(result);
+    }
+    return res.status(500).json(result);
+  }
+});
+
+export default ${modelName.toLowerCase()}Router;`;
+}
+
 // Função principal para criar scaffolding
 function createScaffolding(modelName: string) {
   try {
@@ -445,17 +533,20 @@ function createScaffolding(modelName: string) {
     const useCaseDirPath = path.join(useCasesDir, kebabCaseName);
     const repositoryDirPath = path.join(useCaseDirPath, 'repository');
     const domainsDirPath = path.join(useCaseDirPath, 'domains');
+    const routesDirPath = path.join(useCaseDirPath, 'routes');
     const repositoryPath = path.join(repositoryDirPath, `${modelName}Repository.ts`);
     const businessPath = path.join(useCaseDirPath, `${modelName}Business.ts`);
     const servicePath = path.join(useCaseDirPath, `${modelName}Service.ts`);
     const domainPath = path.join(domainsDirPath, `${modelName}Dom.ts`);
+    const routesPath = path.join(routesDirPath, `${modelName}Routes.ts`);
 
     // Verificar idempotência (não sobrescrever se já existir)
     const filesToCreate = [
       { path: repositoryPath, content: generateRepositoryTemplate(modelName), name: `${modelName}Repository.ts` },
       { path: businessPath, content: generateBusinessTemplate(modelName), name: `${modelName}Business.ts` },
       { path: servicePath, content: generateServiceTemplate(modelName), name: `${modelName}Service.ts` },
-      { path: domainPath, content: generateDomainTemplate(modelName), name: `${modelName}Dom.ts` }
+      { path: domainPath, content: generateDomainTemplate(modelName), name: `${modelName}Dom.ts` },
+      { path: routesPath, content: generateRoutesTemplate(modelName), name: `${modelName}Routes.ts` }
     ];
 
     // Criar diretórios necessários
@@ -474,6 +565,12 @@ function createScaffolding(modelName: string) {
     if (!fs.existsSync(domainsDirPath)) {
       fs.mkdirSync(domainsDirPath, { recursive: true });
       console.log(`\x1b[32mDiretório criado: ${path.relative(process.cwd(), domainsDirPath)}\x1b[0m`);
+    }
+    
+    // Criar diretório de rotas
+    if (!fs.existsSync(routesDirPath)) {
+      fs.mkdirSync(routesDirPath, { recursive: true });
+      console.log(`\x1b[32mDiretório criado: ${path.relative(process.cwd(), routesDirPath)}\x1b[0m`);
     }
 
     // Criar cada arquivo se não existir

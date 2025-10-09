@@ -8,6 +8,60 @@ Framework base para camada de data flow/API de projetos React com DDD, Clean Arc
 npm install framework-reactjs-api
 ```
 
+## Configuração Rápida
+
+Para adicionar o framework ao seu projeto:
+
+1. **Instalação**
+
+```bash
+npm install framework-reactjs-api --save
+```
+
+2. **Configuração do TypeScript** (tsconfig.json)
+
+```json
+{
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  }
+}
+```
+
+3. **Usando os Componentes do Framework**
+
+```typescript
+// Importando componentes principais
+import { 
+  BaseModel, 
+  BaseRepository, 
+  CustomORM, 
+  AuthService 
+} from 'framework-reactjs-api';
+
+// Criando seu próprio modelo
+export class ProdutoModel extends BaseModel {
+  static tableName = 'produtos';
+  nome: string;
+  preco: number;
+}
+```
+
+4. **Ferramentas CLI**
+
+```bash
+# Executar migrações
+npx framework-reactjs-api-migrate
+
+# Sincronizar esquema do banco de dados
+npx framework-reactjs-api-sync
+
+# Criar scaffold de um caso de uso completo (com Repo, Service, Business, Domain e Routes)
+npx framework-reactjs-api-scaffold Usuario
+```
+
 ## Visão Geral
 
 O framework é estruturado em quatro camadas principais:
@@ -42,11 +96,13 @@ src/
     ├── product/
     │   ├── domains/            # Interfaces de domínio
     │   ├── repository/         # Repositório específico
+    │   ├── routes/             # Rotas para API REST
     │   ├── ProductBusiness.ts  # Lógica de negócios
     │   └── ProductService.ts   # Camada de serviço
     └── user/
         ├── domains/            # Interfaces de domínio
         ├── repository/         # Repositório específico
+        ├── routes/             # Rotas para API REST
         ├── UserBusiness.ts     # Lógica de negócios
         └── UserService.ts      # Camada de serviço
 ```
@@ -105,6 +161,26 @@ npx framework-reactjs-api-scaffold NomeEntidade
 ```bash
 npx framework-reactjs-api-migrate
 ```
+
+#### Sincronizar esquema do banco com modelos:
+
+```bash
+npx framework-reactjs-api-sync
+```
+
+## Solucionando Problemas de Importação
+
+Quando usar o framework como dependência em outro projeto, use os seguintes padrões de importação:
+
+```typescript
+// ✅ Correto: Importar componentes do ponto de entrada principal
+import { BaseModel, BaseRepository, CustomORM } from 'framework-reactjs-api';
+
+// ❌ Incorreto: Não tente acessar diretamente arquivos internos
+// import { BaseModel } from 'framework-reactjs-api/core/domain/models/BaseModel';
+```
+
+Para mais detalhes sobre resolução de problemas de importação, consulte a [seção de troubleshooting](./MANUAL.md#resolução-de-problemas-de-importação) no MANUAL.md.
 
 #### Sincronizar esquema do banco de dados:
 

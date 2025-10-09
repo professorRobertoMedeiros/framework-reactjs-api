@@ -99,6 +99,11 @@ export class ClienteModel extends BaseModel {
     "emitDecoratorMetadata": true,
     // Se estiver usando os decoradores estágio 3 (padrão mais recente)
     "useDefineForClassFields": false,
+    // Configuração de path aliases (IMPORTANTE para resolver erros de importação)
+    "paths": {
+      "@framework/*": ["./node_modules/framework-reactjs-api/dist/*"]
+    },
+    "baseUrl": ".",
     // outras configurações...
   }
 }

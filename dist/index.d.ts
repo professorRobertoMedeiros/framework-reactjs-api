@@ -10,7 +10,7 @@ export { UserModel } from './core/domain/models/UserModel';
 export { ProductModel } from './core/domain/models/ProductModel';
 export { AuthMiddleware } from './core/auth/AuthMiddleware';
 export { AuthService } from './core/auth/AuthService';
-export { CustomORM } from './infra/db/CustomORM';
+export { CustomORM, initializeORM } from './infra/db/CustomORM';
 export { QueryBuilder, Operator } from './infra/db/query/QueryBuilder';
 export { BaseRepository, IRepository, PaginationOptions, PaginatedResult } from './infra/repository/BaseRepository';
 import { runMigration } from './infra/cli/migration-runner';

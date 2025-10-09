@@ -23,7 +23,7 @@ export { AuthMiddleware } from './core/auth/AuthMiddleware';
 export { AuthService } from './core/auth/AuthService';
 
 // Infraestrutura
-export { CustomORM } from './infra/db/CustomORM';
+export { CustomORM, initializeORM } from './infra/db/CustomORM';
 export { QueryBuilder, Operator } from './infra/db/query/QueryBuilder';
 
 // Repository Base
