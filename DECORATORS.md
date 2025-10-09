@@ -2,6 +2,8 @@
 
 Este guia explica como usar os decoradores do framework com diferentes versões do TypeScript.
 
+> **NOTA IMPORTANTE:** Sempre use os parênteses com os decoradores `@Id()` e `@Column()`, mesmo na versão TypeScript 5.0+. A sintaxe `@Id` sem parênteses não é suportada corretamente.
+
 ## Decoradores no TypeScript 4.x (Experimental)
 
 Para projetos usando TypeScript 4.x, você deve usar os decoradores originais:
@@ -46,7 +48,7 @@ import { BaseModel, Entity, Column5 as Column, Id5 as Id } from 'framework-react
 
 @Entity('clientes')
 export class ClienteModel extends BaseModel {
-  @Id
+  @Id()  // IMPORTANTE: Sempre inclua os parênteses!
   id: number = 0;
   
   @Column({

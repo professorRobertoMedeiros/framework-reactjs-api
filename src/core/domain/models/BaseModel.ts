@@ -39,13 +39,20 @@ export function Column(options: ColumnOptions) {
 }
 
 // Decorador Column compatível com TypeScript 5.0+
-export function ColumnStage2(options: ColumnOptions) {
-  return function(target: any, context: ClassFieldDecoratorContext) {
-    const propertyKey = context.name as string;
-    const existingColumns = Reflect.getMetadata(COLUMN_META_KEY, target.constructor) || {};
-    existingColumns[propertyKey] = options;
-    Reflect.defineMetadata(COLUMN_META_KEY, existingColumns, target.constructor);
-  };
+export function ColumnStage2(optionsOrTarget: ColumnOptions | any, contextOrPropertyKey?: ClassFieldDecoratorContext | any) {
+  // Se for chamado como factory de decorador (@Column({...}))
+  if (typeof optionsOrTarget === 'object' && !contextOrPropertyKey) {
+    const options = optionsOrTarget as ColumnOptions;
+    return function(target: any, context: ClassFieldDecoratorContext) {
+      const propertyKey = context.name as string;
+      const existingColumns = Reflect.getMetadata(COLUMN_META_KEY, target.constructor) || {};
+      existingColumns[propertyKey] = options;
+      Reflect.defineMetadata(COLUMN_META_KEY, existingColumns, target.constructor);
+    };
+  }
+  
+  // Nunca deve chegar aqui pois Column sempre precisa de opções
+  throw new Error('Column decorator requires options');
 }
 
 // Decorador Id (alias para Column com primaryKey = true)
@@ -56,12 +63,29 @@ export function Id() {
   };
 }
 
+// Decoradores para TypeScript 5.0+
+// Estas versões funcionam tanto com @Decorator quanto com @Decorator()
+
 // Nova versão do decorador Id compatível com TypeScript 5.0+
-export function IdStage2(target: any, context: ClassFieldDecoratorContext) {
+export function IdStage2(targetOrOptions?: any, contextOrPropertyKey?: any) {
+  // Se for chamado como factory de decorador (@Id())
+  if (typeof contextOrPropertyKey === 'undefined') {
+    return (target: any, context: ClassFieldDecoratorContext) => {
+      const options: ColumnOptions = { type: 'SERIAL', primaryKey: true };
+      const propertyKey = context.name as string;
+      
+      const existingColumns = Reflect.getMetadata(COLUMN_META_KEY, target.constructor) || {};
+      existingColumns[propertyKey] = options;
+      Reflect.defineMetadata(COLUMN_META_KEY, existingColumns, target.constructor);
+    };
+  }
+  
+  // Se for chamado diretamente como decorador (@Id)
+  const target = targetOrOptions;
+  const context = contextOrPropertyKey;
   const options: ColumnOptions = { type: 'SERIAL', primaryKey: true };
   const propertyKey = context.name as string;
   
-  // Aplicar o decorador de coluna
   const existingColumns = Reflect.getMetadata(COLUMN_META_KEY, target.constructor) || {};
   existingColumns[propertyKey] = options;
   Reflect.defineMetadata(COLUMN_META_KEY, existingColumns, target.constructor);

@@ -658,6 +658,8 @@ const userInfo = await authService.verify(token);
 
 O framework oferece suporte a diferentes versões do TypeScript, incluindo TypeScript 4.x com decoradores experimentais e TypeScript 5.0+ com a nova sintaxe de decoradores.
 
+> **IMPORTANTE:** Sempre use os parênteses com os decoradores, mesmo no TypeScript 5.0+. A sintaxe `@Id` sem parênteses pode causar erros.
+
 Para TypeScript 4.x:
 ```typescript
 import { BaseModel, Entity, Column, Id } from 'framework-reactjs-api';
@@ -678,7 +680,7 @@ import { BaseModel, Entity, Column5 as Column, Id5 as Id } from 'framework-react
 
 @Entity('produtos')
 export class ProdutoModel extends BaseModel {
-  @Id
+  @Id()  // IMPORTANTE: Sempre inclua os parênteses!
   id: number = 0;
   
   @Column({ type: 'VARCHAR', length: 100 })

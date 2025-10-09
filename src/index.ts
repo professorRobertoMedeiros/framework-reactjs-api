@@ -9,9 +9,10 @@
 // Core
 export { 
   BaseModel, 
-  // Decoradores originais
+  // Decoradores para todas as versões de TypeScript
   Entity, Column, Id, UniqueIndex, BusinessIndex,
-  // Decoradores compatíveis com TypeScript 5.0+
+  // Decoradores alternativos para TypeScript 5.0+
+  // Note: Mesmo com estes decoradores, use SEMPRE com parênteses: @Id5()
   ColumnStage2 as Column5, IdStage2 as Id5
 } from './core/domain/models/BaseModel';
 export { UserModel } from './core/domain/models/UserModel';

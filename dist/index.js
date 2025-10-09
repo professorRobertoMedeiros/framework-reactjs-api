@@ -11,13 +11,14 @@ exports.ProductService = exports.ProductRepository = exports.ProductBusiness = e
 // Core
 var BaseModel_1 = require("./core/domain/models/BaseModel");
 Object.defineProperty(exports, "BaseModel", { enumerable: true, get: function () { return BaseModel_1.BaseModel; } });
-// Decoradores originais
+// Decoradores para todas as versões de TypeScript
 Object.defineProperty(exports, "Entity", { enumerable: true, get: function () { return BaseModel_1.Entity; } });
 Object.defineProperty(exports, "Column", { enumerable: true, get: function () { return BaseModel_1.Column; } });
 Object.defineProperty(exports, "Id", { enumerable: true, get: function () { return BaseModel_1.Id; } });
 Object.defineProperty(exports, "UniqueIndex", { enumerable: true, get: function () { return BaseModel_1.UniqueIndex; } });
 Object.defineProperty(exports, "BusinessIndex", { enumerable: true, get: function () { return BaseModel_1.BusinessIndex; } });
-// Decoradores compatíveis com TypeScript 5.0+
+// Decoradores alternativos para TypeScript 5.0+
+// Note: Mesmo com estes decoradores, use SEMPRE com parênteses: @Id5()
 Object.defineProperty(exports, "Column5", { enumerable: true, get: function () { return BaseModel_1.ColumnStage2; } });
 Object.defineProperty(exports, "Id5", { enumerable: true, get: function () { return BaseModel_1.IdStage2; } });
 var UserModel_1 = require("./core/domain/models/UserModel");

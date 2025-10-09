@@ -17,9 +17,9 @@ export interface IndexOptions {
 }
 export declare function Entity(tableName: string): (constructor: Function) => void;
 export declare function Column(options: ColumnOptions): (target: any, propertyKey: string) => void;
-export declare function ColumnStage2(options: ColumnOptions): (target: any, context: ClassFieldDecoratorContext) => void;
+export declare function ColumnStage2(optionsOrTarget: ColumnOptions | any, contextOrPropertyKey?: ClassFieldDecoratorContext | any): (target: any, context: ClassFieldDecoratorContext) => void;
 export declare function Id(): (target: any, propertyKey: string) => void;
-export declare function IdStage2(target: any, context: ClassFieldDecoratorContext): void;
+export declare function IdStage2(targetOrOptions?: any, contextOrPropertyKey?: any): ((target: any, context: ClassFieldDecoratorContext) => void) | undefined;
 export declare function UniqueIndex(indexName: string, columns: string[]): (constructor: Function) => void;
 export declare function BusinessIndex(indexName: string, columns: string[], type: 'INDEX' | 'FULLTEXT'): (constructor: Function) => void;
 export declare abstract class BaseModel {
