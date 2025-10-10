@@ -2,14 +2,23 @@
  * Dom para criação de product
  */
 export interface CreateProductDom {
-  // Adicione aqui as propriedades para criar um novo product
+  name: string;
+  description?: string;
+  price: number;
+  stock: number;
+  active: boolean;
 }
 
 /**
  * Dom para atualização de product
  */
 export interface UpdateProductDom {
-  // Adicione aqui as propriedades para atualizar um product
+  name: string;
+  description?: string;
+  price: number;
+  stock: number;
+  active: boolean;
+  updated_at?: Date;
 }
 
 /**
@@ -17,5 +26,11 @@ export interface UpdateProductDom {
  */
 export interface ProductDom {
   id: number;
-  // Adicione aqui outras propriedades para retorno
+  name: string;
+  description?: string;
+  price: number;
+  stock: number;
+  active: boolean;
+  created_at: Date;
+  updated_at?: Date;
 }

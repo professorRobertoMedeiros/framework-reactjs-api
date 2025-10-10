@@ -284,12 +284,14 @@ export class UsuarioModel extends BaseModel {
 
 O framework oferece ferramentas de linha de comando para aumentar a produtividade:
 
+> **Importante**: Quando o framework é usado como dependência em seu projeto, use sempre os comandos prefixados com `framework-reactjs-api-` ou através do `npx`.
+
 ### Migration Runner
 
 Para executar migrações:
 
 ```bash
-npx migration-runner
+npx framework-reactjs-api-migrate
 ```
 
 ### Schema Sync
@@ -297,7 +299,7 @@ npx migration-runner
 Para sincronizar o esquema do banco de dados com os modelos:
 
 ```bash
-npx schema-sync
+npx framework-reactjs-api-sync
 ```
 
 ### Scaffolding de Use Cases
@@ -305,7 +307,7 @@ npx schema-sync
 Para criar um novo caso de uso completo:
 
 ```bash
-npm run scaffold Product
+npx framework-reactjs-api-scaffold Product
 ```
 
 Este comando irá:
@@ -318,6 +320,18 @@ Este comando irá:
    - `src/use-cases/product/routes/ProductRoutes.ts` (rotas Express com CRUD completo)
 
 Se algum desses arquivos já existir, o script irá pular a criação.
+
+#### Diferença entre Desenvolvimento vs Uso como Dependência
+
+**Desenvolvimento do Framework (para contribuidores):**
+```bash
+npm run scaffold Product  # Apenas para desenvolvimento interno
+```
+
+**Uso como Dependência (para usuários finais):**
+```bash
+npx framework-reactjs-api-scaffold Product  # Comando correto para projetos
+```
 
 #### Arquivo de Rotas Gerado
 
@@ -534,9 +548,9 @@ Se as ferramentas CLI não estiverem disponíveis:
 ```json
 {
   "scripts": {
-    "migrations": "migration-runner",
-    "schema:sync": "schema-sync",
-    "scaffold": "usecase-scaffold"
+    "migrations": "framework-reactjs-api-migrate",
+    "schema:sync": "framework-reactjs-api-sync",
+    "scaffold": "framework-reactjs-api-scaffold"
   }
 }
 ```
@@ -546,5 +560,13 @@ Depois execute com:
 ```bash
 npm run migrations
 npm run schema:sync
-npm run scaffold -- --name NovoCasoUso
+npm run scaffold Product
+```
+
+Ou use diretamente os executáveis do framework:
+
+```bash
+npx framework-reactjs-api-migrate
+npx framework-reactjs-api-sync  
+npx framework-reactjs-api-scaffold Product
 ```

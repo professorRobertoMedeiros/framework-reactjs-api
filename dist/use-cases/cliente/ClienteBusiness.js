@@ -1,35 +1,34 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ProductBusiness = void 0;
-const ProductRepository_1 = require("./repository/ProductRepository");
+exports.ClienteBusiness = void 0;
+const ClienteRepository_1 = require("./repository/ClienteRepository");
 /**
- * Business para Product
+ * Business para Cliente
  * Contém as regras de negócio específicas do domínio
  */
-class ProductBusiness {
-    constructor(productRepository) {
-        this.productRepository = productRepository || new ProductRepository_1.ProductRepository();
+class ClienteBusiness {
+    constructor(clienteRepository) {
+        this.clienteRepository = clienteRepository || new ClienteRepository_1.ClienteRepository();
     }
     /**
      * Converter modelo para Dom
-     * @param model Modelo do Product
-     * @returns Dom do Product
+     * @param model Modelo do Cliente
+     * @returns Dom do Cliente
      */
     toDom(model) {
         return {
             id: model.id,
-            name: model.name,
-            description: model.description,
-            price: model.price,
-            stock: model.stock,
-            active: model.active,
+            nome: model.nome,
+            email: model.email,
+            telefone: model.telefone,
+            ativo: model.ativo,
             created_at: model.created_at,
             updated_at: model.updated_at,
         };
     }
     /**
      * Converter Dom de criação para modelo
-     * @param dom Dom de criação do Product
+     * @param dom Dom de criação do Cliente
      * @returns Dados para criação do modelo
      */
     fromCreateDom(dom) {
@@ -45,7 +44,7 @@ class ProductBusiness {
     }
     /**
      * Converter Dom de atualização para dados parciais do modelo
-     * @param dom Dom de atualização do Product
+     * @param dom Dom de atualização do Cliente
      * @returns Dados parciais para atualização do modelo
      */
     fromUpdateDom(dom) {
@@ -59,31 +58,31 @@ class ProductBusiness {
         return modelData;
     }
     /**
-     * Obter product por ID
-     * @param id ID do product
-     * @returns Dom do Product ou null se não encontrado
+     * Obter cliente por ID
+     * @param id ID do cliente
+     * @returns Dom do Cliente ou null se não encontrado
      */
     async getById(id) {
         // Validações de negócio
         if (!id || id <= 0) {
             throw new Error('ID inválido fornecido');
         }
-        const result = await this.productRepository.findById(id);
+        const result = await this.clienteRepository.findById(id);
         return result ? this.toDom(result) : null;
     }
     /**
-     * Obter todos os products
+     * Obter todos os clientes
      * @param options Opções de consulta
-     * @returns Lista de Doms de Product
+     * @returns Lista de Doms de Cliente
      */
     async getAll(options) {
-        const results = await this.productRepository.findAll(options);
+        const results = await this.clienteRepository.findAll(options);
         return results.map(result => this.toDom(result));
     }
     /**
-     * Criar um novo product
-     * @param data Dados para criação do product
-     * @returns Dom do Product criado
+     * Criar um novo cliente
+     * @param data Dados para criação do cliente
+     * @returns Dom do Cliente criado
      */
     async create(data) {
         // Validações de negócio específicas
@@ -91,14 +90,14 @@ class ProductBusiness {
         // Converter Dom para modelo
         const modelData = this.fromCreateDom(data);
         // Criar no repository
-        const created = await this.productRepository.create(modelData);
+        const created = await this.clienteRepository.create(modelData);
         return this.toDom(created);
     }
     /**
-     * Atualizar um product existente
-     * @param id ID do product
+     * Atualizar um cliente existente
+     * @param id ID do cliente
      * @param data Dados para atualização
-     * @returns Dom do Product atualizado ou null se não encontrado
+     * @returns Dom do Cliente atualizado ou null se não encontrado
      */
     async update(id, data) {
         // Validações de negócio
@@ -106,7 +105,7 @@ class ProductBusiness {
             throw new Error('ID inválido fornecido');
         }
         // Verificar se existe
-        const existing = await this.productRepository.findById(id);
+        const existing = await this.clienteRepository.findById(id);
         if (!existing) {
             return null;
         }
@@ -115,12 +114,12 @@ class ProductBusiness {
         // Converter Dom para dados de modelo
         const modelData = this.fromUpdateDom(data);
         // Atualizar no repository
-        const updated = await this.productRepository.update(id, modelData);
+        const updated = await this.clienteRepository.update(id, modelData);
         return updated ? this.toDom(updated) : null;
     }
     /**
-     * Excluir um product
-     * @param id ID do product
+     * Excluir um cliente
+     * @param id ID do cliente
      * @returns true se excluído com sucesso, false se não encontrado
      */
     async delete(id) {
@@ -129,13 +128,13 @@ class ProductBusiness {
             throw new Error('ID inválido fornecido');
         }
         // Verificar se existe antes de excluir
-        const existing = await this.productRepository.findById(id);
+        const existing = await this.clienteRepository.findById(id);
         if (!existing) {
             return false;
         }
         // Validações de negócio para exclusão
         await this.validateDeleteOperation(existing);
-        return await this.productRepository.delete(id);
+        return await this.clienteRepository.delete(id);
     }
     /**
      * Validar dados para criação (regras de negócio)
@@ -168,12 +167,12 @@ class ProductBusiness {
         // Exemplo: verificar se não há registros dependentes
     }
     /**
-     * Buscar products ativos
+     * Buscar clientes ativos
      * @param options Opções de consulta
-     * @returns Lista de products ativos
+     * @returns Lista de clientes ativos
      */
     async findActive(options) {
-        const results = await this.productRepository.findActive(options);
+        const results = await this.clienteRepository.findActive(options);
         return results.map(result => this.toDom(result));
     }
     /**
@@ -181,8 +180,8 @@ class ProductBusiness {
      * @returns Número de registros
      */
     async count() {
-        return await this.productRepository.count();
+        return await this.clienteRepository.count();
     }
 }
-exports.ProductBusiness = ProductBusiness;
-//# sourceMappingURL=ProductBusiness.js.map
+exports.ClienteBusiness = ClienteBusiness;
+//# sourceMappingURL=ClienteBusiness.js.map

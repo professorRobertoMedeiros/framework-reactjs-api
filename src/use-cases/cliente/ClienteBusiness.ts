@@ -1,32 +1,31 @@
-import { ProductModel } from '../../core/domain/models/ProductModel';
-import { ProductRepository } from './repository/ProductRepository';
-import { CreateProductDom, UpdateProductDom, ProductDom } from './domains/ProductDom';
+import { ClienteModel } from '../../core/domain/models/ClienteModel';
+import { ClienteRepository } from './repository/ClienteRepository';
+import { CreateClienteDom, UpdateClienteDom, ClienteDom } from './domains/ClienteDom';
 
 /**
- * Business para Product
+ * Business para Cliente
  * Contém as regras de negócio específicas do domínio
  */
-export class ProductBusiness {
+export class ClienteBusiness {
   // Injeção de dependência do repository
-  public productRepository: ProductRepository;
+  public clienteRepository: ClienteRepository;
 
-  constructor(productRepository?: ProductRepository) {
-    this.productRepository = productRepository || new ProductRepository();
+  constructor(clienteRepository?: ClienteRepository) {
+    this.clienteRepository = clienteRepository || new ClienteRepository();
   }
 
   /**
    * Converter modelo para Dom
-   * @param model Modelo do Product
-   * @returns Dom do Product
+   * @param model Modelo do Cliente
+   * @returns Dom do Cliente
    */
-  private toDom(model: ProductModel): ProductDom {
+  private toDom(model: ClienteModel): ClienteDom {
     return {
       id: model.id,
-      name: model.name,
-      description: model.description,
-      price: model.price,
-      stock: model.stock,
-      active: model.active,
+      nome: model.nome,
+      email: model.email,
+      telefone: model.telefone,
+      ativo: model.ativo,
       created_at: model.created_at,
       updated_at: model.updated_at,
     };
@@ -34,10 +33,10 @@ export class ProductBusiness {
 
   /**
    * Converter Dom de criação para modelo
-   * @param dom Dom de criação do Product
+   * @param dom Dom de criação do Cliente
    * @returns Dados para criação do modelo
    */
-  private fromCreateDom(dom: CreateProductDom): Omit<ProductModel, 'id'> {
+  private fromCreateDom(dom: CreateClienteDom): Omit<ClienteModel, 'id'> {
     // TODO: Implementar conversão do Dom para modelo
     // Validações e transformações de negócio devem ser feitas aqui
     
@@ -53,10 +52,10 @@ export class ProductBusiness {
 
   /**
    * Converter Dom de atualização para dados parciais do modelo
-   * @param dom Dom de atualização do Product
+   * @param dom Dom de atualização do Cliente
    * @returns Dados parciais para atualização do modelo
    */
-  private fromUpdateDom(dom: UpdateProductDom): Partial<ProductModel> {
+  private fromUpdateDom(dom: UpdateClienteDom): Partial<ClienteModel> {
     // TODO: Implementar conversão do Dom de atualização para modelo
     // Validações e transformações de negócio devem ser feitas aqui
     
@@ -70,36 +69,36 @@ export class ProductBusiness {
   }
 
   /**
-   * Obter product por ID
-   * @param id ID do product
-   * @returns Dom do Product ou null se não encontrado
+   * Obter cliente por ID
+   * @param id ID do cliente
+   * @returns Dom do Cliente ou null se não encontrado
    */
-  async getById(id: number): Promise<ProductDom | null> {
+  async getById(id: number): Promise<ClienteDom | null> {
     // Validações de negócio
     if (!id || id <= 0) {
       throw new Error('ID inválido fornecido');
     }
 
-    const result = await this.productRepository.findById(id);
+    const result = await this.clienteRepository.findById(id);
     return result ? this.toDom(result) : null;
   }
 
   /**
-   * Obter todos os products
+   * Obter todos os clientes
    * @param options Opções de consulta
-   * @returns Lista de Doms de Product
+   * @returns Lista de Doms de Cliente
    */
-  async getAll(options?: { limit?: number; offset?: number }): Promise<ProductDom[]> {
-    const results = await this.productRepository.findAll(options);
+  async getAll(options?: { limit?: number; offset?: number }): Promise<ClienteDom[]> {
+    const results = await this.clienteRepository.findAll(options);
     return results.map(result => this.toDom(result));
   }
 
   /**
-   * Criar um novo product
-   * @param data Dados para criação do product
-   * @returns Dom do Product criado
+   * Criar um novo cliente
+   * @param data Dados para criação do cliente
+   * @returns Dom do Cliente criado
    */
-  async create(data: CreateProductDom): Promise<ProductDom> {
+  async create(data: CreateClienteDom): Promise<ClienteDom> {
     // Validações de negócio específicas
     await this.validateCreateData(data);
     
@@ -107,25 +106,25 @@ export class ProductBusiness {
     const modelData = this.fromCreateDom(data);
     
     // Criar no repository
-    const created = await this.productRepository.create(modelData);
+    const created = await this.clienteRepository.create(modelData);
     
     return this.toDom(created);
   }
 
   /**
-   * Atualizar um product existente
-   * @param id ID do product
+   * Atualizar um cliente existente
+   * @param id ID do cliente
    * @param data Dados para atualização
-   * @returns Dom do Product atualizado ou null se não encontrado
+   * @returns Dom do Cliente atualizado ou null se não encontrado
    */
-  async update(id: number, data: UpdateProductDom): Promise<ProductDom | null> {
+  async update(id: number, data: UpdateClienteDom): Promise<ClienteDom | null> {
     // Validações de negócio
     if (!id || id <= 0) {
       throw new Error('ID inválido fornecido');
     }
 
     // Verificar se existe
-    const existing = await this.productRepository.findById(id);
+    const existing = await this.clienteRepository.findById(id);
     if (!existing) {
       return null;
     }
@@ -137,13 +136,13 @@ export class ProductBusiness {
     const modelData = this.fromUpdateDom(data);
     
     // Atualizar no repository
-    const updated = await this.productRepository.update(id, modelData);
+    const updated = await this.clienteRepository.update(id, modelData);
     return updated ? this.toDom(updated) : null;
   }
 
   /**
-   * Excluir um product
-   * @param id ID do product
+   * Excluir um cliente
+   * @param id ID do cliente
    * @returns true se excluído com sucesso, false se não encontrado
    */
   async delete(id: number): Promise<boolean> {
@@ -153,7 +152,7 @@ export class ProductBusiness {
     }
 
     // Verificar se existe antes de excluir
-    const existing = await this.productRepository.findById(id);
+    const existing = await this.clienteRepository.findById(id);
     if (!existing) {
       return false;
     }
@@ -161,14 +160,14 @@ export class ProductBusiness {
     // Validações de negócio para exclusão
     await this.validateDeleteOperation(existing);
 
-    return await this.productRepository.delete(id);
+    return await this.clienteRepository.delete(id);
   }
 
   /**
    * Validar dados para criação (regras de negócio)
    * @param data Dados para validação
    */
-  private async validateCreateData(data: CreateProductDom): Promise<void> {
+  private async validateCreateData(data: CreateClienteDom): Promise<void> {
     // TODO: Implementar validações de negócio específicas para criação
     // Exemplo:
     // if (!data.name || data.name.trim().length === 0) {
@@ -184,7 +183,7 @@ export class ProductBusiness {
    * Validar dados para atualização (regras de negócio)
    * @param data Dados para validação
    */
-  private async validateUpdateData(data: UpdateProductDom): Promise<void> {
+  private async validateUpdateData(data: UpdateClienteDom): Promise<void> {
     // TODO: Implementar validações de negócio específicas para atualização
   }
 
@@ -192,18 +191,18 @@ export class ProductBusiness {
    * Validar operação de exclusão (regras de negócio)
    * @param model Modelo para validação
    */
-  private async validateDeleteOperation(model: ProductModel): Promise<void> {
+  private async validateDeleteOperation(model: ClienteModel): Promise<void> {
     // TODO: Implementar validações de negócio para exclusão
     // Exemplo: verificar se não há registros dependentes
   }
 
   /**
-   * Buscar products ativos
+   * Buscar clientes ativos
    * @param options Opções de consulta
-   * @returns Lista de products ativos
+   * @returns Lista de clientes ativos
    */
-  async findActive(options?: { limit?: number; offset?: number; orderBy?: string }): Promise<ProductDom[]> {
-    const results = await this.productRepository.findActive(options);
+  async findActive(options?: { limit?: number; offset?: number; orderBy?: string }): Promise<ClienteDom[]> {
+    const results = await this.clienteRepository.findActive(options);
     return results.map(result => this.toDom(result));
   }
 
@@ -212,6 +211,6 @@ export class ProductBusiness {
    * @returns Número de registros
    */
   async count(): Promise<number> {
-    return await this.productRepository.count();
+    return await this.clienteRepository.count();
   }
 }

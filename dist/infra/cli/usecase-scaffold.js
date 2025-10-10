@@ -36,6 +36,55 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.scaffoldUseCase = scaffoldUseCase;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
+// Função para analisar arquivo do modelo e extrair propriedades
+function analyzeModelFile(modelName) {
+    const possiblePaths = [
+        `src/core/domain/models/${modelName}Model.ts`,
+        `src/models/${modelName}Model.ts`,
+        `models/${modelName}Model.ts`
+    ];
+    let modelPath = '';
+    for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+            modelPath = p;
+            break;
+        }
+    }
+    if (!modelPath) {
+        return [];
+    }
+    const content = fs.readFileSync(modelPath, 'utf-8');
+    const properties = [];
+    // Encontrar a seção da classe primeiro
+    const classMatch = content.match(/export class \w+Model extends BaseModel \{([\s\S]*?)\n\s*\/\/ Implementação/);
+    if (!classMatch) {
+        return [];
+    }
+    let classContent = classMatch[1];
+    // Remover decoradores @Column({...}) e @Id() completamente
+    classContent = classContent.replace(/@\w+\(\{[\s\S]*?\}\)\s*/g, '');
+    classContent = classContent.replace(/@\w+\(\)\s*/g, '');
+    // Regex para capturar tanto propriedades obrigatórias (!) quanto opcionais (?)
+    const propertyRegex = /^\s*(\w+)(\?)?[!]?\s*:\s*([^;]+);/gm;
+    let match;
+    while ((match = propertyRegex.exec(classContent)) !== null) {
+        const name = match[1];
+        const optional = !!match[2];
+        const type = match[3].trim();
+        // Verificar se é ID (nome 'id')
+        const isId = name === 'id';
+        // Verificar se é timestamp
+        const isTimestamp = name.includes('_at') || type === 'Date';
+        properties.push({
+            name,
+            type,
+            optional,
+            isId,
+            isTimestamp
+        });
+    }
+    return properties;
+}
 // Função para geração de scaffolding de casos de uso
 function scaffoldUseCase(modelName) {
     // Implementação
@@ -121,6 +170,11 @@ export class ${modelName}Repository extends BaseRepository<${modelName}Model> {
 }
 // Modelo para criar business
 function generateBusinessTemplate(modelName) {
+    const properties = analyzeModelFile(modelName);
+    // Gerar mapeamento de propriedades para toDom
+    const toDomProperties = properties
+        .map(p => `      ${p.name}: model.${p.name},`)
+        .join('\n');
     return `import { ${modelName}Model } from '../../core/domain/models/${modelName}Model';
 import { ${modelName}Repository } from './repository/${modelName}Repository';
 import { Create${modelName}Dom, Update${modelName}Dom, ${modelName}Dom } from './domains/${modelName}Dom';
@@ -144,12 +198,7 @@ export class ${modelName}Business {
    */
   private toDom(model: ${modelName}Model): ${modelName}Dom {
     return {
-      id: model.id,
-      // TODO: Mapear outras propriedades do modelo para o Dom aqui
-      // Exemplo:
-      // name: model.name,
-      // email: model.email,
-      // created_at: model.created_at,
+${toDomProperties || '      id: model.id,\n      // TODO: Mapear outras propriedades do modelo para o Dom aqui'}
     };
   }
 
@@ -339,26 +388,43 @@ export class ${modelName}Business {
 }
 // Modelo para criar domain
 function generateDomainTemplate(modelName) {
+    const properties = analyzeModelFile(modelName);
+    // Gerar propriedades para CreateDom (excluir id e timestamps automáticos)
+    const createProperties = properties
+        .filter(p => !p.isId && !p.name.includes('created_at') && !p.name.includes('updated_at'))
+        .map(p => `  ${p.name}${p.optional ? '?' : ''}: ${p.type};`)
+        .join('\n');
+    // Gerar propriedades para UpdateDom (excluir id e created_at, incluir updated_at como opcional)
+    const updateProperties = properties
+        .filter(p => !p.isId && !p.name.includes('created_at'))
+        .map(p => {
+        const optional = p.optional || p.name.includes('updated_at');
+        return `  ${p.name}${optional ? '?' : ''}: ${p.type};`;
+    })
+        .join('\n');
+    // Gerar propriedades para Dom completo (todas as propriedades)
+    const domProperties = properties
+        .map(p => `  ${p.name}${p.optional ? '?' : ''}: ${p.type};`)
+        .join('\n');
     return `/**
  * Dom para criação de ${modelName.toLowerCase()}
  */
 export interface Create${modelName}Dom {
-  // Adicione aqui as propriedades para criar um novo ${modelName.toLowerCase()}
+${createProperties || '  // Adicione aqui as propriedades para criar um novo ' + modelName.toLowerCase()}
 }
 
 /**
  * Dom para atualização de ${modelName.toLowerCase()}
  */
 export interface Update${modelName}Dom {
-  // Adicione aqui as propriedades para atualizar um ${modelName.toLowerCase()}
+${updateProperties || '  // Adicione aqui as propriedades para atualizar um ' + modelName.toLowerCase()}
 }
 
 /**
  * Dom para representação de ${modelName.toLowerCase()}
  */
 export interface ${modelName}Dom {
-  id: number;
-  // Adicione aqui outras propriedades para retorno
+${domProperties || '  id: number;\n  // Adicione aqui outras propriedades para retorno'}
 }`;
 }
 // Modelo para criar service

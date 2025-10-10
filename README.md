@@ -238,8 +238,11 @@ npm install
 # Compilação 
 npm run build
 
-# Gerar novo use case
+# Gerar novo use case (desenvolvimento do framework)
 npm run scaffold <NomeDoModelo>
+
+# Para usuários finais, use:
+# npx framework-reactjs-api-scaffold <NomeDoModelo>
 
 # Executar migrações
 npm run migration:run
