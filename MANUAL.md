@@ -312,14 +312,63 @@ npx framework-reactjs-api-scaffold Product
 
 Este comando irá:
 1. Verificar se existe um `ProductModel.ts` em `src/core/domain/models/`
-2. Criar a estrutura completa de arquivos:
+2. Analisar o modelo e extrair automaticamente todas as propriedades
+3. Criar a estrutura completa de arquivos:
    - `src/use-cases/product/repository/ProductRepository.ts` (estende BaseRepository)
    - `src/use-cases/product/ProductBusiness.ts` (regras de negócio)
    - `src/use-cases/product/ProductService.ts` (orquestração)
-   - `src/use-cases/product/domains/ProductDom.ts` (interfaces de domínio)
+   - `src/use-cases/product/domains/ProductDom.ts` (interfaces de domínio com propriedades automáticas)
    - `src/use-cases/product/routes/ProductRoutes.ts` (rotas Express com CRUD completo)
 
 Se algum desses arquivos já existir, o script irá pular a criação.
+
+#### Requisitos do Modelo
+
+Para que o scaffolding funcione corretamente, o modelo deve seguir o padrão:
+
+```typescript
+import { BaseModel, Entity, Column, Id } from 'framework-reactjs-api';
+
+@Entity('produtos')
+export class ProductModel extends BaseModel {
+  @Id()
+  id!: number;
+
+  @Column({
+    type: 'VARCHAR',
+    nullable: false,
+    length: 255
+  })
+  name!: string;
+
+  // Outras propriedades...
+
+  // Implementação requerida por BaseModel
+  toJSON(): Record<string, any> {
+    return {
+      id: this.id,
+      name: this.name,
+      // Outras propriedades...
+    };
+  }
+}
+```
+
+#### Diagnóstico de Problemas
+
+Se os Dom estiverem sendo gerados vazios:
+
+1. **Verifique se o modelo existe** no caminho correto:
+   - `src/core/domain/models/ProductModel.ts` (recomendado)
+   - `src/models/ProductModel.ts`
+   - `models/ProductModel.ts`
+
+2. **Verifique se o modelo segue o padrão**:
+   - Classe deve estender `BaseModel`
+   - Propriedades declaradas com `!` (obrigatórias) ou `?` (opcionais)
+   - Decoradores `@Column` e `@Id` utilizados
+
+3. **Execute com logs detalhados**: O comando mostrará quantas propriedades foram encontradas
 
 #### Diferença entre Desenvolvimento vs Uso como Dependência
 

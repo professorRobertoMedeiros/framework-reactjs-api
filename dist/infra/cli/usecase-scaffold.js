@@ -51,16 +51,35 @@ function analyzeModelFile(modelName) {
         }
     }
     if (!modelPath) {
+        console.log(`⚠️  Aviso: Modelo ${modelName}Model.ts não encontrado. Arquivos Dom serão gerados vazios.`);
+        console.log('Caminhos verificados:');
+        possiblePaths.forEach(p => console.log(`- ${p}`));
         return [];
     }
     const content = fs.readFileSync(modelPath, 'utf-8');
     const properties = [];
-    // Encontrar a seção da classe primeiro
-    const classMatch = content.match(/export class \w+Model extends BaseModel \{([\s\S]*?)\n\s*\/\/ Implementação/);
-    if (!classMatch) {
+    // Encontrar a seção da classe primeiro - mais preciso
+    let classContent = '';
+    // Primeira tentativa: buscar até comentário que precede toJSON
+    const classMatch1 = content.match(/export class \w+Model extends BaseModel \{([\s\S]*?)(?:\n\s*\/\/.*(?:Implementação|toJSON|Método))/);
+    // Segunda tentativa: buscar até a declaração do método toJSON
+    const classMatch2 = content.match(/export class \w+Model extends BaseModel \{([\s\S]*?)(?:\n\s*toJSON\(\))/);
+    // Terceira tentativa: buscar até qualquer método
+    const classMatch3 = content.match(/export class \w+Model extends BaseModel \{([\s\S]*?)(?:\n\s*\w+\(\))/);
+    if (classMatch1) {
+        classContent = classMatch1[1];
+    }
+    else if (classMatch2) {
+        classContent = classMatch2[1];
+    }
+    else if (classMatch3) {
+        classContent = classMatch3[1];
+    }
+    else {
+        console.log(`⚠️  Aviso: Não foi possível analisar a estrutura da classe ${modelName}Model.`);
+        console.log('Certifique-se de que a classe estende BaseModel e segue o padrão esperado.');
         return [];
     }
-    let classContent = classMatch[1];
     // Remover decoradores @Column({...}) e @Id() completamente
     classContent = classContent.replace(/@\w+\(\{[\s\S]*?\}\)\s*/g, '');
     classContent = classContent.replace(/@\w+\(\)\s*/g, '');
@@ -83,6 +102,7 @@ function analyzeModelFile(modelName) {
             isTimestamp
         });
     }
+    console.log(`✅ Analisado ${modelName}Model: ${properties.length} propriedades encontradas`);
     return properties;
 }
 // Função para geração de scaffolding de casos de uso
