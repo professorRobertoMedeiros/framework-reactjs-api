@@ -39,9 +39,9 @@ const path = __importStar(require("path"));
 // Função para analisar arquivo do modelo e extrair propriedades
 function analyzeModelFile(modelName) {
     const possiblePaths = [
-        `src/core/domain/models/${modelName}Model.ts`,
-        `src/models/${modelName}Model.ts`,
-        `models/${modelName}Model.ts`
+        path.join(process.cwd(), 'src', 'core', 'domain', 'models', `${modelName}Model.ts`),
+        path.join(process.cwd(), 'src', 'models', `${modelName}Model.ts`),
+        path.join(process.cwd(), 'models', `${modelName}Model.ts`)
     ];
     let modelPath = '';
     for (const p of possiblePaths) {
@@ -53,7 +53,7 @@ function analyzeModelFile(modelName) {
     if (!modelPath) {
         console.log(`⚠️  Aviso: Modelo ${modelName}Model.ts não encontrado. Arquivos Dom serão gerados vazios.`);
         console.log('Caminhos verificados:');
-        possiblePaths.forEach(p => console.log(`- ${p}`));
+        possiblePaths.forEach(p => console.log(`- ${path.relative(process.cwd(), p)}`));
         return [];
     }
     const content = fs.readFileSync(modelPath, 'utf-8');
@@ -125,7 +125,7 @@ function toPascalCase(str) {
 }
 // Modelo para criar repositório
 function generateRepositoryTemplate(modelName) {
-    return `import { BaseRepository } from '../../../infra/repository/BaseRepository';
+    return `import { BaseRepository } from 'framework-reactjs-api';
 import { ${modelName}Model } from '../../../core/domain/models/${modelName}Model';
 
 /**
@@ -449,7 +449,7 @@ ${domProperties || '  id: number;\n  // Adicione aqui outras propriedades para r
 }
 // Modelo para criar service
 function generateServiceTemplate(modelName) {
-    return `import { BaseService, ServiceResponse, PaginatedResponse } from '../../core/services/BaseService';
+    return `import { BaseService, ServiceResponse, PaginatedResponse } from 'framework-reactjs-api';
 import { ${modelName}Business } from './${modelName}Business';
 import { Create${modelName}Dom, Update${modelName}Dom, ${modelName}Dom } from './domains/${modelName}Dom';
 
