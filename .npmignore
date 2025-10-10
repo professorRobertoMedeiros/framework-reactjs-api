@@ -1,0 +1,29 @@
+# Código fonte TypeScript (só incluir o compilado)
+src/
+*.ts
+!*.d.ts
+
+# Arquivos de desenvolvimento
+.gitignore
+tsconfig.json
+jest.config.js
+.vscode/
+.env*
+
+# Arquivos de teste
+__tests__/
+*.test.js
+*.test.ts
+*.spec.js  
+*.spec.ts
+
+# Logs
+logs/
+*.log
+
+# Dependências (não incluir node_modules)
+node_modules/
+
+# Arquivos temporários
+.tmp/
+temp/

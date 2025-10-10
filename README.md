@@ -8,6 +8,35 @@ Framework base para camada de data flow/API de projetos React com DDD, Clean Arc
 npm install framework-reactjs-api
 ```
 
+## Distribuição e Instalação
+
+Este framework está preparado para ser distribuído como um pacote NPM:
+
+- ✅ **Sem Build Automático**: O framework não executa `npm run build` durante a instalação
+- ✅ **Código Pré-compilado**: Inclui pasta `dist/` com código JavaScript compilado
+- ✅ **CLIs Funcionais**: Scripts executáveis em `bin/` com permissões corretas
+- ✅ **Otimização de Tamanho**: Exclui código fonte TypeScript do pacote final
+- ✅ **Documentação Completa**: Inclui README, MANUAL e exemplos
+
+### Para Desenvolvedores do Framework
+
+```bash
+# Build local (desenvolvimento)
+npm run build
+
+# Publicação (executa build automaticamente)
+npm publish
+```
+
+### Para Usuários do Framework
+
+Simplesmente instale e use - não é necessário compilar:
+
+```bash
+npm install framework-reactjs-api
+# Pronto para usar!
+```
+
 ## Configuração Rápida
 
 Para adicionar o framework ao seu projeto:
