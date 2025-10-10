@@ -1,60 +1,62 @@
+import { BaseRepository } from '../../../infra/repository/BaseRepository';
 import { ProductModel } from '../../../core/domain/models/ProductModel';
-import { BaseRepository, IRepository, PaginationOptions, PaginatedResult } from '../../../infra/repository/BaseRepository';
 
 /**
- * Interface para o repository de produtos
+ * Repositório para Product
+ * Estende BaseRepository para operações CRUD básicas
  */
-export interface IProductRepository extends IRepository<ProductModel> {
-  findByName(name: string): Promise<ProductModel[]>;
-  findActiveProducts(options?: PaginationOptions): Promise<ProductModel[]>;
-  findActiveProductsPaginated(options?: PaginationOptions): Promise<PaginatedResult<ProductModel>>;
-  findLowStock(threshold: number): Promise<ProductModel[]>;
-}
-
-/**
- * Implementação do repository de produtos
- * Aproveita todos os métodos CRUD e de paginação herdados do BaseRepository
- */
-export class ProductRepository extends BaseRepository<ProductModel> implements IProductRepository {
-  
+export class ProductRepository extends BaseRepository<ProductModel> {
   constructor() {
     super(ProductModel);
   }
-  
+
   /**
-   * Busca produtos por nome
+   * Mapear dados do banco para o modelo Product
+   * @param data Dados brutos do banco de dados
+   * @returns Instância do modelo Product
    */
-  async findByName(name: string): Promise<ProductModel[]> {
-    return this.findBy({ name });
+  protected mapToModel(data: any): ProductModel {
+    const item = new ProductModel();
+    
+    // Mapear propriedades básicas
+    item.id = data.id;
+    
+    // TODO: Adicione aqui outras propriedades específicas do ProductModel
+    // Exemplo:
+    // item.name = data.name;
+    // item.email = data.email;
+    // item.created_at = data.created_at;
+    
+    // Para mapear todas as propriedades automaticamente (não recomendado para produção):
+    Object.assign(item, data);
+    
+    return item;
   }
-  
+
   /**
-   * Busca produtos ativos
+   * Buscar product por email (exemplo de método customizado)
+   * @param email Email para busca
+   * @returns Product encontrado ou null
    */
-  async findActiveProducts(options?: PaginationOptions): Promise<ProductModel[]> {
+  async findByEmail(email: string): Promise<ProductModel | null> {
+    return this.findOneBy({ email });
+  }
+
+  /**
+   * Buscar products ativos (exemplo de método customizado)
+   * @param options Opções de consulta
+   * @returns Lista de products ativos
+   */
+  async findActive(options?: { limit?: number; offset?: number; orderBy?: string }): Promise<ProductModel[]> {
     return this.findBy({ active: true }, options);
   }
-  
+
   /**
-   * Busca produtos ativos com paginação
+   * Contar products por status (exemplo de método customizado)
+   * @param status Status para contar
+   * @returns Número de registros
    */
-  async findActiveProductsPaginated(options?: PaginationOptions): Promise<PaginatedResult<ProductModel>> {
-    return this.findByPaginated({ active: true }, options);
-  }
-  
-  /**
-   * Busca produtos com estoque abaixo do limite
-   */
-  async findLowStock(threshold: number): Promise<ProductModel[]> {
-    const client = await this.orm.getClient();
-    try {
-      const result = await client.query(
-        `SELECT * FROM ${this.tableName} WHERE stock < $1 AND active = true`,
-        [threshold]
-      );
-      return result.rows.map(row => this.mapToModel(row));
-    } finally {
-      client.release();
-    }
+  async countByStatus(status: string): Promise<number> {
+    return this.count({ status });
   }
 }

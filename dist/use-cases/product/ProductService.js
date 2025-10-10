@@ -1,66 +1,90 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProductService = void 0;
+const BaseService_1 = require("../../core/services/BaseService");
 const ProductBusiness_1 = require("./ProductBusiness");
 /**
- * Serviço para gerenciamento de produtos
+ * Serviço para Product
+ * Estende BaseService para operações CRUD padrão
  */
-class ProductService {
+class ProductService extends BaseService_1.BaseService {
     constructor(productBusiness) {
-        // Injeção de dependência: usar business fornecido ou criar novo
+        super();
         this.productBusiness = productBusiness || new ProductBusiness_1.ProductBusiness();
     }
     /**
-     * Criar um novo produto
+     * Implementação obrigatória para obter business layer
+     * @returns Instância do business
      */
-    async createProduct(productData) {
-        return this.productBusiness.createProduct(productData);
+    getBusiness() {
+        return this.productBusiness;
     }
+    // Os métodos CRUD básicos (getById, getAll, create, update, delete) 
+    // são herdados automaticamente da classe BaseService
     /**
-     * Buscar produto por ID
+     * Método customizado: Buscar products ativos
+     * @param page Página
+     * @param limit Limite por página
+     * @returns Lista de products ativos
      */
-    async getProductById(id) {
-        return this.productBusiness.getProductById(id);
-    }
-    /**
-     * Listar produtos com paginação
-     * Aproveita os métodos de paginação herdados do BaseRepository
-     */
-    async listProducts(options) {
-        return this.productBusiness.getAllProductsPaginated(options);
-    }
-    /**
-     * Listar produtos ativos com paginação
-     */
-    async listActiveProducts(options) {
-        // Usar as opções para filtrar por produtos ativos
-        const products = await this.productBusiness.getAllProducts(options);
-        return products.filter(product => product.active);
-    }
-    /**
-     * Atualizar produto
-     */
-    async updateProduct(id, productData) {
-        return this.productBusiness.updateProduct(id, productData);
-    }
-    /**
-     * Excluir produto (exclusão lógica)
-     */
-    async deleteProduct(id) {
-        // Primeiro, verifica se o produto existe
-        const product = await this.productBusiness.getProductById(id);
-        if (!product) {
-            return false;
+    async getActive(page = 1, limit = 10) {
+        try {
+            // Validar parâmetros de paginação
+            if (page < 1)
+                page = 1;
+            if (limit < 1)
+                limit = 10;
+            if (limit > 100)
+                limit = 100;
+            const offset = (page - 1) * limit;
+            // Buscar products ativos no business
+            const items = await this.productBusiness.findActive({
+                limit,
+                offset
+            });
+            // Para total, poderia implementar um método countActive no business
+            const total = items.length; // Simplificado
+            const totalPages = Math.ceil(total / limit);
+            return {
+                success: true,
+                message: 'Products ativos listados com sucesso',
+                data: {
+                    items,
+                    total,
+                    page,
+                    limit,
+                    totalPages
+                }
+            };
         }
-        // Ao invés de excluir, desativa o produto (exclusão lógica)
-        const result = await this.productBusiness.updateProduct(id, { active: false });
-        return result !== null;
+        catch (error) {
+            return {
+                success: false,
+                message: 'Erro ao listar products ativos',
+                error: error.message || 'Erro desconhecido'
+            };
+        }
     }
     /**
-     * Buscar produtos com estoque baixo
+     * Método customizado: Contar total de registros
+     * @returns Número total de registros
      */
-    async getLowStockProducts(threshold = 10) {
-        return this.productBusiness.findLowStockProducts(threshold);
+    async count() {
+        try {
+            const total = await this.productBusiness.productRepository.count();
+            return {
+                success: true,
+                message: 'Contagem realizada com sucesso',
+                data: total
+            };
+        }
+        catch (error) {
+            return {
+                success: false,
+                message: 'Erro ao contar registros',
+                error: error.message || 'Erro desconhecido'
+            };
+        }
     }
 }
 exports.ProductService = ProductService;

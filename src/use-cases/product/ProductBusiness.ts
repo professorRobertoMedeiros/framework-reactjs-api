@@ -1,131 +1,215 @@
 import { ProductModel } from '../../core/domain/models/ProductModel';
-import { IProductRepository, ProductRepository } from './repository/ProductRepository';
+import { ProductRepository } from './repository/ProductRepository';
 import { CreateProductDom, UpdateProductDom, ProductDom } from './domains/ProductDom';
-import { PaginatedResult, PaginationOptions } from '../../infra/repository/BaseRepository';
 
-// Interface para o business de produtos
-export interface IProductBusiness {
-  getProductById(id: number): Promise<ProductDom | null>;
-  getAllProducts(options?: PaginationOptions): Promise<ProductDom[]>;
-  getAllProductsPaginated(options?: PaginationOptions): Promise<PaginatedResult<ProductDom>>;
-  createProduct(data: CreateProductDom): Promise<ProductDom>;
-  updateProduct(id: number, data: UpdateProductDom): Promise<ProductDom | null>;
-  deleteProduct(id: number): Promise<boolean>;
-  findLowStockProducts(threshold?: number): Promise<ProductDom[]>;
-}
+/**
+ * Business para Product
+ * Contém as regras de negócio específicas do domínio
+ */
+export class ProductBusiness {
+  // Injeção de dependência do repository
+  public productRepository: ProductRepository;
 
-// Implementação do business de produtos
-export class ProductBusiness implements IProductBusiness {
-  private productRepository: IProductRepository;
-
-  constructor(productRepository?: IProductRepository) {
+  constructor(productRepository?: ProductRepository) {
     this.productRepository = productRepository || new ProductRepository();
   }
 
-  // Converter modelo para Dom
-  private toDom(product: ProductModel): ProductDom {
+  /**
+   * Converter modelo para Dom
+   * @param model Modelo do Product
+   * @returns Dom do Product
+   */
+  private toDom(model: ProductModel): ProductDom {
     return {
-      id: product.id,
-      name: product.name,
-      description: product.description,
-      price: product.price,
-      stock: product.stock,
-      active: product.active,
-      created_at: product.created_at,
-      updated_at: product.updated_at
+      id: model.id,
+      // TODO: Mapear outras propriedades do modelo para o Dom aqui
+      // Exemplo:
+      // name: model.name,
+      // email: model.email,
+      // created_at: model.created_at,
     };
   }
 
-  // Obter produto por ID
-  async getProductById(id: number): Promise<ProductDom | null> {
-    const product = await this.productRepository.findById(id);
-    return product ? this.toDom(product) : null;
-  }
-
-  // Obter todos os produtos
-  async getAllProducts(options?: PaginationOptions): Promise<ProductDom[]> {
-    const products = await this.productRepository.findAll(options);
-    return products.map(product => this.toDom(product));
-  }
-
-  // Obter todos os produtos com paginação
-  async getAllProductsPaginated(options?: PaginationOptions): Promise<PaginatedResult<ProductDom>> {
-    const result = await this.productRepository.findAllPaginated(options);
+  /**
+   * Converter Dom de criação para modelo
+   * @param dom Dom de criação do Product
+   * @returns Dados para criação do modelo
+   */
+  private fromCreateDom(dom: CreateProductDom): Omit<ProductModel, 'id'> {
+    // TODO: Implementar conversão do Dom para modelo
+    // Validações e transformações de negócio devem ser feitas aqui
     
-    return {
-      data: result.data.map(product => this.toDom(product)),
-      pagination: result.pagination
+    const modelData: any = {
+      // Exemplo:
+      // name: dom.name,
+      // email: dom.email,
+      // created_at: new Date(),
     };
+
+    return modelData;
   }
 
-  // Criar um novo produto
-  async createProduct(data: CreateProductDom): Promise<ProductDom> {
-    // Validações
-    if (data.price < 0) {
-      throw new Error('O preço não pode ser negativo');
-    }
+  /**
+   * Converter Dom de atualização para dados parciais do modelo
+   * @param dom Dom de atualização do Product
+   * @returns Dados parciais para atualização do modelo
+   */
+  private fromUpdateDom(dom: UpdateProductDom): Partial<ProductModel> {
+    // TODO: Implementar conversão do Dom de atualização para modelo
+    // Validações e transformações de negócio devem ser feitas aqui
     
-    if (data.stock < 0) {
-      throw new Error('O estoque não pode ser negativo');
-    }
+    const modelData: any = {
+      // Exemplo:
+      // name: dom.name,
+      // updated_at: new Date(),
+    };
 
-    // Criar produto
-    const product = new ProductModel();
-    product.name = data.name;
-    product.description = data.description;
-    product.price = data.price;
-    product.stock = data.stock;
-    product.active = data.active !== undefined ? data.active : true;
-    product.created_at = new Date();
-
-    // Persistir no repositório
-    const createdProduct = await this.productRepository.create(product);
-    return this.toDom(createdProduct);
+    return modelData;
   }
 
-  // Atualizar um produto existente
-  async updateProduct(id: number, data: UpdateProductDom): Promise<ProductDom | null> {
-    // Verificar se o produto existe
-    const existingProduct = await this.productRepository.findById(id);
-    if (!existingProduct) {
+  /**
+   * Obter product por ID
+   * @param id ID do product
+   * @returns Dom do Product ou null se não encontrado
+   */
+  async getById(id: number): Promise<ProductDom | null> {
+    // Validações de negócio
+    if (!id || id <= 0) {
+      throw new Error('ID inválido fornecido');
+    }
+
+    const result = await this.productRepository.findById(id);
+    return result ? this.toDom(result) : null;
+  }
+
+  /**
+   * Obter todos os products
+   * @param options Opções de consulta
+   * @returns Lista de Doms de Product
+   */
+  async getAll(options?: { limit?: number; offset?: number }): Promise<ProductDom[]> {
+    const results = await this.productRepository.findAll(options);
+    return results.map(result => this.toDom(result));
+  }
+
+  /**
+   * Criar um novo product
+   * @param data Dados para criação do product
+   * @returns Dom do Product criado
+   */
+  async create(data: CreateProductDom): Promise<ProductDom> {
+    // Validações de negócio específicas
+    await this.validateCreateData(data);
+    
+    // Converter Dom para modelo
+    const modelData = this.fromCreateDom(data);
+    
+    // Criar no repository
+    const created = await this.productRepository.create(modelData);
+    
+    return this.toDom(created);
+  }
+
+  /**
+   * Atualizar um product existente
+   * @param id ID do product
+   * @param data Dados para atualização
+   * @returns Dom do Product atualizado ou null se não encontrado
+   */
+  async update(id: number, data: UpdateProductDom): Promise<ProductDom | null> {
+    // Validações de negócio
+    if (!id || id <= 0) {
+      throw new Error('ID inválido fornecido');
+    }
+
+    // Verificar se existe
+    const existing = await this.productRepository.findById(id);
+    if (!existing) {
       return null;
     }
-
-    // Validações
-    if (data.price !== undefined && data.price < 0) {
-      throw new Error('O preço não pode ser negativo');
-    }
     
-    if (data.stock !== undefined && data.stock < 0) {
-      throw new Error('O estoque não pode ser negativo');
-    }
-
-    // Preparar dados para atualização
-    const updateData: Partial<ProductModel> = {
-      ...data,
-      updated_at: new Date()
-    };
-
-    // Atualizar no repositório
-    const updatedProduct = await this.productRepository.update(id, updateData);
-    return updatedProduct ? this.toDom(updatedProduct) : null;
+    // Validações de negócio específicas para atualização
+    await this.validateUpdateData(data);
+    
+    // Converter Dom para dados de modelo
+    const modelData = this.fromUpdateDom(data);
+    
+    // Atualizar no repository
+    const updated = await this.productRepository.update(id, modelData);
+    return updated ? this.toDom(updated) : null;
   }
 
-  // Excluir um produto
-  async deleteProduct(id: number): Promise<boolean> {
-    // Verificar se o produto existe
-    const existingProduct = await this.productRepository.findById(id);
-    if (!existingProduct) {
+  /**
+   * Excluir um product
+   * @param id ID do product
+   * @returns true se excluído com sucesso, false se não encontrado
+   */
+  async delete(id: number): Promise<boolean> {
+    // Validações de negócio
+    if (!id || id <= 0) {
+      throw new Error('ID inválido fornecido');
+    }
+
+    // Verificar se existe antes de excluir
+    const existing = await this.productRepository.findById(id);
+    if (!existing) {
       return false;
     }
 
-    // Excluir do repositório (ou desativar, dependendo da regra de negócio)
+    // Validações de negócio para exclusão
+    await this.validateDeleteOperation(existing);
+
     return await this.productRepository.delete(id);
   }
 
-  // Encontrar produtos com estoque baixo
-  async findLowStockProducts(threshold: number = 10): Promise<ProductDom[]> {
-    const products = await this.productRepository.findLowStock(threshold);
-    return products.map(product => this.toDom(product));
+  /**
+   * Validar dados para criação (regras de negócio)
+   * @param data Dados para validação
+   */
+  private async validateCreateData(data: CreateProductDom): Promise<void> {
+    // TODO: Implementar validações de negócio específicas para criação
+    // Exemplo:
+    // if (!data.name || data.name.trim().length === 0) {
+    //   throw new Error('Nome é obrigatório');
+    // }
+    // 
+    // if (!data.email || !this.isValidEmail(data.email)) {
+    //   throw new Error('Email inválido');
+    // }
+  }
+
+  /**
+   * Validar dados para atualização (regras de negócio)
+   * @param data Dados para validação
+   */
+  private async validateUpdateData(data: UpdateProductDom): Promise<void> {
+    // TODO: Implementar validações de negócio específicas para atualização
+  }
+
+  /**
+   * Validar operação de exclusão (regras de negócio)
+   * @param model Modelo para validação
+   */
+  private async validateDeleteOperation(model: ProductModel): Promise<void> {
+    // TODO: Implementar validações de negócio para exclusão
+    // Exemplo: verificar se não há registros dependentes
+  }
+
+  /**
+   * Buscar products ativos
+   * @param options Opções de consulta
+   * @returns Lista de products ativos
+   */
+  async findActive(options?: { limit?: number; offset?: number; orderBy?: string }): Promise<ProductDom[]> {
+    const results = await this.productRepository.findActive(options);
+    return results.map(result => this.toDom(result));
+  }
+
+  /**
+   * Contar registros (método para compatibilidade com BaseService)
+   * @returns Número de registros
+   */
+  async count(): Promise<number> {
+    return await this.productRepository.count();
   }
 }

@@ -1,34 +1,37 @@
+import { BaseRepository } from '../../../infra/repository/BaseRepository';
 import { ProductModel } from '../../../core/domain/models/ProductModel';
-import { BaseRepository, IRepository, PaginationOptions, PaginatedResult } from '../../../infra/repository/BaseRepository';
 /**
- * Interface para o repository de produtos
+ * Repositório para Product
+ * Estende BaseRepository para operações CRUD básicas
  */
-export interface IProductRepository extends IRepository<ProductModel> {
-    findByName(name: string): Promise<ProductModel[]>;
-    findActiveProducts(options?: PaginationOptions): Promise<ProductModel[]>;
-    findActiveProductsPaginated(options?: PaginationOptions): Promise<PaginatedResult<ProductModel>>;
-    findLowStock(threshold: number): Promise<ProductModel[]>;
-}
-/**
- * Implementação do repository de produtos
- * Aproveita todos os métodos CRUD e de paginação herdados do BaseRepository
- */
-export declare class ProductRepository extends BaseRepository<ProductModel> implements IProductRepository {
+export declare class ProductRepository extends BaseRepository<ProductModel> {
     constructor();
     /**
-     * Busca produtos por nome
+     * Mapear dados do banco para o modelo Product
+     * @param data Dados brutos do banco de dados
+     * @returns Instância do modelo Product
      */
-    findByName(name: string): Promise<ProductModel[]>;
+    protected mapToModel(data: any): ProductModel;
     /**
-     * Busca produtos ativos
+     * Buscar product por email (exemplo de método customizado)
+     * @param email Email para busca
+     * @returns Product encontrado ou null
      */
-    findActiveProducts(options?: PaginationOptions): Promise<ProductModel[]>;
+    findByEmail(email: string): Promise<ProductModel | null>;
     /**
-     * Busca produtos ativos com paginação
+     * Buscar products ativos (exemplo de método customizado)
+     * @param options Opções de consulta
+     * @returns Lista de products ativos
      */
-    findActiveProductsPaginated(options?: PaginationOptions): Promise<PaginatedResult<ProductModel>>;
+    findActive(options?: {
+        limit?: number;
+        offset?: number;
+        orderBy?: string;
+    }): Promise<ProductModel[]>;
     /**
-     * Busca produtos com estoque abaixo do limite
+     * Contar products por status (exemplo de método customizado)
+     * @param status Status para contar
+     * @returns Número de registros
      */
-    findLowStock(threshold: number): Promise<ProductModel[]>;
+    countByStatus(status: string): Promise<number>;
 }

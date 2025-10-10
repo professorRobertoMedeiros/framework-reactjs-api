@@ -41,6 +41,36 @@ export class UserBusiness implements IUserBusiness {
     return `hashed_${password}_${Date.now()}`;
   }
 
+  // Métodos compatíveis com BaseService
+  async getById(id: number): Promise<UserDom | null> {
+    return this.getUserById(id);
+  }
+
+  async getAll(options?: { limit?: number; offset?: number }): Promise<UserDom[]> {
+    return this.getAllUsers(options);
+  }
+
+  async create(data: CreateUserDom): Promise<UserDom> {
+    return this.createUser(data);
+  }
+
+  async update(id: number, data: UpdateUserDom): Promise<UserDom | null> {
+    return this.updateUser(id, data);
+  }
+
+  async delete(id: number): Promise<boolean> {
+    return this.deleteUser(id);
+  }
+
+  async findByEmail(email: string): Promise<UserDom | null> {
+    const user = await this.userRepository.findByEmail(email);
+    return user ? this.toDom(user) : null;
+  }
+
+  async count(): Promise<number> {
+    return await this.userRepository.count();
+  }
+
   // Obter usuário por ID
   async getUserById(id: number): Promise<UserDom | null> {
     const user = await this.userRepository.findById(id);

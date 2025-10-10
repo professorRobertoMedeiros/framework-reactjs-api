@@ -26,6 +26,29 @@ class UserBusiness {
         // Em produção, use bcrypt ou argon2
         return `hashed_${password}_${Date.now()}`;
     }
+    // Métodos compatíveis com BaseService
+    async getById(id) {
+        return this.getUserById(id);
+    }
+    async getAll(options) {
+        return this.getAllUsers(options);
+    }
+    async create(data) {
+        return this.createUser(data);
+    }
+    async update(id, data) {
+        return this.updateUser(id, data);
+    }
+    async delete(id) {
+        return this.deleteUser(id);
+    }
+    async findByEmail(email) {
+        const user = await this.userRepository.findByEmail(email);
+        return user ? this.toDom(user) : null;
+    }
+    async count() {
+        return await this.userRepository.count();
+    }
     // Obter usuário por ID
     async getUserById(id) {
         const user = await this.userRepository.findById(id);

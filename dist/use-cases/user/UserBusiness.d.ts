@@ -17,6 +17,16 @@ export declare class UserBusiness implements IUserBusiness {
     constructor(userRepository?: IUserRepository);
     private toDom;
     private hashPassword;
+    getById(id: number): Promise<UserDom | null>;
+    getAll(options?: {
+        limit?: number;
+        offset?: number;
+    }): Promise<UserDom[]>;
+    create(data: CreateUserDom): Promise<UserDom>;
+    update(id: number, data: UpdateUserDom): Promise<UserDom | null>;
+    delete(id: number): Promise<boolean>;
+    findByEmail(email: string): Promise<UserDom | null>;
+    count(): Promise<number>;
     getUserById(id: number): Promise<UserDom | null>;
     getAllUsers(options?: {
         limit?: number;

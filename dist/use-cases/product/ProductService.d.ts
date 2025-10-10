@@ -1,39 +1,28 @@
-import { IProductBusiness } from './ProductBusiness';
+import { BaseService, ServiceResponse, PaginatedResponse } from '../../core/services/BaseService';
+import { ProductBusiness } from './ProductBusiness';
 import { CreateProductDom, UpdateProductDom, ProductDom } from './domains/ProductDom';
-import { PaginationOptions, PaginatedResult } from '../../infra/repository/BaseRepository';
 /**
- * Serviço para gerenciamento de produtos
+ * Serviço para Product
+ * Estende BaseService para operações CRUD padrão
  */
-export declare class ProductService {
+export declare class ProductService extends BaseService<ProductDom, CreateProductDom, UpdateProductDom> {
     private productBusiness;
-    constructor(productBusiness?: IProductBusiness);
+    constructor(productBusiness?: ProductBusiness);
     /**
-     * Criar um novo produto
+     * Implementação obrigatória para obter business layer
+     * @returns Instância do business
      */
-    createProduct(productData: CreateProductDom): Promise<ProductDom>;
+    protected getBusiness(): ProductBusiness;
     /**
-     * Buscar produto por ID
+     * Método customizado: Buscar products ativos
+     * @param page Página
+     * @param limit Limite por página
+     * @returns Lista de products ativos
      */
-    getProductById(id: number): Promise<ProductDom | null>;
+    getActive(page?: number, limit?: number): Promise<ServiceResponse<PaginatedResponse<ProductDom>>>;
     /**
-     * Listar produtos com paginação
-     * Aproveita os métodos de paginação herdados do BaseRepository
+     * Método customizado: Contar total de registros
+     * @returns Número total de registros
      */
-    listProducts(options?: PaginationOptions): Promise<PaginatedResult<ProductDom>>;
-    /**
-     * Listar produtos ativos com paginação
-     */
-    listActiveProducts(options?: PaginationOptions): Promise<ProductDom[]>;
-    /**
-     * Atualizar produto
-     */
-    updateProduct(id: number, productData: UpdateProductDom): Promise<ProductDom | null>;
-    /**
-     * Excluir produto (exclusão lógica)
-     */
-    deleteProduct(id: number): Promise<boolean>;
-    /**
-     * Buscar produtos com estoque baixo
-     */
-    getLowStockProducts(threshold?: number): Promise<ProductDom[]>;
+    count(): Promise<ServiceResponse<number>>;
 }

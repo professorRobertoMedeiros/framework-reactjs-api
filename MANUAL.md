@@ -300,12 +300,58 @@ Para sincronizar o esquema do banco de dados com os modelos:
 npx schema-sync
 ```
 
-### Usecase Scaffold
+### Scaffolding de Use Cases
 
-Para criar um novo caso de uso:
+Para criar um novo caso de uso completo:
 
 ```bash
-npx usecase-scaffold --name Produto
+npm run scaffold Product
+```
+
+Este comando irá:
+1. Verificar se existe um `ProductModel.ts` em `src/core/domain/models/`
+2. Criar a estrutura completa de arquivos:
+   - `src/use-cases/product/repository/ProductRepository.ts` (estende BaseRepository)
+   - `src/use-cases/product/ProductBusiness.ts` (regras de negócio)
+   - `src/use-cases/product/ProductService.ts` (orquestração)
+   - `src/use-cases/product/domains/ProductDom.ts` (interfaces de domínio)
+   - `src/use-cases/product/routes/ProductRoutes.ts` (rotas Express com CRUD completo)
+
+Se algum desses arquivos já existir, o script irá pular a criação.
+
+#### Arquivo de Rotas Gerado
+
+O scaffolding agora gera automaticamente um arquivo de rotas Express com:
+
+- **GET /api/products** - Listar produtos com paginação (público)
+- **GET /api/products/:id** - Buscar produto por ID (público)
+- **POST /api/products** - Criar novo produto (protegido - requer JWT)
+- **PUT /api/products/:id** - Atualizar produto (protegido - requer JWT)
+- **DELETE /api/products/:id** - Excluir produto (protegido - requer JWT)
+
+Todas as rotas incluem:
+- Validação de entrada
+- Tratamento de erros
+- Respostas padronizadas
+- Autenticação JWT para operações de escrita
+- Documentação JSDoc
+
+#### Exemplo de Uso das Rotas
+
+```typescript
+// app.ts - Exemplo de como usar as rotas geradas
+import express from 'express';
+import productRouter from './src/use-cases/product/routes/ProductRoutes';
+
+const app = express();
+app.use(express.json());
+
+// Registrar as rotas do produto
+app.use('/api/products', productRouter);
+
+app.listen(3000, () => {
+  console.log('Servidor rodando na porta 3000');
+});
 ```
 
 ## Padrões de Design
