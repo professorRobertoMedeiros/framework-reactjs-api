@@ -195,7 +195,7 @@ function generateBusinessTemplate(modelName) {
     const toDomProperties = properties
         .map(p => `      ${p.name}: model.${p.name},`)
         .join('\n');
-    return `import { ${modelName}Model } from '../../core/domain/models/${modelName}Model';
+    return `import { ${modelName}Model } from '../../../core/domain/models/${modelName}Model';
 import { ${modelName}Repository } from './repository/${modelName}Repository';
 import { Create${modelName}Dom, Update${modelName}Dom, ${modelName}Dom } from './domains/${modelName}Dom';
 
@@ -555,7 +555,7 @@ export class ${modelName}Service extends BaseService<${modelName}Dom, Create${mo
 function generateRoutesTemplate(modelName) {
     return `import { Router } from 'express';
 import { ${modelName}Service } from '../${modelName}Service';
-import { AuthMiddleware } from '../../../core/auth/AuthMiddleware';
+import { AuthMiddleware } from 'framework-reactjs-api';
 
 // Criação do roteador para ${modelName}
 const ${modelName.toLowerCase()}Router = Router();
