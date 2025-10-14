@@ -116,7 +116,7 @@ function toPascalCase(str: string): string {
 // Modelo para criar repositório
 function generateRepositoryTemplate(modelName: string): string {
   return `import { BaseRepository } from 'framework-reactjs-api';
-import { ${modelName}Model } from '../../../core/domain/models/${modelName}Model';
+import { ${modelName}Model } from '@/models/${modelName}Model';
 
 /**
  * Repositório para ${modelName}
@@ -134,47 +134,20 @@ export class ${modelName}Repository extends BaseRepository<${modelName}Model> {
    */
   protected mapToModel(data: any): ${modelName}Model {
     const item = new ${modelName}Model();
-    
-    // Mapear propriedades básicas
-    item.id = data.id;
-    
-    // TODO: Adicione aqui outras propriedades específicas do ${modelName}Model
-    // Exemplo:
-    // item.name = data.name;
-    // item.email = data.email;
-    // item.created_at = data.created_at;
-    
-    // Para mapear todas as propriedades automaticamente (não recomendado para produção):
     Object.assign(item, data);
-    
     return item;
   }
 
   /**
-   * Buscar ${modelName.toLowerCase()} por email (exemplo de método customizado)
-   * @param email Email para busca
-   * @returns ${modelName} encontrado ou null
+   * Buscar por condições customizadas
+   * @param conditions Condições de busca
+   * @param options Opções adicionais
    */
-  async findByEmail(email: string): Promise<${modelName}Model | null> {
-    return this.findOneBy({ email });
-  }
-
-  /**
-   * Buscar ${modelName.toLowerCase()}s ativos (exemplo de método customizado)
-   * @param options Opções de consulta
-   * @returns Lista de ${modelName.toLowerCase()}s ativos
-   */
-  async findActive(options?: { limit?: number; offset?: number; orderBy?: string }): Promise<${modelName}Model[]> {
-    return this.findBy({ active: true }, options);
-  }
-
-  /**
-   * Contar ${modelName.toLowerCase()}s por status (exemplo de método customizado)
-   * @param status Status para contar
-   * @returns Número de registros
-   */
-  async countByStatus(status: string): Promise<number> {
-    return this.count({ status });
+  async findByConditions(
+    conditions: Record<string, any>,
+    options?: { limit?: number; offset?: number; includes?: string[]; orderBy?: string }
+  ): Promise<${modelName}Model[]> {
+    return this.findBy(conditions, options);
   }
 }`;
 }
@@ -188,7 +161,7 @@ function generateBusinessTemplate(modelName: string): string {
     .map(p => `      ${p.name}: model.${p.name},`)
     .join('\n');
 
-  return `import { ${modelName}Model } from '../../../core/domain/models/${modelName}Model';
+  return `import { ${modelName}Model } from '@/models/${modelName}Model';
 import { ${modelName}Repository } from './repository/${modelName}Repository';
 import { Create${modelName}Dom, Update${modelName}Dom, ${modelName}Dom } from './domains/${modelName}Dom';
 
@@ -448,302 +421,269 @@ ${domProperties || '  id: number;\n  // Adicione aqui outras propriedades para r
 
 // Modelo para criar service
 function generateServiceTemplate(modelName: string): string {
-  return `import { BaseService, ServiceResponse, PaginatedResponse } from 'framework-reactjs-api';
-import { ${modelName}Business } from './${modelName}Business';
-import { Create${modelName}Dom, Update${modelName}Dom, ${modelName}Dom } from './domains/${modelName}Dom';
+  return `import { ${modelName}Repository } from './repository/${modelName}Repository';
+import { ${modelName}Model } from '@/models/${modelName}Model';
+
+export interface ServiceResponse<T = any> {
+  status: number;
+  data?: T;
+  message?: string;
+}
+
+export interface QueryOptions {
+  conditions?: Record<string, any>;
+  includes?: string[];
+  limit?: number;
+  offset?: number;
+  orderBy?: string;
+}
 
 /**
- * Serviço para ${modelName}
- * Estende BaseService para operações CRUD padrão
+ * Service para ${modelName}
+ * Contém a lógica de negócio
  */
-export class ${modelName}Service extends BaseService<${modelName}Dom, Create${modelName}Dom, Update${modelName}Dom> {
-  // Instância do business
-  private ${modelName.toLowerCase()}Business: ${modelName}Business;
+export class ${modelName}Service {
+  private repository: ${modelName}Repository;
 
-  constructor(${modelName.toLowerCase()}Business?: ${modelName}Business) {
-    super();
-    this.${modelName.toLowerCase()}Business = ${modelName.toLowerCase()}Business || new ${modelName}Business();
+  constructor() {
+    this.repository = new ${modelName}Repository();
   }
 
   /**
-   * Implementação obrigatória para obter business layer
-   * @returns Instância do business
+   * Buscar todos os registros com filtros
    */
-  protected getBusiness(): ${modelName}Business {
-    return this.${modelName.toLowerCase()}Business;
-  }
-
-  // Os métodos CRUD básicos (getById, getAll, create, update, delete) 
-  // são herdados automaticamente da classe BaseService
-
-  /**
-   * Método customizado: Buscar ${modelName.toLowerCase()}s ativos
-   * @param page Página
-   * @param limit Limite por página
-   * @returns Lista de ${modelName.toLowerCase()}s ativos
-   */
-  async getActive(page: number = 1, limit: number = 10): Promise<ServiceResponse<PaginatedResponse<${modelName}Dom>>> {
+  async findAll(options?: QueryOptions): Promise<ServiceResponse<${modelName}Model[]>> {
     try {
-      // Validar parâmetros de paginação
-      if (page < 1) page = 1;
-      if (limit < 1) limit = 10;
-      if (limit > 100) limit = 100;
-
-      const offset = (page - 1) * limit;
-
-      // Buscar ${modelName.toLowerCase()}s ativos no business
-      const items = await this.${modelName.toLowerCase()}Business.findActive({
-        limit,
-        offset
-      });
-
-      // Para total, poderia implementar um método countActive no business
-      const total = items.length; // Simplificado
-      const totalPages = Math.ceil(total / limit);
-
-      return {
-        success: true,
-        message: '${modelName}s ativos listados com sucesso',
-        data: {
-          items,
-          total,
-          page,
-          limit,
-          totalPages
+      const data = await this.repository.findByConditions(
+        options?.conditions || {},
+        {
+          limit: options?.limit,
+          offset: options?.offset,
+          includes: options?.includes,
+          orderBy: options?.orderBy,
         }
-      };
-    } catch (error: any) {
+      );
+
       return {
-        success: false,
-        message: 'Erro ao listar ${modelName.toLowerCase()}s ativos',
-        error: error.message || 'Erro desconhecido'
+        status: 200,
+        data,
+        message: 'Registros recuperados com sucesso',
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: error instanceof Error ? error.message : 'Erro ao buscar registros',
       };
     }
   }
 
   /**
-   * Método customizado: Contar total de registros
-   * @returns Número total de registros
+   * Buscar registro por ID
    */
-  async count(): Promise<ServiceResponse<number>> {
+  async findById(id: number, includes?: string[]): Promise<ServiceResponse<${modelName}Model>> {
     try {
-      const total = await this.${modelName.toLowerCase()}Business.${modelName.toLowerCase()}Repository.count();
-      
+      const data = await this.repository.findById(id, includes);
+
+      if (!data) {
+        return {
+          status: 404,
+          message: 'Registro não encontrado',
+        };
+      }
+
       return {
-        success: true,
-        message: 'Contagem realizada com sucesso',
-        data: total
+        status: 200,
+        data,
+        message: 'Registro recuperado com sucesso',
       };
-    } catch (error: any) {
+    } catch (error) {
       return {
-        success: false,
-        message: 'Erro ao contar registros',
-        error: error.message || 'Erro desconhecido'
+        status: 500,
+        message: error instanceof Error ? error.message : 'Erro ao buscar registro',
       };
     }
   }
 
-  // TODO: Adicione aqui outros métodos específicos do domínio ${modelName}
-  // Exemplo:
-  // async findByStatus(status: string): Promise<ServiceResponse<${modelName}Dom[]>> {
-  //   // Implementação específica
-  // }
+  /**
+   * Criar novo registro
+   */
+  async create(data: Partial<${modelName}Model>): Promise<ServiceResponse<${modelName}Model>> {
+    try {
+      const created = await this.repository.create(data);
+
+      return {
+        status: 201,
+        data: created,
+        message: 'Registro criado com sucesso',
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: error instanceof Error ? error.message : 'Erro ao criar registro',
+      };
+    }
+  }
+
+  /**
+   * Atualizar registro existente
+   */
+  async update(id: number, data: Partial<${modelName}Model>): Promise<ServiceResponse<${modelName}Model>> {
+    try {
+      const updated = await this.repository.update(id, data);
+
+      if (!updated) {
+        return {
+          status: 404,
+          message: 'Registro não encontrado',
+        };
+      }
+
+      return {
+        status: 200,
+        data: updated,
+        message: 'Registro atualizado com sucesso',
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: error instanceof Error ? error.message : 'Erro ao atualizar registro',
+      };
+    }
+  }
+
+  /**
+   * Deletar registro
+   */
+  async delete(id: number): Promise<ServiceResponse<boolean>> {
+    try {
+      const deleted = await this.repository.delete(id);
+
+      if (!deleted) {
+        return {
+          status: 404,
+          message: 'Registro não encontrado',
+        };
+      }
+
+      return {
+        status: 200,
+        data: true,
+        message: 'Registro deletado com sucesso',
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: error instanceof Error ? error.message : 'Erro ao deletar registro',
+      };
+    }
+  }
+
+  /**
+   * Contar registros com filtros
+   */
+  async count(conditions?: Record<string, any>): Promise<ServiceResponse<number>> {
+    try {
+      const count = await this.repository.count(conditions || {});
+
+      return {
+        status: 200,
+        data: count,
+        message: 'Contagem realizada com sucesso',
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: error instanceof Error ? error.message : 'Erro ao contar registros',
+      };
+    }
+  }
 }`;
 }
 
 // Modelo para criar arquivo de rotas
 function generateRoutesTemplate(modelName: string): string {
-  return `import { Router } from 'express';
+  return `import { Router, Request, Response } from 'express';
 import { ${modelName}Service } from '../${modelName}Service';
-import { AuthMiddleware } from 'framework-reactjs-api';
 
-// Criação do roteador para ${modelName}
-const ${modelName.toLowerCase()}Router = Router();
-const ${modelName.toLowerCase()}Service = new ${modelName}Service();
-const authMiddleware = new AuthMiddleware();
+const router = Router();
+const service = new ${modelName}Service();
 
 /**
- * @route GET /api/${modelName.toLowerCase()}s
- * @description Buscar todos os registros de ${modelName} com paginação
- * @access Public
+ * GET /${modelName.toLowerCase()}
+ * Listar todos os registros
  */
-${modelName.toLowerCase()}Router.get('/', async (req, res) => {
-  try {
-    const page = req.query.page ? parseInt(req.query.page as string) : 1;
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+router.get('/', async (req: Request, res: Response) => {
+  const { limit, offset, orderBy, ...conditions } = req.query;
+  
+  const result = await service.findAll({
+    conditions: Object.keys(conditions).length > 0 ? conditions as Record<string, any> : undefined,
+    limit: limit ? Number(limit) : undefined,
+    offset: offset ? Number(offset) : undefined,
+    orderBy: orderBy as string,
+    includes: req.query.includes ? String(req.query.includes).split(',') : undefined,
+  });
 
-    const result = await ${modelName.toLowerCase()}Service.getAll(page, limit);
-    
-    if (result.success) {
-      return res.status(200).json(result);
-    } else {
-      return res.status(500).json(result);
-    }
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor',
-      error: error.message
-    });
-  }
+  return res.status(result.status).json(result);
 });
 
 /**
- * @route GET /api/${modelName.toLowerCase()}s/:id
- * @description Buscar um registro específico de ${modelName} por ID
- * @access Public
+ * GET /${modelName.toLowerCase()}/:id
+ * Buscar registro por ID
  */
-${modelName.toLowerCase()}Router.get('/:id', async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    
-    // Validar se ID é um número válido
-    if (isNaN(id) || id <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'ID inválido fornecido',
-        error: 'INVALID_ID'
-      });
-    }
-    
-    const result = await ${modelName.toLowerCase()}Service.getById(id);
-    
-    if (result.success) {
-      return res.status(200).json(result);
-    } else {
-      if (result.error === 'NOT_FOUND') {
-        return res.status(404).json(result);
-      }
-      return res.status(500).json(result);
-    }
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor',
-      error: error.message
-    });
-  }
+router.get('/:id', async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const includes = req.query.includes ? String(req.query.includes).split(',') : undefined;
+  
+  const result = await service.findById(id, includes);
+  
+  return res.status(result.status).json(result);
 });
 
 /**
- * @route POST /api/${modelName.toLowerCase()}s
- * @description Criar um novo registro de ${modelName}
- * @access Private (requer autenticação)
+ * POST /${modelName.toLowerCase()}
+ * Criar novo registro
  */
-${modelName.toLowerCase()}Router.post('/', authMiddleware.authenticate(), async (req, res) => {
-  try {
-    const data = req.body;
-    
-    // Validação básica - verificar se body não está vazio
-    if (!data || Object.keys(data).length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Dados não fornecidos',
-        error: 'INVALID_DATA'
-      });
-    }
-    
-    const result = await ${modelName.toLowerCase()}Service.create(data);
-    
-    if (result.success) {
-      return res.status(201).json(result);
-    } else {
-      return res.status(400).json(result);
-    }
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor',
-      error: error.message
-    });
-  }
+router.post('/', async (req: Request, res: Response) => {
+  const result = await service.create(req.body);
+  
+  return res.status(result.status).json(result);
 });
 
 /**
- * @route PUT /api/${modelName.toLowerCase()}s/:id
- * @description Atualizar um registro existente de ${modelName}
- * @access Private (requer autenticação)
+ * PUT /${modelName.toLowerCase()}/:id
+ * Atualizar registro existente
  */
-${modelName.toLowerCase()}Router.put('/:id', authMiddleware.authenticate(), async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    const data = req.body;
-    
-    // Validar se ID é um número válido
-    if (isNaN(id) || id <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'ID inválido fornecido',
-        error: 'INVALID_ID'
-      });
-    }
-    
-    // Validação básica - verificar se body não está vazio
-    if (!data || Object.keys(data).length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Dados não fornecidos para atualização',
-        error: 'INVALID_DATA'
-      });
-    }
-    
-    const result = await ${modelName.toLowerCase()}Service.update(id, data);
-    
-    if (result.success) {
-      return res.status(200).json(result);
-    } else {
-      if (result.error === 'NOT_FOUND') {
-        return res.status(404).json(result);
-      }
-      return res.status(400).json(result);
-    }
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor',
-      error: error.message
-    });
-  }
+router.put('/:id', async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  
+  const result = await service.update(id, req.body);
+  
+  return res.status(result.status).json(result);
 });
 
 /**
- * @route DELETE /api/${modelName.toLowerCase()}s/:id
- * @description Excluir um registro de ${modelName}
- * @access Private (requer autenticação)
+ * DELETE /${modelName.toLowerCase()}/:id
+ * Deletar registro
  */
-${modelName.toLowerCase()}Router.delete('/:id', authMiddleware.authenticate(), async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    
-    // Validar se ID é um número válido
-    if (isNaN(id) || id <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'ID inválido fornecido',
-        error: 'INVALID_ID'
-      });
-    }
-    
-    const result = await ${modelName.toLowerCase()}Service.delete(id);
-    
-    if (result.success) {
-      return res.status(200).json(result);
-    } else {
-      if (result.error === 'NOT_FOUND') {
-        return res.status(404).json(result);
-      }
-      return res.status(500).json(result);
-    }
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: 'Erro interno do servidor',
-      error: error.message
-    });
-  }
+router.delete('/:id', async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  
+  const result = await service.delete(id);
+  
+  return res.status(result.status).json(result);
 });
 
-export default ${modelName.toLowerCase()}Router;
+/**
+ * GET /${modelName.toLowerCase()}/count
+ * Contar registros
+ */
+router.get('/count', async (req: Request, res: Response) => {
+  const result = await service.count(req.query as Record<string, any>);
+  
+  return res.status(result.status).json(result);
+});
+
+export default router;
 
 /**
  * Exemplo de uso em um app Express:
@@ -755,7 +695,7 @@ export default ${modelName.toLowerCase()}Router;
  * app.use(express.json());
  * 
  * // Registrar as rotas
- * app.use('/api/${modelName.toLowerCase()}s', ${modelName.toLowerCase()}Router);
+ * app.use('/api/${modelName.toLowerCase()}', ${modelName.toLowerCase()}Router);
  * 
  * app.listen(3000, () => {
  *   console.log('Servidor rodando na porta 3000');
@@ -892,5 +832,7 @@ function main() {
   createScaffolding(pascalCaseModelName);
 }
 
-// Executar o script
-main();
+// Executar o script apenas se for chamado diretamente (não quando importado)
+if (require.main === module) {
+  main();
+}

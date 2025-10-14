@@ -45,7 +45,7 @@ Para TypeScript, certifique-se de incluir os tipos:
 
 Após a instalação, configure seu projeto para utilizar o framework:
 
-1. Configure o banco de dados no arquivo `.env`:
+### 1. Configure o banco de dados no arquivo `.env`:
 
 ```
 DB_HOST=localhost
@@ -55,7 +55,51 @@ DB_PASSWORD=postgres
 DB_DATABASE=meu_projeto
 ```
 
-2. Inicialize o framework no ponto de entrada da aplicação:
+### 2. Configure o TypeScript com Path Aliases
+
+Para utilizar os imports simplificados com `@/`, configure o `tsconfig.json` do seu projeto:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"],
+      "@/models/*": ["core/domain/models/*"],
+      "@/repositories/*": ["core/domain/repositories/*"],
+      "@/services/*": ["core/application/services/*"],
+      "@/dom/*": ["adapters/dom/*"],
+      "@/routes/*": ["adapters/routes/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+```
+
+**Importante**: Com essa configuração, você deve usar imports como:
+
+```typescript
+// ✅ CORRETO - Usando path alias
+import { ClienteModel } from '@/models/ClienteModel';
+
+// ❌ INCORRETO - Usando caminho relativo
+import { ClienteModel } from '../../../core/domain/models/ClienteModel';
+```
+
+### 3. Inicialize o framework no ponto de entrada da aplicação:
 
 ```typescript
 // src/index.ts
@@ -124,27 +168,46 @@ Os repositórios gerenciam o acesso a dados para cada modelo:
 
 ```typescript
 import { BaseRepository } from 'framework-reactjs-api';
-import { ClienteModel } from '../models/ClienteModel';
+import { ClienteModel } from '@/models/ClienteModel';
 
 export class ClienteRepository extends BaseRepository<ClienteModel> {
   constructor() {
     super(ClienteModel);
   }
   
-  // Métodos específicos além dos CRUD básicos
-  async findByEmail(email: string): Promise<ClienteModel | null> {
-    return this.findOne({ email });
+  /**
+   * Buscar por condições customizadas
+   */
+  async findByConditions(
+    conditions: Record<string, any>,
+    options?: { limit?: number; offset?: number; includes?: string[]; orderBy?: string }
+  ): Promise<ClienteModel[]> {
+    return this.findBy(conditions, options);
   }
 }
 ```
 
 ### Serviços de Negócios
 
-Os serviços implementam a lógica de negócios:
+Os serviços implementam a lógica de negócios e retornam respostas padronizadas:
 
 ```typescript
-import { ClienteRepository } from '../repository/ClienteRepository';
-import { ClienteModel } from '../models/ClienteModel';
+import { ClienteRepository } from './repository/ClienteRepository';
+import { ClienteModel } from '@/models/ClienteModel';
+
+export interface ServiceResponse<T = any> {
+  status: number;
+  data?: T;
+  message?: string;
+}
+
+export interface QueryOptions {
+  conditions?: Record<string, any>;
+  includes?: string[];
+  limit?: number;
+  offset?: number;
+  orderBy?: string;
+}
 
 export class ClienteService {
   private repository: ClienteRepository;
@@ -153,7 +216,163 @@ export class ClienteService {
     this.repository = new ClienteRepository();
   }
   
-  async criarCliente(dados: Omit<ClienteModel, 'id'>): Promise<ClienteModel> {
+  /**
+   * Buscar todos os registros com filtros
+   */
+  async findAll(options?: QueryOptions): Promise<ServiceResponse<ClienteModel[]>> {
+    try {
+      const data = await this.repository.findByConditions(
+        options?.conditions || {},
+        {
+          limit: options?.limit,
+          offset: options?.offset,
+          includes: options?.includes,
+          orderBy: options?.orderBy,
+        }
+      );
+
+      return {
+        status: 200,
+        data,
+        message: 'Registros recuperados com sucesso',
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: error instanceof Error ? error.message : 'Erro ao buscar registros',
+      };
+    }
+  }
+  
+  /**
+   * Buscar registro por ID
+   */
+  async findById(id: number, includes?: string[]): Promise<ServiceResponse<ClienteModel>> {
+    try {
+      const data = await this.repository.findById(id, includes);
+
+      if (!data) {
+        return {
+          status: 404,
+          message: 'Registro não encontrado',
+        };
+      }
+
+      return {
+        status: 200,
+        data,
+        message: 'Registro recuperado com sucesso',
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: error instanceof Error ? error.message : 'Erro ao buscar registro',
+      };
+    }
+  }
+  
+  /**
+   * Criar novo registro
+   */
+  async create(data: Partial<ClienteModel>): Promise<ServiceResponse<ClienteModel>> {
+    try {
+      const created = await this.repository.create(data);
+
+      return {
+        status: 201,
+        data: created,
+        message: 'Registro criado com sucesso',
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: error instanceof Error ? error.message : 'Erro ao criar registro',
+      };
+    }
+  }
+}
+```
+
+### Rotas (Routes)
+
+As rotas chamam diretamente os serviços e utilizam os status HTTP retornados:
+
+```typescript
+import { Router, Request, Response } from 'express';
+import { ClienteService } from '../ClienteService';
+
+const router = Router();
+const service = new ClienteService();
+
+/**
+ * GET /cliente
+ * Listar todos os registros com filtros opcionais
+ */
+router.get('/', async (req: Request, res: Response) => {
+  const { limit, offset, orderBy, ...conditions } = req.query;
+  
+  const result = await service.findAll({
+    conditions: Object.keys(conditions).length > 0 ? conditions as Record<string, any> : undefined,
+    limit: limit ? Number(limit) : undefined,
+    offset: offset ? Number(offset) : undefined,
+    orderBy: orderBy as string,
+    includes: req.query.includes ? String(req.query.includes).split(',') : undefined,
+  });
+
+  return res.status(result.status).json(result);
+});
+
+/**
+ * GET /cliente/:id
+ * Buscar registro por ID
+ */
+router.get('/:id', async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const includes = req.query.includes ? String(req.query.includes).split(',') : undefined;
+  
+  const result = await service.findById(id, includes);
+  
+  return res.status(result.status).json(result);
+});
+
+/**
+ * POST /cliente
+ * Criar novo registro
+ */
+router.post('/', async (req: Request, res: Response) => {
+  const result = await service.create(req.body);
+  
+  return res.status(result.status).json(result);
+});
+
+export default router;
+```
+
+**Exemplos de uso das rotas:**
+
+```bash
+# Listar todos
+GET /api/cliente
+
+# Listar com filtros
+GET /api/cliente?limit=10&offset=0&nome=João
+
+# Listar com includes (relacionamentos)
+GET /api/cliente?includes=pedidos,enderecos
+
+# Buscar por ID
+GET /api/cliente/1
+
+# Buscar por ID com includes
+GET /api/cliente/1?includes=pedidos
+
+# Criar
+POST /api/cliente
+{
+  "nome": "João Silva",
+  "email": "joao@example.com"
+}
+```
     // Validação de regras de negócio
     if (!dados.email) {
       throw new Error('Email é obrigatório');
@@ -314,13 +533,65 @@ Este comando irá:
 1. Verificar se existe um `ProductModel.ts` em `src/core/domain/models/`
 2. Analisar o modelo e extrair automaticamente todas as propriedades
 3. Criar a estrutura completa de arquivos:
-   - `src/use-cases/product/repository/ProductRepository.ts` (estende BaseRepository)
-   - `src/use-cases/product/ProductBusiness.ts` (regras de negócio)
-   - `src/use-cases/product/ProductService.ts` (orquestração)
-   - `src/use-cases/product/domains/ProductDom.ts` (interfaces de domínio com propriedades automáticas)
-   - `src/use-cases/product/routes/ProductRoutes.ts` (rotas Express com CRUD completo)
+   - `src/use-cases/product/repository/ProductRepository.ts` - **Repositório com imports usando `@/models/`**
+   - `src/use-cases/product/ProductBusiness.ts` - Regras de negócio
+   - `src/use-cases/product/ProductService.ts` - **Service que recebe `conditions`, `includes`, `limit` e retorna `{status, data, message}`**
+   - `src/use-cases/product/domains/ProductDom.ts` - Interfaces de domínio
+   - `src/use-cases/product/routes/ProductRoutes.ts` - **Rotas que chamam direto os services**
 
 Se algum desses arquivos já existir, o script irá pular a criação.
+
+#### Estrutura Gerada
+
+**Repository:**
+```typescript
+import { BaseRepository } from 'framework-reactjs-api';
+import { ProductModel } from '@/models/ProductModel'; // ✅ Import correto com path alias
+
+export class ProductRepository extends BaseRepository<ProductModel> {
+  // ... métodos do repositório
+}
+```
+
+**Service:**
+```typescript
+export interface ServiceResponse<T = any> {
+  status: number;
+  data?: T;
+  message?: string;
+}
+
+export interface QueryOptions {
+  conditions?: Record<string, any>;
+  includes?: string[];
+  limit?: number;
+  offset?: number;
+  orderBy?: string;
+}
+
+export class ProductService {
+  async findAll(options?: QueryOptions): Promise<ServiceResponse<ProductModel[]>> {
+    // Retorna { status: 200, data: [...], message: '...' }
+  }
+}
+```
+
+**Routes:**
+```typescript
+router.get('/', async (req: Request, res: Response) => {
+  const { limit, offset, orderBy, ...conditions } = req.query;
+  
+  const result = await service.findAll({
+    conditions,
+    limit: limit ? Number(limit) : undefined,
+    offset: offset ? Number(offset) : undefined,
+    orderBy: orderBy as string,
+    includes: req.query.includes ? String(req.query.includes).split(',') : undefined,
+  });
+
+  return res.status(result.status).json(result);
+});
+```
 
 #### Requisitos do Modelo
 

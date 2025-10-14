@@ -54,10 +54,19 @@ npm install framework-reactjs-api --save
   "compilerOptions": {
     "esModuleInterop": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"],
+      "@/models/*": ["core/domain/models/*"],
+      "@/repositories/*": ["core/domain/repositories/*"],
+      "@/services/*": ["core/application/services/*"]
+    }
   }
 }
 ```
+
+> **Importante**: A configuração de `paths` permite usar imports limpos como `import { Model } from '@/models/Model'` em vez de caminhos relativos longos.
 
 3. **Usando os Componentes do Framework**
 
@@ -69,6 +78,9 @@ import {
   CustomORM, 
   AuthService 
 } from 'framework-reactjs-api';
+
+// Importando seus modelos (usando path alias)
+import { ProdutoModel } from '@/models/ProdutoModel';
 
 // Criando seu próprio modelo
 export class ProdutoModel extends BaseModel {
@@ -87,9 +99,41 @@ npx framework-reactjs-api-migrate
 # Sincronizar esquema do banco de dados
 npx framework-reactjs-api-sync
 
-# Criar scaffold de um caso de uso completo (com Repo, Service, Business, Domain e Routes)
+# Criar scaffold de um caso de uso completo
+# (Gera: Repository, Service, Business, Domain e Routes)
 npx framework-reactjs-api-scaffold Usuario
 ```
+
+## ⚡ Novidades (Outubro 2025)
+
+### ✅ Imports com Path Aliases
+Todos os repositórios agora usam imports limpos:
+```typescript
+import { ClienteModel } from '@/models/ClienteModel'; // ✅ Novo
+// Em vez de: '../../../core/domain/models/ClienteModel'
+```
+
+### ✅ Services com Respostas Padronizadas
+Services agora retornam `{status, data, message}`:
+```typescript
+const result = await service.findAll({
+  conditions: { status: 'ativo' },
+  limit: 10,
+  includes: ['pedidos']
+});
+// result = { status: 200, data: [...], message: '...' }
+```
+
+### ✅ Routes Simplificadas
+Routes chamam direto os services e usam o status retornado:
+```typescript
+router.get('/', async (req, res) => {
+  const result = await service.findAll({ ...req.query });
+  return res.status(result.status).json(result);
+});
+```
+
+📖 **Detalhes**: Veja [ALTERACOES.md](./ALTERACOES.md) para mais informações.
 
 ## Visão Geral
 

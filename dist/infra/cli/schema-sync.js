@@ -130,9 +130,11 @@ async function main() {
         await runMigrations();
     }
 }
-// Executar o script
-main().catch(error => {
-    console.error('\x1b[31mErro fatal:\x1b[0m', error);
-    process.exit(1);
-});
+// Executar o script apenas se for chamado diretamente (não quando importado)
+if (require.main === module) {
+    main().catch(error => {
+        console.error('\x1b[31mErro fatal:\x1b[0m', error);
+        process.exit(1);
+    });
+}
 //# sourceMappingURL=schema-sync.js.map
