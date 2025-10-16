@@ -1,15 +1,27 @@
+import { BaseBusiness } from '../business/BaseBusiness';
+
 /**
  * Interface padrão para resposta de serviços
  */
 export interface ServiceResponse<T = any> {
-  success: boolean;
-  message: string;
+  status: number;
   data?: T;
-  error?: string;
+  message?: string;
 }
 
 /**
- * Interface para dados paginados
+ * Interface para opções de consulta
+ */
+export interface QueryOptions {
+  conditions?: Record<string, any>;
+  includes?: string[];
+  limit?: number;
+  offset?: number;
+  orderBy?: string;
+}
+
+/**
+ * Interface para dados paginados (compatibilidade)
  */
 export interface PaginatedResponse<T> {
   items: T[];
@@ -20,224 +32,163 @@ export interface PaginatedResponse<T> {
 }
 
 /**
- * Classe base para serviços que implementa operações CRUD padrão
- * @template T Tipo do domínio
- * @template CreateT Tipo para criação
- * @template UpdateT Tipo para atualização
+ * Classe base para serviços que delega operações CRUD para Business
+ * Não reimplementa métodos, apenas delega
+ * 
+ * @template T Tipo do modelo
+ * @template TDom Tipo do domínio (DTO)
  */
-export abstract class BaseService<T, CreateT, UpdateT> {
-  /**
-   * Implementação abstrata para obter business layer
-   */
-  protected abstract getBusiness(): any;
+export abstract class BaseService<T, TDom = T> {
+  protected business: BaseBusiness<T, TDom>;
 
-  /**
-   * Buscar por ID
-   * @param id ID do registro
-   * @returns Resposta padronizada com o registro ou erro
-   */
-  async getById(id: number): Promise<ServiceResponse<T>> {
-    try {
-      if (!id || id <= 0) {
-        return {
-          success: false,
-          message: 'ID inválido fornecido',
-          error: 'INVALID_ID'
-        };
-      }
-
-      const business = this.getBusiness();
-      const result = await business.getById(id);
-      
-      if (!result) {
-        return {
-          success: false,
-          message: `Registro com ID ${id} não encontrado`,
-          error: 'NOT_FOUND'
-        };
-      }
-
-      return {
-        success: true,
-        message: 'Registro encontrado com sucesso',
-        data: result
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        message: 'Erro ao buscar registro',
-        error: error.message || 'Erro desconhecido'
-      };
-    }
+  constructor(business: BaseBusiness<T, TDom>) {
+    this.business = business;
   }
 
   /**
-   * Buscar todos com paginação
-   * @param page Página (padrão: 1)
-   * @param limit Limite por página (padrão: 10)
-   * @returns Resposta padronizada com lista paginada ou erro
+   * Buscar todos com filtros - Delega para business
    */
-  async getAll(
-    page: number = 1, 
-    limit: number = 10
-  ): Promise<ServiceResponse<PaginatedResponse<T>>> {
+  async findAll(options?: QueryOptions): Promise<ServiceResponse<TDom[]>> {
     try {
-      // Validar parâmetros de paginação
-      if (page < 1) page = 1;
-      if (limit < 1) limit = 10;
-      if (limit > 100) limit = 100;
-
-      const offset = (page - 1) * limit;
-      const business = this.getBusiness();
-
-      // Buscar dados no business
-      const items = await business.getAll({
-        limit,
-        offset
-      });
-
-      // Contar total de registros
-      const total = await business.count ? await business.count() : items.length;
-      const totalPages = Math.ceil(total / limit);
-
-      return {
-        success: true,
-        message: 'Registros listados com sucesso',
-        data: {
-          items,
-          total,
-          page,
-          limit,
-          totalPages
+      const data = await this.business.findBy(
+        options?.conditions || {},
+        {
+          limit: options?.limit,
+          offset: options?.offset,
+          orderBy: options?.orderBy,
         }
-      };
-    } catch (error: any) {
+      );
+
       return {
-        success: false,
-        message: 'Erro ao listar registros',
-        error: error.message || 'Erro desconhecido'
+        status: 200,
+        data,
+        message: 'Registros recuperados com sucesso',
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: error instanceof Error ? error.message : 'Erro ao buscar registros',
       };
     }
   }
 
   /**
-   * Criar um novo registro
-   * @param data Dados para criação
-   * @returns Resposta padronizada com o registro criado ou erro
+   * Buscar por ID - Delega para business
    */
-  async create(data: CreateT): Promise<ServiceResponse<T>> {
+  async findById(id: number): Promise<ServiceResponse<TDom>> {
     try {
-      // Validação básica
-      if (!data || (typeof data === 'object' && Object.keys(data).length === 0)) {
+      const data = await this.business.findById(id);
+
+      if (!data) {
         return {
-          success: false,
-          message: 'Dados não fornecidos',
-          error: 'INVALID_DATA'
+          status: 404,
+          message: 'Registro não encontrado',
         };
       }
 
-      const business = this.getBusiness();
-      const created = await business.create(data);
+      return {
+        status: 200,
+        data,
+        message: 'Registro recuperado com sucesso',
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: error instanceof Error ? error.message : 'Erro ao buscar registro',
+      };
+    }
+  }
+
+  /**
+   * Criar - Delega para business
+   */
+  async create(data: any): Promise<ServiceResponse<TDom>> {
+    try {
+      const created = await this.business.create(data);
 
       return {
-        success: true,
+        status: 201,
+        data: created,
         message: 'Registro criado com sucesso',
-        data: created
       };
-    } catch (error: any) {
+    } catch (error) {
       return {
-        success: false,
-        message: 'Erro ao criar registro',
-        error: error.message || 'Erro desconhecido'
+        status: 500,
+        message: error instanceof Error ? error.message : 'Erro ao criar registro',
       };
     }
   }
 
   /**
-   * Atualizar um registro existente
-   * @param id ID do registro
-   * @param data Dados para atualização
-   * @returns Resposta padronizada com o registro atualizado ou erro
+   * Atualizar - Delega para business
    */
-  async update(id: number, data: UpdateT): Promise<ServiceResponse<T>> {
+  async update(id: number, data: any): Promise<ServiceResponse<TDom>> {
     try {
-      // Validações básicas
-      if (!id || id <= 0) {
-        return {
-          success: false,
-          message: 'ID inválido fornecido',
-          error: 'INVALID_ID'
-        };
-      }
-
-      if (!data || (typeof data === 'object' && Object.keys(data).length === 0)) {
-        return {
-          success: false,
-          message: 'Dados não fornecidos para atualização',
-          error: 'INVALID_DATA'
-        };
-      }
-
-      const business = this.getBusiness();
-      const updated = await business.update(id, data);
+      const updated = await this.business.update(id, data);
 
       if (!updated) {
         return {
-          success: false,
-          message: `Registro com ID ${id} não encontrado`,
-          error: 'NOT_FOUND'
+          status: 404,
+          message: 'Registro não encontrado',
         };
       }
 
       return {
-        success: true,
+        status: 200,
+        data: updated,
         message: 'Registro atualizado com sucesso',
-        data: updated
       };
-    } catch (error: any) {
+    } catch (error) {
       return {
-        success: false,
-        message: 'Erro ao atualizar registro',
-        error: error.message || 'Erro desconhecido'
+        status: 500,
+        message: error instanceof Error ? error.message : 'Erro ao atualizar registro',
       };
     }
   }
 
   /**
-   * Excluir um registro
-   * @param id ID do registro
-   * @returns Resposta padronizada de sucesso ou erro
+   * Deletar - Delega para business
    */
-  async delete(id: number): Promise<ServiceResponse> {
+  async delete(id: number): Promise<ServiceResponse<boolean>> {
     try {
-      if (!id || id <= 0) {
-        return {
-          success: false,
-          message: 'ID inválido fornecido',
-          error: 'INVALID_ID'
-        };
-      }
-
-      const business = this.getBusiness();
-      const deleted = await business.delete(id);
+      const deleted = await this.business.delete(id);
 
       if (!deleted) {
         return {
-          success: false,
-          message: `Registro com ID ${id} não encontrado`,
-          error: 'NOT_FOUND'
+          status: 404,
+          message: 'Registro não encontrado',
         };
       }
 
       return {
-        success: true,
-        message: 'Registro excluído com sucesso'
+        status: 200,
+        data: true,
+        message: 'Registro deletado com sucesso',
       };
-    } catch (error: any) {
+    } catch (error) {
       return {
-        success: false,
-        message: 'Erro ao excluir registro',
-        error: error.message || 'Erro desconhecido'
+        status: 500,
+        message: error instanceof Error ? error.message : 'Erro ao deletar registro',
+      };
+    }
+  }
+
+  /**
+   * Contar - Delega para business
+   */
+  async count(conditions?: Record<string, any>): Promise<ServiceResponse<number>> {
+    try {
+      const count = await this.business.count(conditions);
+
+      return {
+        status: 200,
+        data: count,
+        message: 'Contagem realizada com sucesso',
+      };
+    } catch (error) {
+      return {
+        status: 500,
+        message: error instanceof Error ? error.message : 'Erro ao contar registros',
       };
     }
   }

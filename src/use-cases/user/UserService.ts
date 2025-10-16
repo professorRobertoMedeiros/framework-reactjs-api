@@ -1,47 +1,52 @@
-import { BaseService, ServiceResponse, PaginatedResponse } from '../../core/services/BaseService';
+import { BaseService } from '../../core/services/BaseService';
+import { UserModel } from '../../core/domain/models/UserModel';
 import { UserBusiness } from './UserBusiness';
 import { UserDom } from './domains/UserDom';
 
-export interface CreateUserDom {
-  name: string;
-  email: string;
-  password: string;
-}
-
-export interface UpdateUserDom {
-  name?: string;
-  email?: string;
-  password?: string;
-}
-
-export class UserService extends BaseService<UserDom, CreateUserDom, UpdateUserDom> {
-  private userBusiness: UserBusiness;
-
+/**
+ * Service para User
+ * Herda de BaseService e delega operações CRUD para o Business
+ * Retorna respostas padronizadas: { status, data?, message? }
+ */
+export class UserService extends BaseService<UserModel, UserDom> {
   constructor() {
-    super();
-    this.userBusiness = new UserBusiness();
+    const business = new UserBusiness();
+    super(business);
   }
 
-  protected getBusiness(): UserBusiness {
-    return this.userBusiness;
-  }
+  // Os métodos CRUD (findAll, findById, findBy, create, update, delete, count) 
+  // são herdados de BaseService e delegam para o Business
+  // Não é necessário reimplementá-los
 
-  // Métodos específicos do usuário
-  async findByEmail(email: string): Promise<ServiceResponse<UserDom | null>> {
+  // Adicione aqui apenas métodos de serviço específicos:
+
+  /**
+   * Exemplo de método de serviço específico
+   * Descomente e adapte conforme necessário
+   */
+  /*
+  async findByCustomField(value: string) {
     try {
-      const user = await this.userBusiness.findByEmail(email);
+      const business = this.business as UserBusiness;
+      const result = await business.findByCustomField(value);
       
+      if (!result) {
+        return {
+          status: 404,
+          message: 'Registro não encontrado'
+        };
+      }
+
       return {
-        success: true,
-        message: user ? 'Usuário encontrado' : 'Usuário não encontrado',
-        data: user
+        status: 200,
+        data: result
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
-        success: false,
-        message: 'Erro ao buscar usuário por email',
-        error: (error as Error).message
+        status: 500,
+        message: error.message || 'Erro ao buscar registro'
       };
     }
   }
+  */
 }

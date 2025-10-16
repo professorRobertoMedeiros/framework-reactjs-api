@@ -1,138 +1,47 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserBusiness = void 0;
-const UserModel_1 = require("../../core/domain/models/UserModel");
+const BaseBusiness_1 = require("../../core/business/BaseBusiness");
 const UserRepository_1 = require("./repository/UserRepository");
-// Implementação do business de usuários
-class UserBusiness {
-    constructor(userRepository) {
-        this.userRepository = userRepository || new UserRepository_1.UserRepository();
+/**
+ * Business para User
+ * Herda de BaseBusiness e delega operações CRUD para o Repository
+ * Adicione aqui apenas regras de negócio específicas
+ */
+class UserBusiness extends BaseBusiness_1.BaseBusiness {
+    constructor() {
+        const repository = new UserRepository_1.UserRepository();
+        super(repository);
     }
-    // Converter modelo para Dom (removendo dados sensíveis como password_hash)
-    toDom(user) {
+    /**
+     * Converter modelo para Dom (DTO)
+     * @param model Modelo do User
+     * @returns Dom do User
+     */
+    toDom(model) {
         return {
-            id: user.id,
-            first_name: user.first_name,
-            last_name: user.last_name,
-            email: user.email,
-            active: user.active,
-            created_at: user.created_at,
-            updated_at: user.updated_at
+            id: model.id,
+            first_name: model.first_name,
+            last_name: model.last_name,
+            email: model.email,
+            password_hash: model.password_hash,
+            active: model.active,
+            created_at: model.created_at,
+            updated_at: model.updated_at,
         };
     }
-    // Hash de senha (exemplo simples - em produção usar bcrypt ou similar)
-    hashPassword(password) {
-        // Este é apenas um exemplo e NÃO deve ser usado em produção
-        // Em produção, use bcrypt ou argon2
-        return `hashed_${password}_${Date.now()}`;
-    }
-    // Métodos compatíveis com BaseService
-    async getById(id) {
-        return this.getUserById(id);
-    }
-    async getAll(options) {
-        return this.getAllUsers(options);
-    }
-    async create(data) {
-        return this.createUser(data);
-    }
-    async update(id, data) {
-        return this.updateUser(id, data);
-    }
-    async delete(id) {
-        return this.deleteUser(id);
-    }
-    async findByEmail(email) {
-        const user = await this.userRepository.findByEmail(email);
-        return user ? this.toDom(user) : null;
-    }
-    async count() {
-        return await this.userRepository.count();
-    }
-    // Obter usuário por ID
-    async getUserById(id) {
-        const user = await this.userRepository.findById(id);
-        return user ? this.toDom(user) : null;
-    }
-    // Obter todos os usuários
-    async getAllUsers(options) {
-        const users = await this.userRepository.findAll(options);
-        return users.map(user => this.toDom(user));
-    }
-    // Criar um novo usuário
-    async createUser(data) {
-        // Validar email
-        if (!UserModel_1.UserModel.validateEmail(data.email)) {
-            throw new Error('Email inválido');
-        }
-        // Verificar se o email já está em uso
-        const existingUser = await this.userRepository.findByEmail(data.email);
-        if (existingUser) {
-            throw new Error('Email já está em uso');
-        }
-        // Hash da senha
-        const password_hash = this.hashPassword(data.password);
-        // Criar modelo de usuário
-        const user = UserModel_1.UserModel.create({
-            first_name: data.first_name,
-            last_name: data.last_name,
-            email: data.email,
-            password_hash: password_hash
-        });
-        // Persistir no repositório
-        const createdUser = await this.userRepository.create(user);
-        return this.toDom(createdUser);
-    }
-    // Atualizar um usuário existente
-    async updateUser(id, data) {
-        // Verificar se o usuário existe
-        const existingUser = await this.userRepository.findById(id);
-        if (!existingUser) {
-            return null;
-        }
-        // Verificar se o email está sendo atualizado e se já está em uso
-        if (data.email && data.email !== existingUser.email) {
-            // Validar novo email
-            if (!UserModel_1.UserModel.validateEmail(data.email)) {
-                throw new Error('Email inválido');
-            }
-            // Verificar se o novo email já está em uso
-            const userWithEmail = await this.userRepository.findByEmail(data.email);
-            if (userWithEmail && userWithEmail.id !== id) {
-                throw new Error('Email já está em uso por outro usuário');
-            }
-        }
-        // Preparar dados para atualização
-        const updateData = {
-            ...data,
-            // Hash da senha se fornecida
-            ...(data.password && { password_hash: this.hashPassword(data.password) })
-        };
-        // Remover campo password (não é uma coluna no banco)
-        if ('password' in updateData) {
-            delete updateData.password;
-        }
-        // Atualizar no repositório
-        const updatedUser = await this.userRepository.update(id, updateData);
-        return updatedUser ? this.toDom(updatedUser) : null;
-    }
-    // Excluir um usuário
-    async deleteUser(id) {
-        // Verificar se o usuário existe
-        const existingUser = await this.userRepository.findById(id);
-        if (!existingUser) {
-            return false;
-        }
-        // Excluir do repositório
-        return await this.userRepository.delete(id);
-    }
-    // Ativar um usuário
-    async activateUser(id) {
-        return await this.updateUser(id, { active: true });
-    }
-    // Desativar um usuário
-    async deactivateUser(id) {
-        return await this.updateUser(id, { active: false });
+    /**
+     * Converter dados de criação para modelo (opcional - sobrescrever se necessário)
+     * @param data Dados de entrada
+     * @returns Dados formatados para o modelo
+     */
+    fromCreateData(data) {
+        // TODO: Adicione validações e transformações de negócio aqui
+        // Exemplo:
+        // if (!data.name || data.name.trim().length === 0) {
+        //   throw new Error('Nome é obrigatório');
+        // }
+        return data;
     }
 }
 exports.UserBusiness = UserBusiness;

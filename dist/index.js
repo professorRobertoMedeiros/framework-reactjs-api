@@ -7,7 +7,7 @@
  * usadas por projetos que implementam este framework como dependência.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ProductService = exports.ProductRepository = exports.ProductBusiness = exports.UserRepository = exports.UserService = exports.UserBusiness = exports.scaffoldUseCase = exports.syncSchema = exports.runMigration = exports.BaseRepository = exports.Operator = exports.QueryBuilder = exports.initializeORM = exports.CustomORM = exports.AuthService = exports.AuthMiddleware = exports.BaseService = exports.ProductModel = exports.UserModel = exports.Id5 = exports.Column5 = exports.BusinessIndex = exports.UniqueIndex = exports.Id = exports.Column = exports.Entity = exports.BaseModel = void 0;
+exports.UserRepository = exports.UserService = exports.UserBusiness = exports.scaffoldUseCase = exports.syncSchema = exports.runMigration = exports.BaseRepository = exports.Operator = exports.QueryBuilder = exports.initializeORM = exports.CustomORM = exports.AuthService = exports.AuthMiddleware = exports.BaseBusiness = exports.BaseService = exports.ProductModel = exports.UserModel = exports.Id5 = exports.Column5 = exports.BusinessIndex = exports.UniqueIndex = exports.Id = exports.Column = exports.Entity = exports.BaseModel = void 0;
 // Core
 var BaseModel_1 = require("./core/domain/models/BaseModel");
 Object.defineProperty(exports, "BaseModel", { enumerable: true, get: function () { return BaseModel_1.BaseModel; } });
@@ -28,6 +28,9 @@ Object.defineProperty(exports, "ProductModel", { enumerable: true, get: function
 // Services
 var BaseService_1 = require("./core/services/BaseService");
 Object.defineProperty(exports, "BaseService", { enumerable: true, get: function () { return BaseService_1.BaseService; } });
+// Business
+var BaseBusiness_1 = require("./core/business/BaseBusiness");
+Object.defineProperty(exports, "BaseBusiness", { enumerable: true, get: function () { return BaseBusiness_1.BaseBusiness; } });
 // Autenticação
 var AuthMiddleware_1 = require("./core/auth/AuthMiddleware");
 Object.defineProperty(exports, "AuthMiddleware", { enumerable: true, get: function () { return AuthMiddleware_1.AuthMiddleware; } });
@@ -50,18 +53,11 @@ const schema_sync_1 = require("./infra/cli/schema-sync");
 Object.defineProperty(exports, "syncSchema", { enumerable: true, get: function () { return schema_sync_1.syncSchema; } });
 const usecase_scaffold_1 = require("./infra/cli/usecase-scaffold");
 Object.defineProperty(exports, "scaffoldUseCase", { enumerable: true, get: function () { return usecase_scaffold_1.scaffoldUseCase; } });
-// User Use Case
+// User Use Case (Exemplo gerado pelo scaffold)
 var UserBusiness_1 = require("./use-cases/user/UserBusiness");
 Object.defineProperty(exports, "UserBusiness", { enumerable: true, get: function () { return UserBusiness_1.UserBusiness; } });
 var UserService_1 = require("./use-cases/user/UserService");
 Object.defineProperty(exports, "UserService", { enumerable: true, get: function () { return UserService_1.UserService; } });
 var UserRepository_1 = require("./use-cases/user/repository/UserRepository");
 Object.defineProperty(exports, "UserRepository", { enumerable: true, get: function () { return UserRepository_1.UserRepository; } });
-// Product Use Case
-var ProductBusiness_1 = require("./use-cases/product/ProductBusiness");
-Object.defineProperty(exports, "ProductBusiness", { enumerable: true, get: function () { return ProductBusiness_1.ProductBusiness; } });
-var ProductRepository_1 = require("./use-cases/product/repository/ProductRepository");
-Object.defineProperty(exports, "ProductRepository", { enumerable: true, get: function () { return ProductRepository_1.ProductRepository; } });
-var ProductService_1 = require("./use-cases/product/ProductService");
-Object.defineProperty(exports, "ProductService", { enumerable: true, get: function () { return ProductService_1.ProductService; } });
 //# sourceMappingURL=index.js.map

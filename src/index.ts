@@ -22,8 +22,12 @@ export { ProductModel } from './core/domain/models/ProductModel';
 export { 
   BaseService, 
   ServiceResponse, 
-  PaginatedResponse 
+  PaginatedResponse,
+  QueryOptions
 } from './core/services/BaseService';
+
+// Business
+export { BaseBusiness } from './core/business/BaseBusiness';
 
 // Autenticação
 export { AuthMiddleware } from './core/auth/AuthMiddleware';
@@ -48,14 +52,8 @@ import { scaffoldUseCase } from './infra/cli/usecase-scaffold';
 
 export { runMigration, syncSchema, scaffoldUseCase };
 
-// User Use Case
-export { IUserBusiness, UserBusiness } from './use-cases/user/UserBusiness';
+// User Use Case (Exemplo gerado pelo scaffold)
+export { UserBusiness } from './use-cases/user/UserBusiness';
 export { UserService } from './use-cases/user/UserService';
-export { IUserRepository, UserRepository } from './use-cases/user/repository/UserRepository';
-export { CreateUserDom, UpdateUserDom, UserDom } from './use-cases/user/domains/UserDom';
-
-// Product Use Case
-export { ProductBusiness } from './use-cases/product/ProductBusiness';
-export { ProductRepository } from './use-cases/product/repository/ProductRepository';
-export { ProductService } from './use-cases/product/ProductService';
-export { CreateProductDom, UpdateProductDom, ProductDom } from './use-cases/product/domains/ProductDom';
+export { UserRepository } from './use-cases/user/repository/UserRepository';
+export { UserDom } from './use-cases/user/domains/UserDom';

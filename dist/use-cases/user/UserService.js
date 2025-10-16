@@ -3,31 +3,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserService = void 0;
 const BaseService_1 = require("../../core/services/BaseService");
 const UserBusiness_1 = require("./UserBusiness");
+/**
+ * Service para User
+ * Herda de BaseService e delega operações CRUD para o Business
+ * Retorna respostas padronizadas: { status, data?, message? }
+ */
 class UserService extends BaseService_1.BaseService {
     constructor() {
-        super();
-        this.userBusiness = new UserBusiness_1.UserBusiness();
-    }
-    getBusiness() {
-        return this.userBusiness;
-    }
-    // Métodos específicos do usuário
-    async findByEmail(email) {
-        try {
-            const user = await this.userBusiness.findByEmail(email);
-            return {
-                success: true,
-                message: user ? 'Usuário encontrado' : 'Usuário não encontrado',
-                data: user
-            };
-        }
-        catch (error) {
-            return {
-                success: false,
-                message: 'Erro ao buscar usuário por email',
-                error: error.message
-            };
-        }
+        const business = new UserBusiness_1.UserBusiness();
+        super(business);
     }
 }
 exports.UserService = UserService;

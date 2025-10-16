@@ -1,40 +1,23 @@
-import { IUserRepository } from './repository/UserRepository';
-import { CreateUserDom, UpdateUserDom, UserDom } from './domains/UserDom';
-export interface IUserBusiness {
-    getUserById(id: number): Promise<UserDom | null>;
-    getAllUsers(options?: {
-        limit?: number;
-        offset?: number;
-    }): Promise<UserDom[]>;
-    createUser(data: CreateUserDom): Promise<UserDom>;
-    updateUser(id: number, data: UpdateUserDom): Promise<UserDom | null>;
-    deleteUser(id: number): Promise<boolean>;
-    activateUser(id: number): Promise<UserDom | null>;
-    deactivateUser(id: number): Promise<UserDom | null>;
-}
-export declare class UserBusiness implements IUserBusiness {
-    userRepository: IUserRepository;
-    constructor(userRepository?: IUserRepository);
-    private toDom;
-    private hashPassword;
-    getById(id: number): Promise<UserDom | null>;
-    getAll(options?: {
-        limit?: number;
-        offset?: number;
-    }): Promise<UserDom[]>;
-    create(data: CreateUserDom): Promise<UserDom>;
-    update(id: number, data: UpdateUserDom): Promise<UserDom | null>;
-    delete(id: number): Promise<boolean>;
-    findByEmail(email: string): Promise<UserDom | null>;
-    count(): Promise<number>;
-    getUserById(id: number): Promise<UserDom | null>;
-    getAllUsers(options?: {
-        limit?: number;
-        offset?: number;
-    }): Promise<UserDom[]>;
-    createUser(data: CreateUserDom): Promise<UserDom>;
-    updateUser(id: number, data: UpdateUserDom): Promise<UserDom | null>;
-    deleteUser(id: number): Promise<boolean>;
-    activateUser(id: number): Promise<UserDom | null>;
-    deactivateUser(id: number): Promise<UserDom | null>;
+import { BaseBusiness } from '../../core/business/BaseBusiness';
+import { UserModel } from '../../core/domain/models/UserModel';
+import { UserDom } from './domains/UserDom';
+/**
+ * Business para User
+ * Herda de BaseBusiness e delega operações CRUD para o Repository
+ * Adicione aqui apenas regras de negócio específicas
+ */
+export declare class UserBusiness extends BaseBusiness<UserModel, UserDom> {
+    constructor();
+    /**
+     * Converter modelo para Dom (DTO)
+     * @param model Modelo do User
+     * @returns Dom do User
+     */
+    protected toDom(model: UserModel): UserDom;
+    /**
+     * Converter dados de criação para modelo (opcional - sobrescrever se necessário)
+     * @param data Dados de entrada
+     * @returns Dados formatados para o modelo
+     */
+    protected fromCreateData(data: any): Omit<UserModel, 'id'>;
 }

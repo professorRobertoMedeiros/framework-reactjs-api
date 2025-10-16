@@ -1,14 +1,24 @@
+import { BaseBusiness } from '../business/BaseBusiness';
 /**
  * Interface padrão para resposta de serviços
  */
 export interface ServiceResponse<T = any> {
-    success: boolean;
-    message: string;
+    status: number;
     data?: T;
-    error?: string;
+    message?: string;
 }
 /**
- * Interface para dados paginados
+ * Interface para opções de consulta
+ */
+export interface QueryOptions {
+    conditions?: Record<string, any>;
+    includes?: string[];
+    limit?: number;
+    offset?: number;
+    orderBy?: string;
+}
+/**
+ * Interface para dados paginados (compatibilidade)
  */
 export interface PaginatedResponse<T> {
     items: T[];
@@ -18,46 +28,37 @@ export interface PaginatedResponse<T> {
     totalPages: number;
 }
 /**
- * Classe base para serviços que implementa operações CRUD padrão
- * @template T Tipo do domínio
- * @template CreateT Tipo para criação
- * @template UpdateT Tipo para atualização
+ * Classe base para serviços que delega operações CRUD para Business
+ * Não reimplementa métodos, apenas delega
+ *
+ * @template T Tipo do modelo
+ * @template TDom Tipo do domínio (DTO)
  */
-export declare abstract class BaseService<T, CreateT, UpdateT> {
+export declare abstract class BaseService<T, TDom = T> {
+    protected business: BaseBusiness<T, TDom>;
+    constructor(business: BaseBusiness<T, TDom>);
     /**
-     * Implementação abstrata para obter business layer
+     * Buscar todos com filtros - Delega para business
      */
-    protected abstract getBusiness(): any;
+    findAll(options?: QueryOptions): Promise<ServiceResponse<TDom[]>>;
     /**
-     * Buscar por ID
-     * @param id ID do registro
-     * @returns Resposta padronizada com o registro ou erro
+     * Buscar por ID - Delega para business
      */
-    getById(id: number): Promise<ServiceResponse<T>>;
+    findById(id: number): Promise<ServiceResponse<TDom>>;
     /**
-     * Buscar todos com paginação
-     * @param page Página (padrão: 1)
-     * @param limit Limite por página (padrão: 10)
-     * @returns Resposta padronizada com lista paginada ou erro
+     * Criar - Delega para business
      */
-    getAll(page?: number, limit?: number): Promise<ServiceResponse<PaginatedResponse<T>>>;
+    create(data: any): Promise<ServiceResponse<TDom>>;
     /**
-     * Criar um novo registro
-     * @param data Dados para criação
-     * @returns Resposta padronizada com o registro criado ou erro
+     * Atualizar - Delega para business
      */
-    create(data: CreateT): Promise<ServiceResponse<T>>;
+    update(id: number, data: any): Promise<ServiceResponse<TDom>>;
     /**
-     * Atualizar um registro existente
-     * @param id ID do registro
-     * @param data Dados para atualização
-     * @returns Resposta padronizada com o registro atualizado ou erro
+     * Deletar - Delega para business
      */
-    update(id: number, data: UpdateT): Promise<ServiceResponse<T>>;
+    delete(id: number): Promise<ServiceResponse<boolean>>;
     /**
-     * Excluir um registro
-     * @param id ID do registro
-     * @returns Resposta padronizada de sucesso ou erro
+     * Contar - Delega para business
      */
-    delete(id: number): Promise<ServiceResponse>;
+    count(conditions?: Record<string, any>): Promise<ServiceResponse<number>>;
 }

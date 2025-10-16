@@ -1,15 +1,26 @@
+import { BaseRepository } from '../../../infra/repository/BaseRepository';
 import { UserModel } from '../../../core/domain/models/UserModel';
-import { BaseRepository, IRepository, PaginationOptions } from '../../../infra/repository/BaseRepository';
-export interface IUserRepository extends IRepository<UserModel> {
-    findByEmail(email: string): Promise<UserModel | null>;
-    findActiveUsers(options?: PaginationOptions): Promise<UserModel[]>;
-    findByName(firstName: string, lastName: string): Promise<UserModel[]>;
-    searchUsers(searchTerm: string, options?: PaginationOptions): Promise<UserModel[]>;
-}
-export declare class UserRepository extends BaseRepository<UserModel> implements IUserRepository {
+/**
+ * Repositório para User
+ * Estende BaseRepository para operações CRUD básicas
+ */
+export declare class UserRepository extends BaseRepository<UserModel> {
     constructor();
-    findByEmail(email: string): Promise<UserModel | null>;
-    findActiveUsers(options?: PaginationOptions): Promise<UserModel[]>;
-    findByName(firstName: string, lastName: string): Promise<UserModel[]>;
-    searchUsers(searchTerm: string, options?: PaginationOptions): Promise<UserModel[]>;
+    /**
+     * Mapear dados do banco para o modelo User
+     * @param data Dados brutos do banco de dados
+     * @returns Instância do modelo User
+     */
+    protected mapToModel(data: any): UserModel;
+    /**
+     * Buscar por condições customizadas
+     * @param conditions Condições de busca
+     * @param options Opções adicionais
+     */
+    findByConditions(conditions: Record<string, any>, options?: {
+        limit?: number;
+        offset?: number;
+        includes?: string[];
+        orderBy?: string;
+    }): Promise<UserModel[]>;
 }

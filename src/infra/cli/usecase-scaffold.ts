@@ -10,6 +10,16 @@ interface ModelProperty {
   isTimestamp: boolean;
 }
 
+// Detectar se estamos dentro do framework ou em um projeto externo
+function isInsideFramework(): boolean {
+  const packageJsonPath = path.join(process.cwd(), 'package.json');
+  if (fs.existsSync(packageJsonPath)) {
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+    return packageJson.name === 'framework-reactjs-api';
+  }
+  return false;
+}
+
 // Função para analisar arquivo do modelo e extrair propriedades
 function analyzeModelFile(modelName: string): ModelProperty[] {
   const possiblePaths = [
@@ -115,8 +125,19 @@ function toPascalCase(str: string): string {
 
 // Modelo para criar repositório
 function generateRepositoryTemplate(modelName: string): string {
-  return `import { BaseRepository } from 'framework-reactjs-api';
-import { ${modelName}Model } from '@/models/${modelName}Model';
+  const insideFramework = isInsideFramework();
+  
+  // Ajustar imports baseado no contexto
+  const baseRepositoryImport = insideFramework 
+    ? `import { BaseRepository } from '../../../infra/repository/BaseRepository';`
+    : `import { BaseRepository } from 'framework-reactjs-api';`;
+  
+  const modelImport = insideFramework
+    ? `import { ${modelName}Model } from '../../../core/domain/models/${modelName}Model';`
+    : `import { ${modelName}Model } from '@/models/${modelName}Model';`;
+
+  return `${baseRepositoryImport}
+${modelImport}
 
 /**
  * Repositório para ${modelName}
@@ -155,221 +176,80 @@ export class ${modelName}Repository extends BaseRepository<${modelName}Model> {
 // Modelo para criar business
 function generateBusinessTemplate(modelName: string): string {
   const properties = analyzeModelFile(modelName);
+  const insideFramework = isInsideFramework();
   
   // Gerar mapeamento de propriedades para toDom
   const toDomProperties = properties
     .map(p => `      ${p.name}: model.${p.name},`)
     .join('\n');
 
-  return `import { ${modelName}Model } from '@/models/${modelName}Model';
+  // Ajustar imports baseado no contexto
+  const baseBusinessImport = insideFramework 
+    ? `import { BaseBusiness } from '../../core/business/BaseBusiness';`
+    : `import { BaseBusiness } from 'framework-reactjs-api';`;
+  
+  const modelImport = insideFramework
+    ? `import { ${modelName}Model } from '../../core/domain/models/${modelName}Model';`
+    : `import { ${modelName}Model } from '@/models/${modelName}Model';`;
+
+  return `${baseBusinessImport}
+${modelImport}
 import { ${modelName}Repository } from './repository/${modelName}Repository';
-import { Create${modelName}Dom, Update${modelName}Dom, ${modelName}Dom } from './domains/${modelName}Dom';
+import { ${modelName}Dom } from './domains/${modelName}Dom';
 
 /**
  * Business para ${modelName}
- * Contém as regras de negócio específicas do domínio
+ * Herda de BaseBusiness e delega operações CRUD para o Repository
+ * Adicione aqui apenas regras de negócio específicas
  */
-export class ${modelName}Business {
-  // Injeção de dependência do repository
-  public ${modelName.toLowerCase()}Repository: ${modelName}Repository;
-
-  constructor(${modelName.toLowerCase()}Repository?: ${modelName}Repository) {
-    this.${modelName.toLowerCase()}Repository = ${modelName.toLowerCase()}Repository || new ${modelName}Repository();
+export class ${modelName}Business extends BaseBusiness<${modelName}Model, ${modelName}Dom> {
+  constructor() {
+    const repository = new ${modelName}Repository();
+    super(repository);
   }
 
   /**
-   * Converter modelo para Dom
+   * Converter modelo para Dom (DTO)
    * @param model Modelo do ${modelName}
    * @returns Dom do ${modelName}
    */
-  private toDom(model: ${modelName}Model): ${modelName}Dom {
+  protected toDom(model: ${modelName}Model): ${modelName}Dom {
     return {
 ${toDomProperties || '      id: model.id,\n      // TODO: Mapear outras propriedades do modelo para o Dom aqui'}
     };
   }
 
   /**
-   * Converter Dom de criação para modelo
-   * @param dom Dom de criação do ${modelName}
-   * @returns Dados para criação do modelo
+   * Converter dados de criação para modelo (opcional - sobrescrever se necessário)
+   * @param data Dados de entrada
+   * @returns Dados formatados para o modelo
    */
-  private fromCreateDom(dom: Create${modelName}Dom): Omit<${modelName}Model, 'id'> {
-    // TODO: Implementar conversão do Dom para modelo
-    // Validações e transformações de negócio devem ser feitas aqui
-    
-    const modelData: any = {
-      // Exemplo:
-      // name: dom.name,
-      // email: dom.email,
-      // created_at: new Date(),
-    };
-
-    return modelData;
-  }
-
-  /**
-   * Converter Dom de atualização para dados parciais do modelo
-   * @param dom Dom de atualização do ${modelName}
-   * @returns Dados parciais para atualização do modelo
-   */
-  private fromUpdateDom(dom: Update${modelName}Dom): Partial<${modelName}Model> {
-    // TODO: Implementar conversão do Dom de atualização para modelo
-    // Validações e transformações de negócio devem ser feitas aqui
-    
-    const modelData: any = {
-      // Exemplo:
-      // name: dom.name,
-      // updated_at: new Date(),
-    };
-
-    return modelData;
-  }
-
-  /**
-   * Obter ${modelName.toLowerCase()} por ID
-   * @param id ID do ${modelName.toLowerCase()}
-   * @returns Dom do ${modelName} ou null se não encontrado
-   */
-  async getById(id: number): Promise<${modelName}Dom | null> {
-    // Validações de negócio
-    if (!id || id <= 0) {
-      throw new Error('ID inválido fornecido');
-    }
-
-    const result = await this.${modelName.toLowerCase()}Repository.findById(id);
-    return result ? this.toDom(result) : null;
-  }
-
-  /**
-   * Obter todos os ${modelName.toLowerCase()}s
-   * @param options Opções de consulta
-   * @returns Lista de Doms de ${modelName}
-   */
-  async getAll(options?: { limit?: number; offset?: number }): Promise<${modelName}Dom[]> {
-    const results = await this.${modelName.toLowerCase()}Repository.findAll(options);
-    return results.map(result => this.toDom(result));
-  }
-
-  /**
-   * Criar um novo ${modelName.toLowerCase()}
-   * @param data Dados para criação do ${modelName.toLowerCase()}
-   * @returns Dom do ${modelName} criado
-   */
-  async create(data: Create${modelName}Dom): Promise<${modelName}Dom> {
-    // Validações de negócio específicas
-    await this.validateCreateData(data);
-    
-    // Converter Dom para modelo
-    const modelData = this.fromCreateDom(data);
-    
-    // Criar no repository
-    const created = await this.${modelName.toLowerCase()}Repository.create(modelData);
-    
-    return this.toDom(created);
-  }
-
-  /**
-   * Atualizar um ${modelName.toLowerCase()} existente
-   * @param id ID do ${modelName.toLowerCase()}
-   * @param data Dados para atualização
-   * @returns Dom do ${modelName} atualizado ou null se não encontrado
-   */
-  async update(id: number, data: Update${modelName}Dom): Promise<${modelName}Dom | null> {
-    // Validações de negócio
-    if (!id || id <= 0) {
-      throw new Error('ID inválido fornecido');
-    }
-
-    // Verificar se existe
-    const existing = await this.${modelName.toLowerCase()}Repository.findById(id);
-    if (!existing) {
-      return null;
-    }
-    
-    // Validações de negócio específicas para atualização
-    await this.validateUpdateData(data);
-    
-    // Converter Dom para dados de modelo
-    const modelData = this.fromUpdateDom(data);
-    
-    // Atualizar no repository
-    const updated = await this.${modelName.toLowerCase()}Repository.update(id, modelData);
-    return updated ? this.toDom(updated) : null;
-  }
-
-  /**
-   * Excluir um ${modelName.toLowerCase()}
-   * @param id ID do ${modelName.toLowerCase()}
-   * @returns true se excluído com sucesso, false se não encontrado
-   */
-  async delete(id: number): Promise<boolean> {
-    // Validações de negócio
-    if (!id || id <= 0) {
-      throw new Error('ID inválido fornecido');
-    }
-
-    // Verificar se existe antes de excluir
-    const existing = await this.${modelName.toLowerCase()}Repository.findById(id);
-    if (!existing) {
-      return false;
-    }
-
-    // Validações de negócio para exclusão
-    await this.validateDeleteOperation(existing);
-
-    return await this.${modelName.toLowerCase()}Repository.delete(id);
-  }
-
-  /**
-   * Validar dados para criação (regras de negócio)
-   * @param data Dados para validação
-   */
-  private async validateCreateData(data: Create${modelName}Dom): Promise<void> {
-    // TODO: Implementar validações de negócio específicas para criação
+  protected fromCreateData(data: any): Omit<${modelName}Model, 'id'> {
+    // TODO: Adicione validações e transformações de negócio aqui
     // Exemplo:
     // if (!data.name || data.name.trim().length === 0) {
     //   throw new Error('Nome é obrigatório');
     // }
-    // 
-    // if (!data.email || !this.isValidEmail(data.email)) {
-    //   throw new Error('Email inválido');
-    // }
+    
+    return data as Omit<${modelName}Model, 'id'>;
   }
 
-  /**
-   * Validar dados para atualização (regras de negócio)
-   * @param data Dados para validação
-   */
-  private async validateUpdateData(data: Update${modelName}Dom): Promise<void> {
-    // TODO: Implementar validações de negócio específicas para atualização
-  }
+  // Os métodos CRUD (findById, findAll, findBy, create, update, delete, count) 
+  // são herdados de BaseBusiness e delegam para o Repository
+  // Não é necessário reimplementá-los
 
+  // Adicione aqui apenas métodos de negócio específicos:
+  
   /**
-   * Validar operação de exclusão (regras de negócio)
-   * @param model Modelo para validação
+   * Exemplo de método de negócio específico
+   * Descomente e adapte conforme necessário
    */
-  private async validateDeleteOperation(model: ${modelName}Model): Promise<void> {
-    // TODO: Implementar validações de negócio para exclusão
-    // Exemplo: verificar se não há registros dependentes
+  /*
+  async findByCustomField(value: string): Promise<${modelName}Dom | null> {
+    const results = await this.findBy({ custom_field: value });
+    return results.length > 0 ? results[0] : null;
   }
-
-  /**
-   * Buscar ${modelName.toLowerCase()}s ativos
-   * @param options Opções de consulta
-   * @returns Lista de ${modelName.toLowerCase()}s ativos
-   */
-  async findActive(options?: { limit?: number; offset?: number; orderBy?: string }): Promise<${modelName}Dom[]> {
-    const results = await this.${modelName.toLowerCase()}Repository.findActive(options);
-    return results.map(result => this.toDom(result));
-  }
-
-  /**
-   * Contar registros (método para compatibilidade com BaseService)
-   * @returns Número de registros
-   */
-  async count(): Promise<number> {
-    return await this.${modelName.toLowerCase()}Repository.count();
-  }
+  */
 }`;
 }
 
@@ -377,226 +257,84 @@ ${toDomProperties || '      id: model.id,\n      // TODO: Mapear outras propried
 function generateDomainTemplate(modelName: string): string {
   const properties = analyzeModelFile(modelName);
   
-  // Gerar propriedades para CreateDom (excluir id e timestamps automáticos)
-  const createProperties = properties
-    .filter(p => !p.isId && !p.name.includes('created_at') && !p.name.includes('updated_at'))
-    .map(p => `  ${p.name}${p.optional ? '?' : ''}: ${p.type};`)
-    .join('\n');
-
-  // Gerar propriedades para UpdateDom (excluir id e created_at, incluir updated_at como opcional)
-  const updateProperties = properties
-    .filter(p => !p.isId && !p.name.includes('created_at'))
-    .map(p => {
-      const optional = p.optional || p.name.includes('updated_at');
-      return `  ${p.name}${optional ? '?' : ''}: ${p.type};`;
-    })
-    .join('\n');
-
   // Gerar propriedades para Dom completo (todas as propriedades)
   const domProperties = properties
     .map(p => `  ${p.name}${p.optional ? '?' : ''}: ${p.type};`)
     .join('\n');
 
   return `/**
- * Dom para criação de ${modelName.toLowerCase()}
- */
-export interface Create${modelName}Dom {
-${createProperties || '  // Adicione aqui as propriedades para criar um novo ' + modelName.toLowerCase()}
-}
-
-/**
- * Dom para atualização de ${modelName.toLowerCase()}
- */
-export interface Update${modelName}Dom {
-${updateProperties || '  // Adicione aqui as propriedades para atualizar um ' + modelName.toLowerCase()}
-}
-
-/**
- * Dom para representação de ${modelName.toLowerCase()}
+ * Dom (DTO) para ${modelName}
+ * Interface de transferência de dados
  */
 export interface ${modelName}Dom {
-${domProperties || '  id: number;\n  // Adicione aqui outras propriedades para retorno'}
+${domProperties || '  id: number;\n  // TODO: Adicione aqui as propriedades do Dom'}
 }`;
 }
 
 // Modelo para criar service
 function generateServiceTemplate(modelName: string): string {
-  return `import { ${modelName}Repository } from './repository/${modelName}Repository';
-import { ${modelName}Model } from '@/models/${modelName}Model';
+  const insideFramework = isInsideFramework();
+  
+  // Ajustar imports baseado no contexto
+  const baseServiceImport = insideFramework 
+    ? `import { BaseService } from '../../core/services/BaseService';`
+    : `import { BaseService } from 'framework-reactjs-api';`;
+  
+  const modelImport = insideFramework
+    ? `import { ${modelName}Model } from '../../core/domain/models/${modelName}Model';`
+    : `import { ${modelName}Model } from '@/models/${modelName}Model';`;
 
-export interface ServiceResponse<T = any> {
-  status: number;
-  data?: T;
-  message?: string;
-}
-
-export interface QueryOptions {
-  conditions?: Record<string, any>;
-  includes?: string[];
-  limit?: number;
-  offset?: number;
-  orderBy?: string;
-}
+  return `${baseServiceImport}
+${modelImport}
+import { ${modelName}Business } from './${modelName}Business';
+import { ${modelName}Dom } from './domains/${modelName}Dom';
 
 /**
  * Service para ${modelName}
- * Contém a lógica de negócio
+ * Herda de BaseService e delega operações CRUD para o Business
+ * Retorna respostas padronizadas: { status, data?, message? }
  */
-export class ${modelName}Service {
-  private repository: ${modelName}Repository;
-
+export class ${modelName}Service extends BaseService<${modelName}Model, ${modelName}Dom> {
   constructor() {
-    this.repository = new ${modelName}Repository();
+    const business = new ${modelName}Business();
+    super(business);
   }
 
-  /**
-   * Buscar todos os registros com filtros
-   */
-  async findAll(options?: QueryOptions): Promise<ServiceResponse<${modelName}Model[]>> {
-    try {
-      const data = await this.repository.findByConditions(
-        options?.conditions || {},
-        {
-          limit: options?.limit,
-          offset: options?.offset,
-          includes: options?.includes,
-          orderBy: options?.orderBy,
-        }
-      );
+  // Os métodos CRUD (findAll, findById, findBy, create, update, delete, count) 
+  // são herdados de BaseService e delegam para o Business
+  // Não é necessário reimplementá-los
 
-      return {
-        status: 200,
-        data,
-        message: 'Registros recuperados com sucesso',
-      };
-    } catch (error) {
-      return {
-        status: 500,
-        message: error instanceof Error ? error.message : 'Erro ao buscar registros',
-      };
-    }
-  }
+  // Adicione aqui apenas métodos de serviço específicos:
 
   /**
-   * Buscar registro por ID
+   * Exemplo de método de serviço específico
+   * Descomente e adapte conforme necessário
    */
-  async findById(id: number, includes?: string[]): Promise<ServiceResponse<${modelName}Model>> {
+  /*
+  async findByCustomField(value: string) {
     try {
-      const data = await this.repository.findById(id, includes);
-
-      if (!data) {
+      const business = this.business as ${modelName}Business;
+      const result = await business.findByCustomField(value);
+      
+      if (!result) {
         return {
           status: 404,
-          message: 'Registro não encontrado',
+          message: 'Registro não encontrado'
         };
       }
 
       return {
         status: 200,
-        data,
-        message: 'Registro recuperado com sucesso',
+        data: result
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         status: 500,
-        message: error instanceof Error ? error.message : 'Erro ao buscar registro',
+        message: error.message || 'Erro ao buscar registro'
       };
     }
   }
-
-  /**
-   * Criar novo registro
-   */
-  async create(data: Partial<${modelName}Model>): Promise<ServiceResponse<${modelName}Model>> {
-    try {
-      const created = await this.repository.create(data);
-
-      return {
-        status: 201,
-        data: created,
-        message: 'Registro criado com sucesso',
-      };
-    } catch (error) {
-      return {
-        status: 500,
-        message: error instanceof Error ? error.message : 'Erro ao criar registro',
-      };
-    }
-  }
-
-  /**
-   * Atualizar registro existente
-   */
-  async update(id: number, data: Partial<${modelName}Model>): Promise<ServiceResponse<${modelName}Model>> {
-    try {
-      const updated = await this.repository.update(id, data);
-
-      if (!updated) {
-        return {
-          status: 404,
-          message: 'Registro não encontrado',
-        };
-      }
-
-      return {
-        status: 200,
-        data: updated,
-        message: 'Registro atualizado com sucesso',
-      };
-    } catch (error) {
-      return {
-        status: 500,
-        message: error instanceof Error ? error.message : 'Erro ao atualizar registro',
-      };
-    }
-  }
-
-  /**
-   * Deletar registro
-   */
-  async delete(id: number): Promise<ServiceResponse<boolean>> {
-    try {
-      const deleted = await this.repository.delete(id);
-
-      if (!deleted) {
-        return {
-          status: 404,
-          message: 'Registro não encontrado',
-        };
-      }
-
-      return {
-        status: 200,
-        data: true,
-        message: 'Registro deletado com sucesso',
-      };
-    } catch (error) {
-      return {
-        status: 500,
-        message: error instanceof Error ? error.message : 'Erro ao deletar registro',
-      };
-    }
-  }
-
-  /**
-   * Contar registros com filtros
-   */
-  async count(conditions?: Record<string, any>): Promise<ServiceResponse<number>> {
-    try {
-      const count = await this.repository.count(conditions || {});
-
-      return {
-        status: 200,
-        data: count,
-        message: 'Contagem realizada com sucesso',
-      };
-    } catch (error) {
-      return {
-        status: 500,
-        message: error instanceof Error ? error.message : 'Erro ao contar registros',
-      };
-    }
-  }
+  */
 }`;
 }
 
@@ -632,9 +370,8 @@ router.get('/', async (req: Request, res: Response) => {
  */
 router.get('/:id', async (req: Request, res: Response) => {
   const id = Number(req.params.id);
-  const includes = req.query.includes ? String(req.query.includes).split(',') : undefined;
   
-  const result = await service.findById(id, includes);
+  const result = await service.findById(id);
   
   return res.status(result.status).json(result);
 });
