@@ -1,370 +1,522 @@
-# 🔐 Guia Completo de Autenticação JWT
+# 🔐 Autenticação JWT - Guia Prático
 
-## ✅ O que foi implementado
+Sistema completo de autenticação JWT integrado ao framework.
 
-1. **Rotas de autenticação prontas para uso** - Não precisa implementar JWT do zero
-2. **Rotas geradas pelo scaffold são PRIVADAS** - Protegidas automaticamente com JWT
-3. **Sistema completo de login/registro/verificação**
-
-## 📋 Como Usar no Seu Projeto
-
-### 1. Importar as rotas de autenticação do framework
+## 🚀 Setup Rápido
 
 ```typescript
-// src/index.ts ou src/app.ts
 import express from 'express';
-import { authRoutes } from 'framework-reactjs-api';
+import { setupFramework } from 'framework-reactjs-api';
 
 const app = express();
 app.use(express.json());
 
-// Rota pública de autenticação (login/register)
-app.use('/api/auth', authRoutes);
+// Configura rotas de autenticação automaticamente
+setupFramework(app);
 
-// Suas outras rotas (protegidas)
-// ...
-
-app.listen(3000, () => {
-  console.log('Servidor rodando na porta 3000');
-});
+app.listen(3000);
 ```
 
-### 2. Rotas Disponíveis
+**Pronto!** As rotas de autenticação já estão disponíveis.
 
-#### 🔓 POST /api/auth/login (Pública)
-Autenticar usuário e obter token JWT
+## 📋 Rotas Disponíveis
 
-**Body:**
-```json
+### 1. Registrar Usuário
+```bash
+POST /api/auth/register
+
+# Body
 {
   "email": "usuario@example.com",
-  "password": "senha123"
-}
-```
-
-**Response (sucesso - 200):**
-```json
-{
-  "success": true,
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": 1,
-    "email": "usuario@example.com",
-    "name": "Nome Completo",
-    "roles": []
-  }
-}
-```
-
-**Response (erro - 401):**
-```json
-{
-  "success": false,
-  "message": "Credenciais inválidas",
-  "error": "INVALID_CREDENTIALS"
-}
-```
-
-#### 🔓 POST /api/auth/register (Pública)
-Registrar novo usuário
-
-**Body:**
-```json
-{
-  "email": "novousuario@example.com",
   "password": "senha123",
   "first_name": "João",
   "last_name": "Silva"
 }
-```
 
-**Response (sucesso - 201):**
-```json
-{
-  "success": true,
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": 2,
-    "email": "novousuario@example.com",
-    "name": "João Silva",
-    "roles": []
-  }
-}
-```
-
-#### 🔐 GET /api/auth/me (Privada)
-Obter informações do usuário autenticado
-
-**Headers:**
-```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-**Response (sucesso - 200):**
-```json
+# Response (201)
 {
   "success": true,
   "user": {
     "id": 1,
     "email": "usuario@example.com",
-    "name": "Nome Completo",
-    "roles": []
+    "first_name": "João",
+    "last_name": "Silva",
+    "active": true
   }
 }
 ```
 
-### 3. Rotas Geradas pelo Scaffold (PRIVADAS)
-
-Quando você executa:
+### 2. Fazer Login
 ```bash
-npx framework-reactjs-api-scaffold Product
+POST /api/auth/login
+
+# Body
+{
+  "email": "usuario@example.com",
+  "password": "senha123"
+}
+
+# Response (200)
+{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "email": "usuario@example.com",
+    "first_name": "João",
+    "last_name": "Silva"
+  }
+}
 ```
 
-As rotas geradas em `src/use-cases/product/routes/ProductRoutes.ts` são **AUTOMATICAMENTE PROTEGIDAS**:
+### 3. Obter Dados do Usuário
+```bash
+GET /api/auth/me
+
+# Headers
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Response (200)
+{
+  "success": true,
+  "user": {
+    "id": 1,
+    "email": "usuario@example.com",
+    "first_name": "João",
+    "last_name": "Silva",
+    "active": true
+  }
+}
+```
+
+## 🔒 Proteger Rotas Customizadas
+
+### Exemplo Básico
 
 ```typescript
-import { Router, Request, Response } from 'express';
-import { ProductService } from '../ProductService';
+import { Router } from 'express';
 import { AuthMiddleware } from 'framework-reactjs-api';
 
 const router = Router();
-const service = new ProductService();
 const authMiddleware = new AuthMiddleware();
 
-// ✅ PRIVADA - Requer token JWT
-router.get('/', authMiddleware.authenticate(), async (req: Request, res: Response) => {
-  // ...
-});
+// Rota protegida (requer JWT)
+router.get('/produtos', 
+  authMiddleware.authenticate(),
+  async (req, res) => {
+    // req.user contém dados do usuário autenticado
+    res.json({ user: req.user });
+  }
+);
 
-// ✅ PRIVADA - Requer token JWT
-router.post('/', authMiddleware.authenticate(), async (req: Request, res: Response) => {
-  // ...
-});
-
-// Todas as rotas são protegidas!
+// Rota pública (sem autenticação)
+router.get('/produtos/publicos', 
+  async (req, res) => {
+    res.json({ produtos: [] });
+  }
+);
 ```
 
-### 4. Como Acessar Rotas Protegidas
+### Use Case Completo
 
-#### No Frontend (JavaScript/React/Angular/Vue):
+```typescript
+// src/use-cases/produto/routes/ProdutoRoutes.ts
+import { Router } from 'express';
+import { AuthMiddleware } from 'framework-reactjs-api';
+import { ProdutoController } from '../ProdutoController';
+
+const router = Router();
+const authMiddleware = new AuthMiddleware();
+const controller = new ProdutoController();
+
+// Todas as rotas protegidas
+router.get('/', authMiddleware.authenticate(), controller.findAll);
+router.get('/:id', authMiddleware.authenticate(), controller.findById);
+router.post('/', authMiddleware.authenticate(), controller.create);
+router.put('/:id', authMiddleware.authenticate(), controller.update);
+router.delete('/:id', authMiddleware.authenticate(), controller.delete);
+
+export default router;
+```
+
+### Scaffold Gera Rotas Protegidas Automaticamente
+
+```bash
+npx framework-reactjs-api-scaffold Produto
+```
+
+**As rotas geradas já vêm protegidas com JWT!**
+
+## 🧪 Testar Autenticação
+
+### Com cURL
+
+```bash
+# 1. Registrar
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "password": "senha123",
+    "first_name": "Test",
+    "last_name": "User"
+  }'
+
+# 2. Login e salvar token
+TOKEN=$(curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"senha123"}' \
+  | jq -r '.token')
+
+# 3. Acessar rota protegida
+curl http://localhost:3000/api/auth/me \
+  -H "Authorization: Bearer $TOKEN"
+
+# 4. Acessar sua rota protegida
+curl http://localhost:3000/api/produtos \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Com JavaScript/Fetch
 
 ```javascript
-// 1. Fazer login e guardar token
+// 1. Login
 const loginResponse = await fetch('http://localhost:3000/api/auth/login', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    email: 'usuario@example.com',
+    email: 'test@example.com',
     password: 'senha123'
   })
 });
 
 const { token } = await loginResponse.json();
-localStorage.setItem('token', token);
 
-// 2. Usar token para acessar rotas protegidas
-const productsResponse = await fetch('http://localhost:3000/api/products', {
+// 2. Usar token em requisições
+const produtosResponse = await fetch('http://localhost:3000/api/produtos', {
   headers: {
-    'Authorization': `Bearer ${localStorage.getItem('token')}`
+    'Authorization': `Bearer ${token}`
   }
 });
 
-const products = await productsResponse.json();
+const produtos = await produtosResponse.json();
 ```
 
-#### Com Axios:
+## ⚙️ Configuração
 
-```javascript
-import axios from 'axios';
-
-// Configurar interceptor para adicionar token automaticamente
-axios.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Usar normalmente
-const response = await axios.get('http://localhost:3000/api/products');
-```
-
-#### Com cURL (Testes):
-
-```bash
-# Login
-curl -X POST http://localhost:3000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"usuario@example.com","password":"senha123"}'
-
-# Copiar o token da resposta
-
-# Acessar rota protegida
-curl http://localhost:3000/api/products \
-  -H "Authorization: Bearer SEU_TOKEN_AQUI"
-```
-
-### 5. Estrutura Completa do App
-
-```typescript
-// src/app.ts
-import express from 'express';
-import { authRoutes } from 'framework-reactjs-api';
-import productRouter from './use-cases/product/routes/ProductRoutes';
-import clienteRouter from './use-cases/cliente/routes/ClienteRoutes';
-
-const app = express();
-app.use(express.json());
-
-// ========== ROTAS PÚBLICAS ==========
-app.use('/api/auth', authRoutes);  // Login, Register, etc
-
-// ========== ROTAS PRIVADAS (Requerem JWT) ==========
-app.use('/api/products', productRouter);
-app.use('/api/clientes', clienteRouter);
-
-app.listen(3000, () => {
-  console.log('🚀 Servidor rodando na porta 3000');
-  console.log('📝 Login: POST http://localhost:3000/api/auth/login');
-  console.log('🔐 Products: GET http://localhost:3000/api/products (protegido)');
-});
-
-export default app;
-```
-
-### 6. Configuração do JWT_SECRET
-
-**⚠️ IMPORTANTE**: Configure a variável de ambiente `JWT_SECRET` para segurança
+### Variáveis de Ambiente
 
 ```env
 # .env
-JWT_SECRET=sua-chave-secreta-super-segura-aqui-use-algo-complexo
+JWT_SECRET=sua_chave_secreta_super_segura
+JWT_EXPIRES_IN=24h
+
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=seu_banco
 DB_USER=postgres
-DB_PASSWORD=postgres
+DB_PASSWORD=sua_senha
 ```
 
-**Gerar chave segura:**
-```bash
-# Node.js
-node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-
-# OpenSSL
-openssl rand -hex 64
-```
-
-### 7. Acessar Dados do Usuário nas Rotas
-
-Após autenticação, o objeto `req.user` contém os dados do usuário:
+### Customizar Setup
 
 ```typescript
-router.get('/', authMiddleware.authenticate(), async (req: Request, res: Response) => {
-  // Dados do usuário autenticado disponíveis em req.user
-  console.log(req.user);
-  // { id: 1, email: "user@example.com", name: "...", roles: [] }
-  
-  const userId = req.user.id;
-  const userEmail = req.user.email;
-  
-  // Use para filtrar dados por usuário
-  const myProducts = await service.findAll({
-    conditions: { userId: req.user.id }
-  });
-  
-  return res.json(myProducts);
+import { setupFramework } from 'framework-reactjs-api';
+
+setupFramework(app, {
+  apiPrefix: '/api/v1',        // default: '/api'
+  authPath: '/authentication', // default: '/auth'
+  enableAuth: true,            // default: true
+  databaseConfig: {
+    host: process.env.DB_HOST,
+    port: parseInt(process.env.DB_PORT || '5432'),
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD
+  }
+});
+
+// Rotas ficarão em: /api/v1/authentication/login
+```
+
+### Desabilitar Autenticação (API Pública)
+
+```typescript
+setupFramework(app, {
+  enableAuth: false  // Não cria rotas de auth
 });
 ```
 
-### 8. Proteger Rotas por Papel (Role)
+## 🔑 Como Funciona
 
+### 1. Registro de Usuário
+- Senha é hasheada com bcrypt (10 salt rounds)
+- Usuário salvo na tabela `users`
+- Email é único (constraint no banco)
+
+### 2. Login
+- Verifica email e senha
+- Gera JWT token (válido por 24h)
+- Retorna token + dados do usuário
+
+### 3. Autenticação de Requisições
+- Middleware valida token no header `Authorization`
+- Extrai dados do usuário do token
+- Injeta `req.user` com dados do usuário
+- Se token inválido/expirado: retorna 401 Unauthorized
+
+## 🗄️ Modelo UserModel
+
+```typescript
+@Entity('users')
+export class UserModel extends BaseModel {
+  @Id()
+  id!: number;
+
+  @Column({ type: 'VARCHAR', length: 100 })
+  first_name!: string;
+
+  @Column({ type: 'VARCHAR', length: 100 })
+  last_name!: string;
+
+  @Column({ type: 'VARCHAR', length: 255 })
+  email!: string;  // UNIQUE
+
+  @Column({ type: 'VARCHAR', length: 255 })
+  password_hash!: string;
+
+  @Column({ type: 'BOOLEAN', default: true })
+  active!: boolean;
+
+  @Column({ type: 'TIMESTAMP', default: 'CURRENT_TIMESTAMP' })
+  created_at!: Date;
+
+  @Column({ type: 'TIMESTAMP', nullable: true })
+  updated_at?: Date;
+}
+```
+
+**Tabela criada automaticamente** ao executar `npx framework-reactjs-api-sync`
+
+## 📦 Classes Disponíveis
+
+### AuthService
+```typescript
+import { AuthService } from 'framework-reactjs-api';
+
+const authService = new AuthService();
+
+// Hashear senha
+const hash = await authService.hashPassword('senha123');
+
+// Comparar senha
+const isValid = await authService.comparePasswords('senha123', hash);
+
+// Gerar token
+const token = authService.generateToken({ 
+  userId: 1, 
+  email: 'user@example.com' 
+});
+
+// Validar token
+const payload = authService.verifyToken(token);
+```
+
+### AuthMiddleware
 ```typescript
 import { AuthMiddleware } from 'framework-reactjs-api';
 
 const authMiddleware = new AuthMiddleware();
 
-// Apenas administradores
-router.delete('/:id', 
-  authMiddleware.authenticate(),
-  authMiddleware.hasRole(['admin']),
-  async (req, res) => {
-    // Só usuários com role 'admin' chegam aqui
+// Usar em rotas
+router.get('/protegido', authMiddleware.authenticate(), handler);
+```
+
+### UserRepository
+```typescript
+import { UserRepository } from 'framework-reactjs-api';
+
+const userRepo = new UserRepository();
+
+// Buscar por email
+const user = await userRepo.findByEmail('user@example.com');
+
+// Buscar por ID
+const user = await userRepo.findById(1);
+
+// Criar usuário
+const newUser = await userRepo.create({
+  email: 'new@example.com',
+  password_hash: hashedPassword,
+  first_name: 'João',
+  last_name: 'Silva'
+});
+```
+
+## 🎯 Fluxo Completo
+
+```
+1. Cliente → POST /api/auth/register
+           ↓
+2. Framework → Hash da senha com bcrypt
+           ↓
+3. Framework → Salva na tabela users
+           ↓
+4. Framework → Retorna sucesso
+           ↓
+5. Cliente → POST /api/auth/login
+           ↓
+6. Framework → Verifica email/senha
+           ↓
+7. Framework → Gera JWT token
+           ↓
+8. Framework → Retorna token + user
+           ↓
+9. Cliente → GET /api/produtos
+            Header: Authorization: Bearer <token>
+           ↓
+10. AuthMiddleware → Valida token
+           ↓
+11. AuthMiddleware → Extrai user do token
+           ↓
+12. AuthMiddleware → Injeta req.user
+           ↓
+13. Controller → Processa requisição
+           ↓
+14. Framework → Retorna resposta
+```
+
+## 🐛 Troubleshooting
+
+### ❌ Erro: "relation 'users' does not exist"
+
+**Solução:**
+```bash
+npm run build
+npx framework-reactjs-api-sync
+```
+
+### ❌ Erro: "jwt must be provided"
+
+Token não foi enviado no header. Verifique:
+```javascript
+headers: {
+  'Authorization': 'Bearer SEU_TOKEN_AQUI'
+}
+```
+
+### ❌ Erro: "jwt malformed"
+
+Token inválido ou mal formatado. Faça login novamente.
+
+### ❌ Erro: "jwt expired"
+
+Token expirou (24h). Faça login novamente.
+
+### ❌ Erro: "Invalid credentials"
+
+Email ou senha incorretos.
+
+### ❌ Erro: "User not found"
+
+Usuário não existe ou foi deletado.
+
+## 🔒 Boas Práticas
+
+### 1. Usar HTTPS em Produção
+```typescript
+// Nunca transmita tokens via HTTP não-criptografado
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (!req.secure) {
+      return res.redirect('https://' + req.headers.host + req.url);
+    }
+    next();
+  });
+}
+```
+
+### 2. Armazenar Token Seguramente (Frontend)
+```javascript
+// ✅ BOM: HttpOnly cookie (mais seguro)
+// Configurar no backend para enviar cookie
+res.cookie('token', token, { 
+  httpOnly: true, 
+  secure: true, 
+  sameSite: 'strict' 
+});
+
+// ⚠️ OK: localStorage (menos seguro, mas funcional)
+localStorage.setItem('token', token);
+
+// ❌ EVITAR: variável global
+window.token = token;  // Vulnerável a XSS
+```
+
+### 3. Validar Dados de Entrada
+```typescript
+router.post('/register', async (req, res) => {
+  const { email, password } = req.body;
+  
+  // Validar email
+  if (!email || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+    return res.status(400).json({ error: 'Email inválido' });
   }
-);
-
-// Admin ou moderador
-router.put('/:id',
-  authMiddleware.authenticate(),
-  authMiddleware.hasRole(['admin', 'moderator']),
-  async (req, res) => {
-    // ...
+  
+  // Validar senha (mínimo 6 caracteres)
+  if (!password || password.length < 6) {
+    return res.status(400).json({ error: 'Senha muito curta' });
   }
-);
+  
+  // Prosseguir com registro...
+});
 ```
 
-## 🧪 Testando o Fluxo Completo
+### 4. Usar Variáveis de Ambiente
+```typescript
+// ❌ NUNCA faça isso
+const JWT_SECRET = 'minha-chave-123';
 
-### 1. Registrar novo usuário
-```bash
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "teste@example.com",
-    "password": "senha123",
-    "first_name": "João",
-    "last_name": "Silva"
-  }'
+// ✅ Sempre use .env
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET não definido!');
+}
 ```
 
-### 2. Fazer login
-```bash
-curl -X POST http://localhost:3000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "teste@example.com",
-    "password": "senha123"
-  }'
+## 📚 Exemplos Adicionais
+
+### Refresh Token (Avançado)
+
+```typescript
+// Implementação customizada de refresh token
+router.post('/auth/refresh', async (req, res) => {
+  const { refreshToken } = req.body;
+  
+  try {
+    const payload = authService.verifyToken(refreshToken);
+    const newToken = authService.generateToken({
+      userId: payload.userId,
+      email: payload.email
+    });
+    
+    res.json({ success: true, token: newToken });
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid refresh token' });
+  }
+});
 ```
 
-### 3. Usar token para acessar rota protegida
-```bash
-curl http://localhost:3000/api/products \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+### Logout (Frontend)
+
+```javascript
+// Simplesmente remover o token
+localStorage.removeItem('token');
+// ou
+document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
 ```
-
-## 📊 Respostas de Erro
-
-| Status | Erro | Descrição |
-|--------|------|-----------|
-| 400 | MISSING_CREDENTIALS | Email ou senha não fornecidos |
-| 400 | MISSING_FIELDS | Campos obrigatórios ausentes |
-| 401 | INVALID_CREDENTIALS | Email ou senha incorretos |
-| 401 | MISSING_TOKEN | Token JWT não fornecido |
-| 401 | UNAUTHORIZED | Token inválido ou expirado |
-| 403 | FORBIDDEN | Usuário sem permissão (role) |
-| 404 | USER_NOT_FOUND | Usuário não encontrado |
-| 409 | EMAIL_ALREADY_EXISTS | Email já cadastrado |
-| 500 | INTERNAL_SERVER_ERROR | Erro interno do servidor |
-
-## ✅ Checklist de Implementação
-
-- [ ] Importar `authRoutes` do framework
-- [ ] Registrar rotas: `app.use('/api/auth', authRoutes)`
-- [ ] Configurar `JWT_SECRET` no `.env`
-- [ ] Gerar usecases com `npx framework-reactjs-api-scaffold`
-- [ ] Rotas são automaticamente protegidas com JWT
-- [ ] Testar login: `POST /api/auth/login`
-- [ ] Copiar token da resposta
-- [ ] Testar rota protegida com: `Authorization: Bearer {token}`
 
 ---
 
-**Data**: 17 de outubro de 2025  
-**Status**: ✅ **IMPLEMENTADO E TESTADO**  
-**Novidades**:
-- ✅ Rotas de autenticação prontas (`authRoutes`)
-- ✅ Scaffold gera rotas PRIVADAS automaticamente
-- ✅ Middleware de autenticação aplicado em todas as rotas geradas
-- ✅ Sistema completo de login/registro/verificação
+**Versão:** 1.0.0  
+**Última atualização:** Janeiro 2025

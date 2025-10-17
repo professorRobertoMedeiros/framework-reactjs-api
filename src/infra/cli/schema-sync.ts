@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import 'reflect-metadata';
 import { BaseModel } from '../../core/domain/models/BaseModel';
 import { CustomORM, initializeORM } from '../db/CustomORM';
 
@@ -88,8 +89,68 @@ export async function syncSchema() {
       process.exit(1);
     }
     
-    // Carregar e registrar todos os modelos encontrados
-    console.log(`\x1b[33mCarregando modelos de ${modelsDir}...\x1b[0m`);
+    // Primeiro: carregar modelos do framework DINAMICAMENTE
+    console.log('\x1b[36m📦 Carregando modelos do framework...\x1b[0m');
+    try {
+      // Descobrir dinamicamente o diretório de modelos do framework
+      const frameworkModelsDir = path.join(__dirname, '..', '..', 'core', 'domain', 'models');
+      
+      if (fs.existsSync(frameworkModelsDir)) {
+        const frameworkFiles = fs.readdirSync(frameworkModelsDir);
+        const modelFiles = frameworkFiles.filter(f => 
+          (f.endsWith('.js') || f.endsWith('.ts')) && 
+          f.includes('Model') && 
+          f !== 'BaseModel.js' && 
+          f !== 'BaseModel.ts'
+        );
+        
+        let frameworkModelsLoaded = 0;
+        
+        for (const file of modelFiles) {
+          try {
+            const modelPath = path.join(frameworkModelsDir, file);
+            const modelModule = require(modelPath);
+            
+            // Encontrar a classe Model exportada
+            const modelName = Object.keys(modelModule).find(key => key.includes('Model'));
+            
+            if (modelName && modelModule[modelName]) {
+              const Model = modelModule[modelName];
+              
+              // Verificar se é uma classe que extende BaseModel
+              if (Model.prototype && Model.prototype instanceof BaseModel) {
+                // Verificar se tem metadados de decoradores (opcional)
+                const hasMetadata = typeof Reflect !== 'undefined' && 
+                                   Reflect.hasMetadata && 
+                                   Reflect.hasMetadata('entity:tableName', Model.prototype);
+                
+                // Registrar se tem metadados OU se é claramente um Model
+                if (hasMetadata || modelName.endsWith('Model')) {
+                  orm.registerModel(Model);
+                  console.log(`\x1b[32m✓ Modelo do framework ${modelName} registrado\x1b[0m`);
+                  frameworkModelsLoaded++;
+                }
+              }
+            }
+          } catch (modelError) {
+            // Ignorar erros de modelos individuais
+            console.log(`\x1b[33m⚠️  Não foi possível carregar ${file}\x1b[0m`);
+          }
+        }
+        
+        if (frameworkModelsLoaded === 0) {
+          console.log('\x1b[33m⚠️  Nenhum modelo do framework encontrado com decoradores\x1b[0m');
+        } else {
+          console.log(`\x1b[32m✓ Total: ${frameworkModelsLoaded} modelo(s) do framework registrado(s)\x1b[0m`);
+        }
+      }
+    } catch (error) {
+      // Se não conseguir carregar (projeto externo), continuar normalmente
+      console.log('\x1b[33m⚠️  Modelos do framework não encontrados (projeto externo)\x1b[0m');
+    }
+    
+    // Depois: carregar modelos do projeto
+    console.log(`\x1b[33m📁 Carregando modelos do projeto de ${modelsDir}...\x1b[0m`);
     
     // Verificar se existem arquivos compilados (.js) ou apenas TypeScript (.ts)
     const files = fs.readdirSync(modelsDir);

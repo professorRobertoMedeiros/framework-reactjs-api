@@ -16,7 +16,6 @@ export {
   ColumnStage2 as Column5, IdStage2 as Id5
 } from './core/domain/models/BaseModel';
 export { UserModel } from './core/domain/models/UserModel';
-export { ProductModel } from './core/domain/models/ProductModel';
 
 // Services
 export { 
@@ -35,6 +34,13 @@ export { AuthService } from './core/auth/AuthService';
 
 // Rotas prontas para uso
 export { default as authRoutes } from './routes/auth';
+
+// Setup automático do framework
+export { 
+  setupFramework, 
+  createFrameworkRouter,
+  FrameworkOptions 
+} from './core/setup/FrameworkSetup';
 
 // Infraestrutura
 export { CustomORM, initializeORM } from './infra/db/CustomORM';

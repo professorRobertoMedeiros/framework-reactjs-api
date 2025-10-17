@@ -7,12 +7,12 @@
  */
 export { BaseModel, Entity, Column, Id, UniqueIndex, BusinessIndex, ColumnStage2 as Column5, IdStage2 as Id5 } from './core/domain/models/BaseModel';
 export { UserModel } from './core/domain/models/UserModel';
-export { ProductModel } from './core/domain/models/ProductModel';
 export { BaseService, ServiceResponse, PaginatedResponse, QueryOptions } from './core/services/BaseService';
 export { BaseBusiness } from './core/business/BaseBusiness';
 export { AuthMiddleware } from './core/auth/AuthMiddleware';
 export { AuthService } from './core/auth/AuthService';
 export { default as authRoutes } from './routes/auth';
+export { setupFramework, createFrameworkRouter, FrameworkOptions } from './core/setup/FrameworkSetup';
 export { CustomORM, initializeORM } from './infra/db/CustomORM';
 export { QueryBuilder, Operator } from './infra/db/query/QueryBuilder';
 export { BaseRepository, IRepository, PaginationOptions, PaginatedResult } from './infra/repository/BaseRepository';
