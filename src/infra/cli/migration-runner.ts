@@ -4,12 +4,16 @@ import { CustomORM, initializeORM } from '../db/CustomORM';
 import { BaseModel } from '../../core/domain/models/BaseModel';
 
 // Função para executar migrações SQL a partir do diretório de migrações
-export async function runMigration(customMigrationsDir?: string) {
+export async function runMigration(customMigrationsDir?: string): Promise<{ success: boolean; errors: string[] }> {
   console.log('\x1b[34m=== Framework TypeScript DDD - Executor de Migrações ===\x1b[0m');
+  const errors: string[] = [];
   
   try {
+    console.log('\x1b[34mIniciando execução de migrações...\x1b[0m');
+    
     // Inicializar ORM
     const orm = initializeORM();
+    console.log('\x1b[32mConexão estabelecida com o banco de dados\x1b[0m');
     
     // Diretório de migrações (padrão ou personalizado)
     const migrationsDir = customMigrationsDir || 
@@ -29,8 +33,17 @@ export async function runMigration(customMigrationsDir?: string) {
       }
     }
     
-    // Executar migrações
-    await orm.runMigrations(migrationsDirToUse);
+    // Verificar se existem arquivos de migração
+    const migrationFiles = fs.readdirSync(migrationsDirToUse)
+      .filter(file => file.endsWith('.sql'));
+      
+    if (migrationFiles.length === 0) {
+      console.log('\x1b[33mNenhuma migração encontrada\x1b[0m');
+    } else {
+      console.log(`\x1b[34mEncontradas ${migrationFiles.length} migrações\x1b[0m`);
+      // Executar migrações
+      await orm.runMigrations(migrationsDirToUse);
+    }
     
     // Registrar os modelos
     console.log('\x1b[34mRegistrando modelos de domínio...\x1b[0m');
@@ -46,8 +59,10 @@ export async function runMigration(customMigrationsDir?: string) {
     const modelsDir = possibleModelsPaths.find(dir => fs.existsSync(dir));
     
     if (!modelsDir) {
-      console.log('\x1b[33mDiretório de modelos não encontrado. Verifique sua estrutura de projeto.\x1b[0m');
-      return;
+      const error = 'Diretório de modelos não encontrado. Verifique sua estrutura de projeto.';
+      console.log(`\x1b[33m${error}\x1b[0m`);
+      errors.push(error);
+      return { success: false, errors };
     }
     
     console.log(`\x1b[34mUsando diretório de modelos: ${modelsDir}\x1b[0m`);
@@ -58,7 +73,7 @@ export async function runMigration(customMigrationsDir?: string) {
     
     console.log(`\x1b[34mEncontrados ${modelFiles.length} arquivos de modelo\x1b[0m`);
     
-    let hasErrors = false;
+    let hasModelErrors = false;
     
     for (const file of modelFiles) {
       try {
@@ -77,23 +92,31 @@ export async function runMigration(customMigrationsDir?: string) {
           orm.registerModel(modelClass as typeof BaseModel);
           console.log(`\x1b[32mModelo ${file} registrado com sucesso!\x1b[0m`);
         } else {
-          console.error(`\x1b[31mErro: ${file} não exporta um modelo válido\x1b[0m`);
-          hasErrors = true;
+          const error = `Erro: ${file} não exporta um modelo válido`;
+          console.error(`\x1b[31m${error}\x1b[0m`);
+          errors.push(error);
+          hasModelErrors = true;
         }
-      } catch (error) {
-        console.error(`\x1b[31mErro ao processar modelo ${file}:\x1b[0m`, error);
-        hasErrors = true;
+      } catch (error: any) {
+        const errorMsg = `Erro ao processar modelo ${file}: ${error.message || error}`;
+        console.error(`\x1b[31m${errorMsg}\x1b[0m`);
+        errors.push(errorMsg);
+        hasModelErrors = true;
       }
     }
     
-    if (hasErrors) {
+    if (hasModelErrors) {
       console.warn('\x1b[33mAlguns modelos não puderam ser registrados\x1b[0m');
+      return { success: false, errors };
     }
     
     console.log('\x1b[32mProcesso de migração finalizado com sucesso!\x1b[0m');
-  } catch (error) {
-    console.error('\x1b[31mErro ao executar migrações:\x1b[0m', error);
-    process.exit(1);
+    return { success: true, errors: [] };
+  } catch (error: any) {
+    const errorMsg = `Erro ao executar migrações: ${error.message || error}`;
+    console.error(`\x1b[31m${errorMsg}\x1b[0m`);
+    errors.push(errorMsg);
+    return { success: false, errors };
   }
 }
 

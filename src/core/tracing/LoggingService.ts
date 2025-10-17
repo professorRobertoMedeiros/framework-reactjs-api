@@ -31,12 +31,25 @@ export class LoggingService {
    * @param error Objeto de erro
    * @param data Dados adicionais para o log
    */
-  static error(message: string, error?: Error, data: any = {}): void {
-    const errorData = error ? {
-      errorMessage: error.message,
-      stack: error.stack,
-      ...data
-    } : data;
+  static error(message: string, error?: unknown, data: any = {}): void {
+    let errorData = data;
+    
+    if (error) {
+      if (error instanceof Error) {
+        errorData = {
+          errorMessage: error.message,
+          stack: error.stack,
+          ...data
+        };
+      } else {
+        // Tentar extrair informações úteis de erros não-Error
+        errorData = {
+          errorMessage: String(error),
+          rawError: error,
+          ...data
+        };
+      }
+    }
     
     this.log('ERROR', message, errorData);
   }

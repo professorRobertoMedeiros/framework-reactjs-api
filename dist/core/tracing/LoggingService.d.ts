@@ -23,7 +23,7 @@ export declare class LoggingService {
      * @param error Objeto de erro
      * @param data Dados adicionais para o log
      */
-    static error(message: string, error?: Error, data?: any): void;
+    static error(message: string, error?: unknown, data?: any): void;
     /**
      * Gera um log de depuração
      * @param message Mensagem a ser logada

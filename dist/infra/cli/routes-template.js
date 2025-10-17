@@ -54,11 +54,15 @@ router.get('/', authMiddleware.authenticate(), async (req: Request, res: Respons
     
     return res.status(result.status).json(result);
   } catch (error) {
-    LoggingService.error('Erro ao buscar registros', error, { entity: '${modelName}' });
+    // Garantir que error seja tratado como Error ou converter para um objeto Error
+    const err = error instanceof Error ? error : new Error(String(error));
+    
+    LoggingService.error('Erro ao buscar registros', err, { entity: '${modelName}' });
+    
     return res.status(500).json({ 
       success: false, 
       message: 'Erro interno do servidor',
-      error: error.message
+      error: err.message
     });
   }
 });
@@ -86,15 +90,18 @@ router.get('/:id', authMiddleware.authenticate(), async (req: Request, res: Resp
     
     return res.status(result.status).json(result);
   } catch (error) {
-    LoggingService.error('Erro ao buscar registro por ID', error, { 
+    // Converter para Error se não for
+    const err = error instanceof Error ? error : new Error(String(error));
+    
+    LoggingService.error('Erro ao buscar registro por ID', err, { 
       entity: '${modelName}',
-      id: req.params.id 
+      id: req.params.id
     });
     
     return res.status(500).json({ 
       success: false, 
       message: 'Erro interno do servidor',
-      error: error.message
+      error: err.message
     });
   }
 });
@@ -119,12 +126,15 @@ router.post('/', authMiddleware.authenticate(), async (req: Request, res: Respon
     
     return res.status(result.status).json(result);
   } catch (error) {
-    LoggingService.error('Erro ao criar registro', error, { entity: '${modelName}' });
+    // Converter para Error se não for
+    const err = error instanceof Error ? error : new Error(String(error));
+    
+    LoggingService.error('Erro ao criar registro', err, { entity: '${modelName}' });
     
     return res.status(500).json({ 
       success: false, 
       message: 'Erro interno do servidor',
-      error: error.message
+      error: err.message
     });
   }
 });
@@ -152,7 +162,10 @@ router.put('/:id', authMiddleware.authenticate(), async (req: Request, res: Resp
     
     return res.status(result.status).json(result);
   } catch (error) {
-    LoggingService.error('Erro ao atualizar registro', error, { 
+    // Converter para Error se não for
+    const err = error instanceof Error ? error : new Error(String(error));
+    
+    LoggingService.error('Erro ao atualizar registro', err, { 
       entity: '${modelName}',
       id: req.params.id
     });
@@ -160,7 +173,7 @@ router.put('/:id', authMiddleware.authenticate(), async (req: Request, res: Resp
     return res.status(500).json({ 
       success: false, 
       message: 'Erro interno do servidor',
-      error: error.message
+      error: err.message
     });
   }
 });
@@ -188,7 +201,10 @@ router.delete('/:id', authMiddleware.authenticate(), async (req: Request, res: R
     
     return res.status(result.status).json(result);
   } catch (error) {
-    LoggingService.error('Erro ao excluir registro', error, { 
+    // Converter para Error se não for
+    const err = error instanceof Error ? error : new Error(String(error));
+    
+    LoggingService.error('Erro ao excluir registro', err, { 
       entity: '${modelName}',
       id: req.params.id
     });
@@ -196,7 +212,7 @@ router.delete('/:id', authMiddleware.authenticate(), async (req: Request, res: R
     return res.status(500).json({ 
       success: false, 
       message: 'Erro interno do servidor',
-      error: error.message
+      error: err.message
     });
   }
 });
@@ -221,12 +237,15 @@ router.get('/count', authMiddleware.authenticate(), async (req: Request, res: Re
     
     return res.status(result.status).json(result);
   } catch (error) {
-    LoggingService.error('Erro ao contar registros', error, { entity: '${modelName}' });
+    // Converter para Error se não for
+    const err = error instanceof Error ? error : new Error(String(error));
+    
+    LoggingService.error('Erro ao contar registros', err, { entity: '${modelName}' });
     
     return res.status(500).json({ 
       success: false, 
       message: 'Erro interno do servidor',
-      error: error.message
+      error: err.message
     });
   }
 });

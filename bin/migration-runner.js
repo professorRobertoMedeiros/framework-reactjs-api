@@ -11,12 +11,20 @@ const projectDir = process.cwd();
     console.log(`Executando migrações no diretório: ${projectDir}`);
     
     // Passe os argumentos da linha de comando para a função
-    await runMigration();
+    const result = await runMigration();
     
-    console.log('✅ Migrações concluídas com sucesso!');
-    process.exit(0);
+    if (result.success) {
+      console.log('✅ Migrações concluídas com sucesso!');
+      process.exit(0);
+    } else {
+      console.error('❌ Migrações concluídas com erros:');
+      result.errors.forEach((err, index) => {
+        console.error(`   ${index + 1}. ${err}`);
+      });
+      process.exit(1);
+    }
   } catch (error) {
-    console.error('❌ Erro ao executar migrações:', error);
+    console.error('❌ Erro fatal ao executar migrações:', error);
     process.exit(1);
   }
 })();

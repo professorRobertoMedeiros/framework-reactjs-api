@@ -97,7 +97,12 @@ router.get('/produtos', authMiddleware.authenticate(), controller.findAll);
 import { LoggingService } from 'framework-reactjs-api';
 
 LoggingService.info('Criando novo produto', { produtoId: 123 });
-LoggingService.error('Falha na operação', error, { operacao: 'update' });
+// O parâmetro error pode ser Error ou qualquer outro tipo
+// O serviço vai processar adequadamente
+LoggingService.error('Falha na operação', error, { 
+  entity: 'User', 
+  operation: 'update' 
+});
 LoggingService.warn('Estoque baixo', { produtoId: 123, quantidade: 5 });
 LoggingService.debug('Detalhes da operação', { detalhes: '...' });
 ```
@@ -155,6 +160,23 @@ npx framework-reactjs-api-sync
 # Executar migrações
 npx framework-reactjs-api-migrate
 ```
+
+O comando executa arquivos SQL encontrados em um dos seguintes diretórios:
+1. `./src/infra/migrations/`
+2. `./migrations/` (alternativo)
+
+**Exemplo de arquivo de migração (migrations/20251017001_criar_tabela_produtos.sql)**:
+```sql
+CREATE TABLE IF NOT EXISTS produtos (
+  id SERIAL PRIMARY KEY,
+  nome VARCHAR(255) NOT NULL,
+  preco DECIMAL(10,2) NOT NULL,
+  ativo BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+> ⚠️ **Atenção**: O comando verifica erros nos modelos e nos arquivos de migração. Se encontrar erros, exibe mensagens apropriadas e termina com código de erro não-zero.
 
 ## 📦 Padrão Repository
 
@@ -432,7 +454,9 @@ router.get('/', authMiddleware.authenticate(), async (req, res) => {
     const result = await controller.findAll(req, res);
     return result;
   } catch (error) {
-    LoggingService.error('Erro ao buscar produtos', error);
+    // Garantir que error seja tratado corretamente
+    const err = error instanceof Error ? error : new Error(String(error));
+    LoggingService.error('Erro ao buscar produtos', err);
     return res.status(500).json({ message: 'Erro interno' });
   }
 });
@@ -473,6 +497,115 @@ import {
   // Service e Business
   BaseService, BaseBusiness
 } from 'framework-reactjs-api';
+```
+
+## � Ferramentas de Linha de Comando
+
+O framework oferece várias ferramentas de linha de comando para facilitar o desenvolvimento:
+
+### Geração de Código (Scaffold)
+
+Para gerar rapidamente arquivos de caso de uso para uma nova entidade:
+
+```bash
+# Gera arquivos para uma nova entidade
+npx framework-reactjs-api-scaffold NomeEntidade
+```
+
+### Sincronização de Schema
+
+Para sincronizar os modelos TypeScript com seu banco de dados:
+
+```bash
+# Sincroniza os modelos com o banco de dados
+npx framework-reactjs-api-sync
+```
+
+### Execução de Migrações
+
+Para aplicar migrações SQL no banco de dados:
+
+```bash
+# Executa migrações pendentes
+npx framework-reactjs-api-migrate
+```
+
+## �🔎 Acompanhamento e Diagnóstico de Projetos
+
+### Verificação de Integridade do Projeto
+
+Para garantir que seu projeto esteja corretamente configurado para usar o framework, execute:
+
+```bash
+# Verifica a estrutura e configuração do projeto
+npx framework-reactjs-api-check
+```
+
+Esta ferramenta irá verificar:
+- Estrutura de diretórios
+- Arquivos de configuração
+- Dependências instaladas
+- Configuração do TypeScript
+- Configurações de ambiente (.env)
+- Modelos e decoradores
+- Arquivos de migração
+
+A verificação irá exibir:
+- ✅ Verificações bem-sucedidas
+- ⚠️ Avisos (itens opcionais ou que podem ser melhorados)
+- ❌ Erros (problemas que precisam ser corrigidos)
+
+### Solução de Problemas Comuns
+
+#### Erros na Execução de Migrações
+
+Quando executar `npx framework-reactjs-api-migrate` e encontrar erros como:
+
+```
+Erro ao processar modelo ClienteNovoModel.ts: SyntaxError: Invalid or unexpected token
+```
+
+**Diagnóstico:**
+1. Verifique se o arquivo do modelo possui erros de sintaxe
+2. Confira se os decoradores estão sendo usados corretamente
+3. Certifique-se que o TypeScript está compilando sem erros
+
+**Solução:**
+```bash
+# Verifique erros de compilação
+tsc --noEmit
+
+# Corrija os erros nos arquivos indicados
+# Em seguida, execute novamente a migração
+npx framework-reactjs-api-migrate
+```
+
+#### Erro: Módulo não Encontrado
+
+Se receber erros de módulo não encontrado:
+
+```
+Cannot find module 'framework-reactjs-api'
+```
+
+**Solução:**
+```bash
+npm install framework-reactjs-api --save
+```
+
+#### Erro: Propriedades Ausentes
+
+Se receber erros como "Property 'X' does not exist on type...":
+
+```
+Property 'TracingService' does not exist on type...
+```
+
+**Solução:**
+Atualize o framework para a versão mais recente:
+
+```bash
+npm update framework-reactjs-api
 ```
 
 ---

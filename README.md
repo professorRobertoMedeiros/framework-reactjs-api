@@ -45,6 +45,14 @@ app.use(TracingMiddleware.addRequestId());
 
 // Logging com ID de rastreamento automático
 LoggingService.info('Processando pedido', { orderId: 123 });
+
+// Logging de erros - trata qualquer tipo de erro
+try {
+  // Código que pode gerar erro
+} catch (error) {
+  // O serviço lida com erro unknown automaticamente
+  LoggingService.error('Falha no processamento', error);
+}
 ```
 
 ### 🔐 Autenticação JWT

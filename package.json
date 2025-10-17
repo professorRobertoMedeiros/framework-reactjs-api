@@ -15,7 +15,8 @@
   "bin": {
     "framework-reactjs-api-migrate": "./bin/migration-runner.js",
     "framework-reactjs-api-sync": "./bin/schema-sync.js",
-    "framework-reactjs-api-scaffold": "./bin/usecase-scaffold.js"
+    "framework-reactjs-api-scaffold": "./bin/usecase-scaffold.js",
+    "framework-reactjs-api-check": "./bin/project-check.js"
   },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
