@@ -397,28 +397,71 @@ POST /api/cliente
 Para criar um novo modelo:
 
 1. Crie uma classe que estenda `BaseModel`
-2. Defina a propriedade estática `tableName`
-3. Adicione as propriedades do modelo
-4. Implemente o construtor
+2. Use o decorador `@Entity` para definir o nome da tabela
+3. Use `@Id()` para a primary key
+4. Use `@Column` para cada campo com suas opções
+5. Implemente o construtor
+
+> **⚠️ IMPORTANTE**: Os modelos DEVEM usar decorators (`@Entity`, `@Column`, `@Id`) para que o schema-sync funcione corretamente!
 
 ```typescript
-import { BaseModel } from 'framework-reactjs-api';
+import { BaseModel, Entity, Column, Id } from 'framework-reactjs-api';
 
+@Entity('produtos')  // Define o nome da tabela
 export class ProdutoModel extends BaseModel {
-  static tableName = 'produtos';
-  
-  nome: string;
-  descricao: string;
-  preco: number;
-  estoque: number;
-  categoriaId: number;
+  @Id()  // Primary key auto-incremento
+  id!: number;
+
+  @Column({
+    type: 'VARCHAR',
+    nullable: false,
+    length: 255
+  })
+  nome!: string;
+
+  @Column({
+    type: 'TEXT',
+    nullable: true
+  })
+  descricao?: string;
+
+  @Column({
+    type: 'INT',
+    nullable: false,
+    default: 0
+  })
+  preco!: number;
+
+  @Column({
+    type: 'INT',
+    nullable: false,
+    default: 0
+  })
+  estoque!: number;
+
+  @Column({
+    type: 'INT',
+    nullable: true
+  })
+  categoriaId?: number;
   
   constructor(data?: Partial<ProdutoModel>) {
     super();
-    Object.assign(this, data);
+    if (data) {
+      Object.assign(this, data);
+    }
   }
 }
 ```
+
+**Tipos de colunas disponíveis:**
+- `SERIAL` - Auto-incremento (usado para IDs)
+- `VARCHAR` - Texto variável (especificar `length`)
+- `INT` - Número inteiro
+- `BOOLEAN` - Verdadeiro/Falso
+- `TIMESTAMP` - Data e hora
+- `TEXT` - Texto longo
+- `JSONB` - JSON binário (PostgreSQL)
 
 ### Implementação de Repositórios
 

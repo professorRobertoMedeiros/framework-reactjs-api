@@ -152,8 +152,9 @@ async function syncSchema() {
                         continue;
                     }
                     const Model = modelModule[modelName];
-                    const model = new Model();
-                    console.log(`\x1b[32m✓ Modelo ${modelName} carregado com sucesso\x1b[0m`);
+                    // Registrar o modelo no ORM para sincronização
+                    orm.registerModel(Model);
+                    console.log(`\x1b[32m✓ Modelo ${modelName} carregado e registrado com sucesso\x1b[0m`);
                 }
                 catch (error) {
                     console.error(`\x1b[31m✗ Erro ao carregar modelo ${file}:\x1b[0m`, error);
