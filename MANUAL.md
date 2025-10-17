@@ -98,13 +98,17 @@ import { LoggingService } from 'framework-reactjs-api';
 
 LoggingService.info('Criando novo produto', { produtoId: 123 });
 LoggingService.error('Falha na operação', error, { operacao: 'update' });
+LoggingService.warn('Estoque baixo', { produtoId: 123, quantidade: 5 });
+LoggingService.debug('Detalhes da operação', { detalhes: '...' });
 ```
 
 ### 4. Sistema de Rastreamento de Requisições
 
 ```typescript
-// Ativar rastreamento
-import { TracingMiddleware } from 'framework-reactjs-api';
+// Importação dos serviços de rastreamento
+import { TracingMiddleware, TracingService, LoggingService } from 'framework-reactjs-api';
+
+// Ativar rastreamento como middleware global (deve ser um dos primeiros middlewares)
 app.use(TracingMiddleware.addRequestId());
 
 // Logs incluem ID de rastreamento automaticamente

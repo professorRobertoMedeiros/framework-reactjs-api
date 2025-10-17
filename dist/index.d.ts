@@ -11,6 +11,9 @@ export { BaseService, ServiceResponse, PaginatedResponse, QueryOptions } from '.
 export { BaseBusiness } from './core/business/BaseBusiness';
 export { AuthMiddleware } from './core/auth/AuthMiddleware';
 export { AuthService } from './core/auth/AuthService';
+export { TracingService } from './core/tracing/TracingService';
+export { TracingMiddleware } from './core/tracing/TracingMiddleware';
+export { LoggingService } from './core/tracing/LoggingService';
 export { default as authRoutes } from './routes/auth';
 export { setupFramework, createFrameworkRouter, FrameworkOptions } from './core/setup/FrameworkSetup';
 export { CustomORM, initializeORM } from './infra/db/CustomORM';

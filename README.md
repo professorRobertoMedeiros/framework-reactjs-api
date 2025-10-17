@@ -37,6 +37,9 @@ app.listen(3000);
 ### 📊 Sistema de Rastreamento
 
 ```typescript
+// Importação dos serviços
+import { TracingMiddleware, LoggingService } from 'framework-reactjs-api';
+
 // Middleware para adicionar ID único a cada requisição
 app.use(TracingMiddleware.addRequestId());
 

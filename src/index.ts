@@ -32,6 +32,11 @@ export { BaseBusiness } from './core/business/BaseBusiness';
 export { AuthMiddleware } from './core/auth/AuthMiddleware';
 export { AuthService } from './core/auth/AuthService';
 
+// Sistema de Rastreamento
+export { TracingService } from './core/tracing/TracingService';
+export { TracingMiddleware } from './core/tracing/TracingMiddleware';
+export { LoggingService } from './core/tracing/LoggingService';
+
 // Rotas prontas para uso
 export { default as authRoutes } from './routes/auth';
 

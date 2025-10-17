@@ -10,7 +10,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserRepository = exports.UserService = exports.UserBusiness = exports.scaffoldUseCase = exports.syncSchema = exports.runMigration = exports.BaseRepository = exports.HTTPLoggerMiddleware = exports.LogType = exports.LogLevel = exports.logger = exports.Logger = exports.Operator = exports.QueryBuilder = exports.initializeORM = exports.CustomORM = exports.createFrameworkRouter = exports.setupFramework = exports.authRoutes = exports.AuthService = exports.AuthMiddleware = exports.BaseBusiness = exports.BaseService = exports.UserModel = exports.Id5 = exports.Column5 = exports.BusinessIndex = exports.UniqueIndex = exports.Id = exports.Column = exports.Entity = exports.BaseModel = void 0;
+exports.UserRepository = exports.UserService = exports.UserBusiness = exports.scaffoldUseCase = exports.syncSchema = exports.runMigration = exports.BaseRepository = exports.HTTPLoggerMiddleware = exports.LogType = exports.LogLevel = exports.logger = exports.Logger = exports.Operator = exports.QueryBuilder = exports.initializeORM = exports.CustomORM = exports.createFrameworkRouter = exports.setupFramework = exports.authRoutes = exports.LoggingService = exports.TracingMiddleware = exports.TracingService = exports.AuthService = exports.AuthMiddleware = exports.BaseBusiness = exports.BaseService = exports.UserModel = exports.Id5 = exports.Column5 = exports.BusinessIndex = exports.UniqueIndex = exports.Id = exports.Column = exports.Entity = exports.BaseModel = void 0;
 // Core
 var BaseModel_1 = require("./core/domain/models/BaseModel");
 Object.defineProperty(exports, "BaseModel", { enumerable: true, get: function () { return BaseModel_1.BaseModel; } });
@@ -37,6 +37,13 @@ var AuthMiddleware_1 = require("./core/auth/AuthMiddleware");
 Object.defineProperty(exports, "AuthMiddleware", { enumerable: true, get: function () { return AuthMiddleware_1.AuthMiddleware; } });
 var AuthService_1 = require("./core/auth/AuthService");
 Object.defineProperty(exports, "AuthService", { enumerable: true, get: function () { return AuthService_1.AuthService; } });
+// Sistema de Rastreamento
+var TracingService_1 = require("./core/tracing/TracingService");
+Object.defineProperty(exports, "TracingService", { enumerable: true, get: function () { return TracingService_1.TracingService; } });
+var TracingMiddleware_1 = require("./core/tracing/TracingMiddleware");
+Object.defineProperty(exports, "TracingMiddleware", { enumerable: true, get: function () { return TracingMiddleware_1.TracingMiddleware; } });
+var LoggingService_1 = require("./core/tracing/LoggingService");
+Object.defineProperty(exports, "LoggingService", { enumerable: true, get: function () { return LoggingService_1.LoggingService; } });
 // Rotas prontas para uso
 var auth_1 = require("./routes/auth");
 Object.defineProperty(exports, "authRoutes", { enumerable: true, get: function () { return __importDefault(auth_1).default; } });
