@@ -517,8 +517,54 @@ npx framework-reactjs-api-migrate
 
 Para sincronizar o esquema do banco de dados com os modelos:
 
+> **⚠️ IMPORTANTE**: Os modelos devem estar compilados antes de executar o schema-sync!
+
 ```bash
+# 1. Primeiro, compile seu projeto
+npm run build
+
+# 2. Depois, execute a sincronização
 npx framework-reactjs-api-sync
+```
+
+**Por que preciso compilar?**
+
+O comando `schema-sync` carrega os modelos dinamicamente para analisar sua estrutura e criar/atualizar as tabelas no banco de dados. Como o Node.js não executa TypeScript diretamente, os arquivos `.ts` precisam ser compilados para `.js` primeiro.
+
+**Fluxo recomendado:**
+
+```bash
+# Desenvolvimento: compilar e sincronizar
+npm run build && npx framework-reactjs-api-sync
+
+# Ou adicione um script no package.json:
+{
+  "scripts": {
+    "db:sync": "npm run build && npx framework-reactjs-api-sync"
+  }
+}
+
+# Execute com:
+npm run db:sync
+```
+
+**Estrutura esperada após compilação:**
+
+```
+dist/
+└── models/              # Modelos compilados (.js)
+    ├── ClienteModel.js
+    ├── ProductModel.js
+    └── ...
+
+# OU (dependendo da estrutura do projeto)
+
+dist/
+└── core/
+    └── domain/
+        └── models/      # Modelos compilados (.js)
+            ├── ClienteModel.js
+            └── ...
 ```
 
 ### Scaffolding de Use Cases
