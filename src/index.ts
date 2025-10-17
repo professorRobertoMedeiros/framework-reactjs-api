@@ -33,6 +33,9 @@ export { BaseBusiness } from './core/business/BaseBusiness';
 export { AuthMiddleware } from './core/auth/AuthMiddleware';
 export { AuthService } from './core/auth/AuthService';
 
+// Rotas prontas para uso
+export { default as authRoutes } from './routes/auth';
+
 // Infraestrutura
 export { CustomORM, initializeORM } from './infra/db/CustomORM';
 export { QueryBuilder, Operator } from './infra/db/query/QueryBuilder';

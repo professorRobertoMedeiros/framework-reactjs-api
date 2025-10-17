@@ -23,4 +23,10 @@ export declare class UserRepository extends BaseRepository<UserModel> {
         includes?: string[];
         orderBy?: string;
     }): Promise<UserModel[]>;
+    /**
+     * Buscar usuário por email
+     * @param email Email do usuário
+     * @returns Usuário encontrado ou null
+     */
+    findByEmail(email: string): Promise<UserModel | null>;
 }

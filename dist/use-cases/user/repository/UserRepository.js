@@ -29,6 +29,15 @@ class UserRepository extends BaseRepository_1.BaseRepository {
     async findByConditions(conditions, options) {
         return this.findBy(conditions, options);
     }
+    /**
+     * Buscar usuário por email
+     * @param email Email do usuário
+     * @returns Usuário encontrado ou null
+     */
+    async findByEmail(email) {
+        const users = await this.findBy({ email }, { limit: 1 });
+        return users.length > 0 ? users[0] : null;
+    }
 }
 exports.UserRepository = UserRepository;
 //# sourceMappingURL=UserRepository.js.map

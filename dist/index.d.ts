@@ -12,6 +12,7 @@ export { BaseService, ServiceResponse, PaginatedResponse, QueryOptions } from '.
 export { BaseBusiness } from './core/business/BaseBusiness';
 export { AuthMiddleware } from './core/auth/AuthMiddleware';
 export { AuthService } from './core/auth/AuthService';
+export { default as authRoutes } from './routes/auth';
 export { CustomORM, initializeORM } from './infra/db/CustomORM';
 export { QueryBuilder, Operator } from './infra/db/query/QueryBuilder';
 export { BaseRepository, IRepository, PaginationOptions, PaginatedResult } from './infra/repository/BaseRepository';

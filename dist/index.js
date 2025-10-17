@@ -6,8 +6,11 @@
  * exportando todas as classes, interfaces e funções que podem ser
  * usadas por projetos que implementam este framework como dependência.
  */
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserRepository = exports.UserService = exports.UserBusiness = exports.scaffoldUseCase = exports.syncSchema = exports.runMigration = exports.BaseRepository = exports.Operator = exports.QueryBuilder = exports.initializeORM = exports.CustomORM = exports.AuthService = exports.AuthMiddleware = exports.BaseBusiness = exports.BaseService = exports.ProductModel = exports.UserModel = exports.Id5 = exports.Column5 = exports.BusinessIndex = exports.UniqueIndex = exports.Id = exports.Column = exports.Entity = exports.BaseModel = void 0;
+exports.UserRepository = exports.UserService = exports.UserBusiness = exports.scaffoldUseCase = exports.syncSchema = exports.runMigration = exports.BaseRepository = exports.Operator = exports.QueryBuilder = exports.initializeORM = exports.CustomORM = exports.authRoutes = exports.AuthService = exports.AuthMiddleware = exports.BaseBusiness = exports.BaseService = exports.ProductModel = exports.UserModel = exports.Id5 = exports.Column5 = exports.BusinessIndex = exports.UniqueIndex = exports.Id = exports.Column = exports.Entity = exports.BaseModel = void 0;
 // Core
 var BaseModel_1 = require("./core/domain/models/BaseModel");
 Object.defineProperty(exports, "BaseModel", { enumerable: true, get: function () { return BaseModel_1.BaseModel; } });
@@ -36,6 +39,9 @@ var AuthMiddleware_1 = require("./core/auth/AuthMiddleware");
 Object.defineProperty(exports, "AuthMiddleware", { enumerable: true, get: function () { return AuthMiddleware_1.AuthMiddleware; } });
 var AuthService_1 = require("./core/auth/AuthService");
 Object.defineProperty(exports, "AuthService", { enumerable: true, get: function () { return AuthService_1.AuthService; } });
+// Rotas prontas para uso
+var auth_1 = require("./routes/auth");
+Object.defineProperty(exports, "authRoutes", { enumerable: true, get: function () { return __importDefault(auth_1).default; } });
 // Infraestrutura
 var CustomORM_1 = require("./infra/db/CustomORM");
 Object.defineProperty(exports, "CustomORM", { enumerable: true, get: function () { return CustomORM_1.CustomORM; } });

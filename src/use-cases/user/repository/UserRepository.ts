@@ -32,4 +32,14 @@ export class UserRepository extends BaseRepository<UserModel> {
   ): Promise<UserModel[]> {
     return this.findBy(conditions, options);
   }
+
+  /**
+   * Buscar usuário por email
+   * @param email Email do usuário
+   * @returns Usuário encontrado ou null
+   */
+  async findByEmail(email: string): Promise<UserModel | null> {
+    const users = await this.findBy({ email }, { limit: 1 });
+    return users.length > 0 ? users[0] : null;
+  }
 }

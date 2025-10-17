@@ -333,17 +333,24 @@ export class ${modelName}Service extends BaseService<${modelName}Model, ${modelN
 }
 // Modelo para criar arquivo de rotas
 function generateRoutesTemplate(modelName) {
+    const insideFramework = isInsideFramework();
+    // Ajustar import do AuthMiddleware baseado no contexto
+    const authImport = insideFramework
+        ? `import { AuthMiddleware } from '../../core/auth/AuthMiddleware';`
+        : `import { AuthMiddleware } from 'framework-reactjs-api';`;
     return `import { Router, Request, Response } from 'express';
 import { ${modelName}Service } from '../${modelName}Service';
+${authImport}
 
 const router = Router();
 const service = new ${modelName}Service();
+const authMiddleware = new AuthMiddleware();
 
 /**
  * GET /${modelName.toLowerCase()}
- * Listar todos os registros
+ * Listar todos os registros (PRIVADO - Requer autenticação)
  */
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', authMiddleware.authenticate(), async (req: Request, res: Response) => {
   const { limit, offset, orderBy, ...conditions } = req.query;
   
   const result = await service.findAll({
@@ -359,9 +366,9 @@ router.get('/', async (req: Request, res: Response) => {
 
 /**
  * GET /${modelName.toLowerCase()}/:id
- * Buscar registro por ID
+ * Buscar registro por ID (PRIVADO - Requer autenticação)
  */
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', authMiddleware.authenticate(), async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   
   const result = await service.findById(id);
@@ -371,9 +378,9 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 /**
  * POST /${modelName.toLowerCase()}
- * Criar novo registro
+ * Criar novo registro (PRIVADO - Requer autenticação)
  */
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', authMiddleware.authenticate(), async (req: Request, res: Response) => {
   const result = await service.create(req.body);
   
   return res.status(result.status).json(result);
@@ -381,9 +388,9 @@ router.post('/', async (req: Request, res: Response) => {
 
 /**
  * PUT /${modelName.toLowerCase()}/:id
- * Atualizar registro existente
+ * Atualizar registro existente (PRIVADO - Requer autenticação)
  */
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', authMiddleware.authenticate(), async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   
   const result = await service.update(id, req.body);
@@ -393,9 +400,9 @@ router.put('/:id', async (req: Request, res: Response) => {
 
 /**
  * DELETE /${modelName.toLowerCase()}/:id
- * Deletar registro
+ * Deletar registro (PRIVADO - Requer autenticação)
  */
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', authMiddleware.authenticate(), async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   
   const result = await service.delete(id);
@@ -405,9 +412,9 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
 /**
  * GET /${modelName.toLowerCase()}/count
- * Contar registros
+ * Contar registros (PRIVADO - Requer autenticação)
  */
-router.get('/count', async (req: Request, res: Response) => {
+router.get('/count', authMiddleware.authenticate(), async (req: Request, res: Response) => {
   const result = await service.count(req.query as Record<string, any>);
   
   return res.status(result.status).json(result);
@@ -420,16 +427,29 @@ export default router;
  * 
  * import express from 'express';
  * import ${modelName.toLowerCase()}Router from './use-cases/${modelName.toLowerCase()}/routes/${modelName}Routes';
+ * import authRouter from 'framework-reactjs-api/routes/auth';  // Rota de login do framework
  * 
  * const app = express();
  * app.use(express.json());
  * 
- * // Registrar as rotas
+ * // Rota de autenticação (pública)
+ * app.use('/api/auth', authRouter);
+ * 
+ * // Rotas protegidas
  * app.use('/api/${modelName.toLowerCase()}', ${modelName.toLowerCase()}Router);
  * 
  * app.listen(3000, () => {
  *   console.log('Servidor rodando na porta 3000');
  * });
+ * 
+ * // Para fazer login:
+ * // POST /api/auth/login
+ * // Body: { "email": "user@example.com", "password": "senha123" }
+ * // Retorna: { "success": true, "token": "jwt-token-aqui", "user": {...} }
+ * 
+ * // Para acessar rotas protegidas:
+ * // GET /api/${modelName.toLowerCase()}
+ * // Headers: { "Authorization": "Bearer jwt-token-aqui" }
  */`;
 }
 // Função principal para criar scaffolding
