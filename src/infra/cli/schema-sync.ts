@@ -38,18 +38,33 @@ export async function syncSchema() {
     // Inicializar ORM
     const orm = initializeORM();
     
-    // Tentar encontrar diretório de modelos (diferentes estruturas possíveis)
+    // Tentar encontrar diretório de modelos COMPILADOS (diferentes estruturas possíveis)
+    // Prioriza arquivos .js (compilados) em dist/
     const possibleModelsPaths = [
+      // Primeiro: tentar diretórios compilados (dist/)
+      path.join(process.cwd(), 'dist', 'core', 'domain', 'models'),
+      path.join(process.cwd(), 'dist', 'models'),
+      path.join(process.cwd(), 'dist', 'src', 'models'),
+      path.join(process.cwd(), 'dist', 'src', 'core', 'domain', 'models'),
+      // Depois: tentar diretórios de código-fonte (src/) - apenas para desenvolvimento
       path.join(process.cwd(), 'src', 'core', 'domain', 'models'),
       path.join(process.cwd(), 'src', 'models'),
       path.join(process.cwd(), 'models')
     ];
     
     // Usar o primeiro diretório de modelos que existir
-    const modelsDir = possibleModelsPaths.find(dir => fs.existsSync(dir));
+    let modelsDir = possibleModelsPaths.find(dir => fs.existsSync(dir));
     
     if (!modelsDir) {
-      console.error('\x1b[31mErro: Diretório de modelos não encontrado. Verifique sua estrutura de projeto.\x1b[0m');
+      console.error('\x1b[31m❌ Erro: Diretório de modelos não encontrado.\x1b[0m');
+      console.log('\x1b[33m\nEstrutura esperada:\x1b[0m');
+      console.log('  • \x1b[36mdist/models/\x1b[0m (após compilar com npm run build)');
+      console.log('  • \x1b[36mdist/core/domain/models/\x1b[0m');
+      console.log('  • \x1b[36msrc/models/\x1b[0m (apenas desenvolvimento)');
+      console.log('\n\x1b[33mVerifique:\x1b[0m');
+      console.log('  1. O projeto foi compilado? Execute: \x1b[32mnpm run build\x1b[0m');
+      console.log('  2. O tsconfig.json tem \x1b[32m"outDir": "./dist"\x1b[0m configurado?');
+      console.log('  3. Os modelos estão em src/models/ ou src/core/domain/models/?');
       process.exit(1);
     }
     
