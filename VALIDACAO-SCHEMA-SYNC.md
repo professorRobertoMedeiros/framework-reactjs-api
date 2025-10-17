@@ -54,15 +54,14 @@ SyntaxError: Invalid or unexpected token
 **Setup**:
 ```bash
 # Criar projeto
-mkdir projeto-teste-sync
-cd projeto-teste-sync
+mkdir projeto-teste-final
+cd projeto-teste-final
 npm init -y
-npm install framework-reactjs-api
+npm install /workspaces/framework-reactjs-api
 npm install -D typescript @types/node
 
-# Criar modelo TypeScript
-mkdir -p src/models
-# ... criar ClienteTesteModel.ts
+# Configurar tsconfig.json com outDir: "./dist"
+# Criar modelo TypeScript em src/models/ClienteNovoModel.ts
 ```
 
 **Execução** (sem compilar):
@@ -70,11 +69,13 @@ mkdir -p src/models
 npx framework-reactjs-api-sync
 ```
 
-**Resultado esperado**: ✅ PASSOU
+**Resultado**: ✅ PASSOU
 ```
+=== Framework TypeScript DDD - Sincronização de Esquema ===
+Carregando modelos de /workspaces/projeto-teste-final/src/models...
 ❌ Erro: Nenhum modelo compilado (.js) encontrado!
 ⚠️  Modelos TypeScript (.ts) encontrados em:
-   /workspaces/projeto-teste-sync/src/models
+   /workspaces/projeto-teste-final/src/models
 ⚠️  O Node.js não pode executar arquivos TypeScript diretamente.
 
 📋 SOLUÇÃO - Execute estes comandos:
@@ -90,45 +91,115 @@ npm run build
 npx framework-reactjs-api-sync
 ```
 
-**Resultado esperado**: ✅ PASSOU
+**Resultado**: ✅ PASSOU
 ```
 === Framework TypeScript DDD - Sincronização de Esquema ===
-Carregando modelos de /workspaces/projeto-teste-sync/dist/models...
-Carregando modelo: ClienteTesteModel.js
-✓ Modelo ClienteTesteModel carregado com sucesso
+Carregando modelos de /workspaces/projeto-teste-final/dist/models...
+Carregando modelo: ClienteNovoModel.js
+✓ Modelo ClienteNovoModel carregado com sucesso
+Sincronizando esquema...
+Iniciando sincronização do esquema...
+Sincronização de esquema concluída com sucesso!
+Esquema sincronizado com sucesso!
+✅ Esquema sincronizado com sucesso!
+```
+
+**OBSERVAÇÃO CRÍTICA**: Note que após a compilação, o schema-sync agora carrega de `dist/models/` (não mais `src/models/`).
+
+### Teste 3: Comando único (build && sync)
+
+**Execução**:
+```bash
+# Limpar dist/ e executar comando completo
+rm -rf dist/
+npm run build && npx framework-reactjs-api-sync
+```
+
+**Resultado**: ✅ PASSOU
+```
+> projeto-teste-final@1.0.0 build
+> tsc
+
+Sincronizando esquema do banco de dados no diretório: /workspaces/projeto-teste-final
+=== Framework TypeScript DDD - Sincronização de Esquema ===
+Carregando modelos de /workspaces/projeto-teste-final/dist/models...
+Carregando modelo: ClienteNovoModel.js
+✓ Modelo ClienteNovoModel carregado com sucesso
 Sincronizando esquema...
 Esquema sincronizado com sucesso!
 ```
 
-### Teste 3: Detecção de dist/models/
+### Teste 4: Verificação de estrutura
 
-**Verificação**:
+**Antes da compilação**:
 ```bash
-ls dist/models/
+ls src/models/
+# ClienteNovoModel.ts
+
+ls dist/models/ 2>/dev/null || echo "dist/ não existe"
+# dist/ não existe
 ```
 
-**Resultado esperado**: ✅ PASSOU
+**Depois da compilação**:
+```bash
+npm run build
+
+ls dist/models/
+# ClienteNovoModel.js
+
+ls src/models/
+# ClienteNovoModel.ts (ainda existe)
 ```
-ClienteTesteModel.js
-```
+
+**Resultado**: ✅ PASSOU - Schema-sync prioriza `dist/models/` mesmo com `src/models/` presente
 
 ## 📊 Resultados
 
 | Cenário | Status | Observações |
 |---------|--------|-------------|
 | Erro sem compilação | ✅ PASSOU | Mensagem clara e instruções |
-| Sincronização após build | ✅ PASSOU | Carrega .js corretamente |
-| Priorização de dist/ | ✅ PASSOU | Procura em dist/ primeiro |
+| Sincronização após build | ✅ PASSOU | Carrega .js de dist/models/ |
+| Comando único (build && sync) | ✅ PASSOU | Funciona perfeitamente |
+| Priorização de dist/ | ✅ PASSOU | **SEMPRE prioriza dist/ sobre src/** |
 | Validação de .js | ✅ PASSOU | Rejeita .ts, aceita apenas .js |
+| Estrutura dual (src + dist) | ✅ PASSOU | Ignora src/ quando dist/ existe com .js |
 
 ## 🎯 Conclusão
 
 A correção foi **100% validada** e agora:
 
 1. ✅ O schema-sync **NUNCA** tenta carregar arquivos `.ts` diretamente
-2. ✅ Mensagens de erro são **claras e instrutivas**
-3. ✅ Prioriza diretórios **compilados** (`dist/`)
-4. ✅ Funciona corretamente em **projetos externos**
+2. ✅ **Procura PRIMEIRO por diretórios com arquivos `.js`** (não apenas por diretórios que existem)
+3. ✅ Mensagens de erro são **claras e instrutivas**
+4. ✅ Prioriza diretórios **compilados** (`dist/`) mesmo quando `src/` existe
+5. ✅ Funciona corretamente em **projetos externos**
+
+## 🔑 Mudança Crítica Implementada
+
+**Antes** (PROBLEMA):
+```typescript
+// Usava o primeiro diretório que EXISTE
+let modelsDir = possibleModelsPaths.find(dir => fs.existsSync(dir));
+// Se src/models/ existe, para ali (mesmo sem .js!)
+```
+
+**Depois** (SOLUÇÃO):
+```typescript
+// Procura o primeiro diretório que CONTÉM arquivos .js
+for (const dir of possibleModelsPaths) {
+  if (fs.existsSync(dir)) {
+    const files = fs.readdirSync(dir);
+    const jsFiles = files.filter(f => f.endsWith('.js') && f.includes('Model'));
+    
+    if (jsFiles.length > 0) {
+      modelsDir = dir;  // Encontrou .js, usa este!
+      break;
+    }
+  }
+}
+```
+
+Isso garante que **mesmo com `src/models/` existindo**, o schema-sync vai usar `dist/models/` se houver arquivos `.js` compilados lá.
 
 ## 📝 Instruções para Usuários Finais
 

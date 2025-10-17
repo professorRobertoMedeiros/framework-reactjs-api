@@ -52,8 +52,28 @@ export async function syncSchema() {
       path.join(process.cwd(), 'models')
     ];
     
-    // Usar o primeiro diretório de modelos que existir
-    let modelsDir = possibleModelsPaths.find(dir => fs.existsSync(dir));
+    // CRÍTICO: Encontrar o primeiro diretório que CONTÉM arquivos .js
+    // (não apenas que existe, mas que tem modelos compilados)
+    let modelsDir: string | undefined;
+    
+    for (const dir of possibleModelsPaths) {
+      if (fs.existsSync(dir)) {
+        const files = fs.readdirSync(dir);
+        const jsFiles = files.filter(f => f.endsWith('.js') && f.includes('Model'));
+        
+        // Se encontrou arquivos .js, este é o diretório correto
+        if (jsFiles.length > 0) {
+          modelsDir = dir;
+          break;
+        }
+      }
+    }
+    
+    // Se não encontrou nenhum diretório com .js, tentar encontrar com .ts
+    // para dar uma mensagem de erro mais clara
+    if (!modelsDir) {
+      modelsDir = possibleModelsPaths.find(dir => fs.existsSync(dir));
+    }
     
     if (!modelsDir) {
       console.error('\x1b[31m❌ Erro: Diretório de modelos não encontrado.\x1b[0m');
