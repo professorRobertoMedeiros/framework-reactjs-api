@@ -10,7 +10,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserRepository = exports.UserService = exports.UserBusiness = exports.scaffoldUseCase = exports.syncSchema = exports.runMigration = exports.BaseRepository = exports.Operator = exports.QueryBuilder = exports.initializeORM = exports.CustomORM = exports.createFrameworkRouter = exports.setupFramework = exports.authRoutes = exports.AuthService = exports.AuthMiddleware = exports.BaseBusiness = exports.BaseService = exports.UserModel = exports.Id5 = exports.Column5 = exports.BusinessIndex = exports.UniqueIndex = exports.Id = exports.Column = exports.Entity = exports.BaseModel = void 0;
+exports.UserRepository = exports.UserService = exports.UserBusiness = exports.scaffoldUseCase = exports.syncSchema = exports.runMigration = exports.BaseRepository = exports.HTTPLoggerMiddleware = exports.LogType = exports.LogLevel = exports.logger = exports.Logger = exports.Operator = exports.QueryBuilder = exports.initializeORM = exports.CustomORM = exports.createFrameworkRouter = exports.setupFramework = exports.authRoutes = exports.AuthService = exports.AuthMiddleware = exports.BaseBusiness = exports.BaseService = exports.UserModel = exports.Id5 = exports.Column5 = exports.BusinessIndex = exports.UniqueIndex = exports.Id = exports.Column = exports.Entity = exports.BaseModel = void 0;
 // Core
 var BaseModel_1 = require("./core/domain/models/BaseModel");
 Object.defineProperty(exports, "BaseModel", { enumerable: true, get: function () { return BaseModel_1.BaseModel; } });
@@ -51,6 +51,14 @@ Object.defineProperty(exports, "initializeORM", { enumerable: true, get: functio
 var QueryBuilder_1 = require("./infra/db/query/QueryBuilder");
 Object.defineProperty(exports, "QueryBuilder", { enumerable: true, get: function () { return QueryBuilder_1.QueryBuilder; } });
 Object.defineProperty(exports, "Operator", { enumerable: true, get: function () { return QueryBuilder_1.Operator; } });
+// Logger
+var Logger_1 = require("./infra/logger/Logger");
+Object.defineProperty(exports, "Logger", { enumerable: true, get: function () { return Logger_1.Logger; } });
+Object.defineProperty(exports, "logger", { enumerable: true, get: function () { return Logger_1.logger; } });
+Object.defineProperty(exports, "LogLevel", { enumerable: true, get: function () { return Logger_1.LogLevel; } });
+Object.defineProperty(exports, "LogType", { enumerable: true, get: function () { return Logger_1.LogType; } });
+var HTTPLoggerMiddleware_1 = require("./infra/logger/HTTPLoggerMiddleware");
+Object.defineProperty(exports, "HTTPLoggerMiddleware", { enumerable: true, get: function () { return HTTPLoggerMiddleware_1.HTTPLoggerMiddleware; } });
 // Repository Base
 var BaseRepository_1 = require("./infra/repository/BaseRepository");
 Object.defineProperty(exports, "BaseRepository", { enumerable: true, get: function () { return BaseRepository_1.BaseRepository; } });

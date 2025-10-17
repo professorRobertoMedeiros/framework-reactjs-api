@@ -7,6 +7,7 @@ exports.setupFramework = setupFramework;
 exports.createFrameworkRouter = createFrameworkRouter;
 const express_1 = require("express");
 const auth_1 = __importDefault(require("../../routes/auth"));
+const HTTPLoggerMiddleware_1 = require("../../infra/logger/HTTPLoggerMiddleware");
 /**
  * Configuração padrão do framework
  */
@@ -14,6 +15,7 @@ const defaultOptions = {
     apiPrefix: '/api',
     enableAuth: true,
     authPath: '/auth',
+    enableHTTPLogging: process.env.LOG_HTTP === 'true',
 };
 /**
  * Inicializa o framework e configura rotas automáticas
@@ -42,6 +44,11 @@ function setupFramework(app, options = {}) {
     // Mesclar opções com padrões
     const config = { ...defaultOptions, ...options };
     console.log('🚀 Inicializando Framework ReactJS API...');
+    // Configurar middleware de logging HTTP (deve vir antes das rotas)
+    if (config.enableHTTPLogging) {
+        app.use(HTTPLoggerMiddleware_1.HTTPLoggerMiddleware.log());
+        console.log('✅ Logging HTTP habilitado');
+    }
     // Configurar rotas de autenticação automaticamente
     if (config.enableAuth) {
         const authRoutePath = `${config.apiPrefix}${config.authPath}`;

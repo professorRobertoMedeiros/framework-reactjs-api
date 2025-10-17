@@ -46,6 +46,10 @@ export {
 export { CustomORM, initializeORM } from './infra/db/CustomORM';
 export { QueryBuilder, Operator } from './infra/db/query/QueryBuilder';
 
+// Logger
+export { Logger, logger, LogLevel, LogType, LogEntry } from './infra/logger/Logger';
+export { HTTPLoggerMiddleware } from './infra/logger/HTTPLoggerMiddleware';
+
 // Repository Base
 export { 
   BaseRepository, 

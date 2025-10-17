@@ -1,5 +1,6 @@
 import { Express, Router } from 'express';
 import authRoutes from '../../routes/auth';
+import { HTTPLoggerMiddleware } from '../../infra/logger/HTTPLoggerMiddleware';
 
 /**
  * Opções de configuração do framework
@@ -21,6 +22,11 @@ export interface FrameworkOptions {
   authPath?: string;
   
   /**
+   * Habilitar logging HTTP (padrão: true se LOG_HTTP=true no .env)
+   */
+  enableHTTPLogging?: boolean;
+  
+  /**
    * Configurações adicionais do banco de dados
    */
   databaseConfig?: {
@@ -39,6 +45,7 @@ const defaultOptions: FrameworkOptions = {
   apiPrefix: '/api',
   enableAuth: true,
   authPath: '/auth',
+  enableHTTPLogging: process.env.LOG_HTTP === 'true',
 };
 
 /**
@@ -69,6 +76,12 @@ export function setupFramework(app: Express, options: FrameworkOptions = {}): vo
   const config = { ...defaultOptions, ...options };
 
   console.log('🚀 Inicializando Framework ReactJS API...');
+
+  // Configurar middleware de logging HTTP (deve vir antes das rotas)
+  if (config.enableHTTPLogging) {
+    app.use(HTTPLoggerMiddleware.log());
+    console.log('✅ Logging HTTP habilitado');
+  }
 
   // Configurar rotas de autenticação automaticamente
   if (config.enableAuth) {

@@ -5,9 +5,18 @@ export declare class CustomORM {
     private static instance;
     private pool;
     private models;
+    private currentUser;
     private constructor();
     static getInstance(): CustomORM;
     registerModel(model: typeof BaseModel): void;
+    setCurrentUser(user: {
+        id: number;
+        email: string;
+    } | null): void;
+    getCurrentUser(): {
+        id: number;
+        email: string;
+    } | null;
     getClient(): Promise<PoolClient>;
     query(text: string, params?: any[]): Promise<any>;
     private createMigrationsTable;

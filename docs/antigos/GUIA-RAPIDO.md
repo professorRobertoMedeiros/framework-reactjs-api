@@ -52,14 +52,54 @@ export default app;
 ### 3. Variáveis de Ambiente (.env)
 
 ```env
+# Banco de dados
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=seu_banco
 DB_USER=postgres
 DB_PASSWORD=sua_senha
+
+# JWT
 JWT_SECRET=sua_chave_secreta_aqui
+
+# Servidor
 PORT=3000
+
+# Logs (opcional)
+LOG_ENABLED=true
+LOG_LEVEL=info
+LOG_SQL=true
+LOG_HTTP=true
 ```
+
+### 4. Sistema de Logs 📊
+
+O framework inclui logging automático de SQL e HTTP com usuário autenticado:
+
+```typescript
+import { setupFramework } from 'framework-reactjs-api';
+
+// Logs HTTP habilitados automaticamente se LOG_HTTP=true
+setupFramework(app, {
+  enableHTTPLogging: true
+});
+```
+
+**Logs gerados automaticamente:**
+- ✅ Queries SQL (SELECT, INSERT, UPDATE, DELETE)
+- ✅ Requisições HTTP (método, URL, status, duração)
+- ✅ Usuário autenticado (quando disponível)
+- ✅ Formato JSON estruturado
+
+**Arquivos de log:**
+```
+logs/
+├── sql-2025-01-17.log    # Queries SQL
+├── http-2025-01-17.log   # Requisições HTTP
+└── error-2025-01-17.log  # Erros
+```
+
+📚 **Documentação completa:** Ver [SISTEMA-LOGS.md](./SISTEMA-LOGS.md)
 
 ## 🏗️ Criar Use Case Completo
 
@@ -519,6 +559,8 @@ npm run dev
 
 - **Repositório:** https://github.com/professorRobertoMedeiros/framework-reactjs-api
 - **Documentação Completa:** Ver README.md
+- **Sistema de Logs:** Ver SISTEMA-LOGS.md
+- **Autenticação JWT:** Ver GUIA-AUTENTICACAO-JWT.md
 - **Exemplos:** Ver pasta `/examples`
 
 ---

@@ -1,5 +1,6 @@
 import { Pool, PoolClient } from 'pg';
 import { BaseModel, ENTITY_META_KEY, COLUMN_META_KEY, INDEX_META_KEY, BUSINESS_INDEX_META_KEY, ColumnOptions, IndexOptions } from '../../core/domain/models/BaseModel';
+import { logger } from '../logger/Logger';
 import * as fs from 'fs';
 import * as path from 'path';
 import 'dotenv/config';
@@ -9,6 +10,7 @@ export class CustomORM {
   private static instance: CustomORM;
   private pool: Pool;
   private models: (typeof BaseModel)[] = [];
+  private currentUser: { id: number; email: string } | null = null;
 
   private constructor() {
     this.pool = new Pool({
@@ -45,19 +47,38 @@ export class CustomORM {
     this.models.push(model);
   }
 
+  // Definir usuário atual para logs
+  public setCurrentUser(user: { id: number; email: string } | null): void {
+    this.currentUser = user;
+  }
+
+  // Obter usuário atual
+  public getCurrentUser(): { id: number; email: string } | null {
+    return this.currentUser;
+  }
+
   // Obter cliente de conexão
   public async getClient(): Promise<PoolClient> {
     return await this.pool.connect();
   }
 
-  // Executar consulta SQL
+  // Executar consulta SQL com logging
   public async query(text: string, params: any[] = []): Promise<any> {
     const client = await this.getClient();
+    const startTime = Date.now();
+    
     try {
       const result = await client.query(text, params);
+      const duration = Date.now() - startTime;
+      
+      // Log da query SQL
+      logger.logSQL(text, params, duration, this.currentUser);
+      
       return result;
     } catch (error) {
-      console.error('Erro ao executar query:', error);
+      const duration = Date.now() - startTime;
+      logger.logSQL(text, params, duration, this.currentUser);
+      logger.error('Erro ao executar query', error as Error, this.currentUser);
       throw error;
     } finally {
       client.release();

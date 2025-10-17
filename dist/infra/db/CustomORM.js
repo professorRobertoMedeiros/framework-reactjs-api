@@ -36,6 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CustomORM = void 0;
 exports.initializeORM = initializeORM;
 const pg_1 = require("pg");
+const Logger_1 = require("../logger/Logger");
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 require("dotenv/config");
@@ -43,6 +44,7 @@ require("dotenv/config");
 class CustomORM {
     constructor() {
         this.models = [];
+        this.currentUser = null;
         this.pool = new pg_1.Pool({
             host: process.env.DB_HOST || 'localhost',
             port: parseInt(process.env.DB_PORT || '5432'),
@@ -72,19 +74,33 @@ class CustomORM {
     registerModel(model) {
         this.models.push(model);
     }
+    // Definir usuário atual para logs
+    setCurrentUser(user) {
+        this.currentUser = user;
+    }
+    // Obter usuário atual
+    getCurrentUser() {
+        return this.currentUser;
+    }
     // Obter cliente de conexão
     async getClient() {
         return await this.pool.connect();
     }
-    // Executar consulta SQL
+    // Executar consulta SQL com logging
     async query(text, params = []) {
         const client = await this.getClient();
+        const startTime = Date.now();
         try {
             const result = await client.query(text, params);
+            const duration = Date.now() - startTime;
+            // Log da query SQL
+            Logger_1.logger.logSQL(text, params, duration, this.currentUser);
             return result;
         }
         catch (error) {
-            console.error('Erro ao executar query:', error);
+            const duration = Date.now() - startTime;
+            Logger_1.logger.logSQL(text, params, duration, this.currentUser);
+            Logger_1.logger.error('Erro ao executar query', error, this.currentUser);
             throw error;
         }
         finally {

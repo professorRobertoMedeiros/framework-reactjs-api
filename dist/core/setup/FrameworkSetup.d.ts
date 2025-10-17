@@ -16,6 +16,10 @@ export interface FrameworkOptions {
      */
     authPath?: string;
     /**
+     * Habilitar logging HTTP (padrão: true se LOG_HTTP=true no .env)
+     */
+    enableHTTPLogging?: boolean;
+    /**
      * Configurações adicionais do banco de dados
      */
     databaseConfig?: {

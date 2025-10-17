@@ -1,5 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { generateRoutesTemplate } from './routes-template';
+import { isInsideFramework } from './utils';
 
 // Interface para representar uma propriedade do modelo
 interface ModelProperty {
@@ -10,22 +12,12 @@ interface ModelProperty {
   isTimestamp: boolean;
 }
 
-// Detectar se estamos dentro do framework ou em um projeto externo
-function isInsideFramework(): boolean {
-  const packageJsonPath = path.join(process.cwd(), 'package.json');
-  if (fs.existsSync(packageJsonPath)) {
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-    return packageJson.name === 'framework-reactjs-api';
-  }
-  return false;
-}
-
 // Função para analisar arquivo do modelo e extrair propriedades
 function analyzeModelFile(modelName: string): ModelProperty[] {
   const possiblePaths = [
-    path.join(process.cwd(), 'src', 'core', 'domain', 'models', `${modelName}Model.ts`),
-    path.join(process.cwd(), 'src', 'models', `${modelName}Model.ts`),
-    path.join(process.cwd(), 'models', `${modelName}Model.ts`)
+    path.join(process.cwd(), 'src', 'core', 'domain', 'models', modelName + 'Model.ts'),
+    path.join(process.cwd(), 'src', 'models', modelName + 'Model.ts'),
+    path.join(process.cwd(), 'models', modelName + 'Model.ts')
   ];
 
   let modelPath = '';
@@ -37,9 +29,9 @@ function analyzeModelFile(modelName: string): ModelProperty[] {
   }
 
   if (!modelPath) {
-    console.log(`⚠️  Aviso: Modelo ${modelName}Model.ts não encontrado. Arquivos Dom serão gerados vazios.`);
+    console.log("⚠️  Aviso: Modelo " + modelName + "Model.ts não encontrado. Arquivos Dom serão gerados vazios.");
     console.log('Caminhos verificados:');
-    possiblePaths.forEach(p => console.log(`- ${path.relative(process.cwd(), p)}`));
+    possiblePaths.forEach(p => console.log("- " + path.relative(process.cwd(), p)));
     return [];
   }
 
@@ -65,7 +57,7 @@ function analyzeModelFile(modelName: string): ModelProperty[] {
   } else if (classMatch3) {
     classContent = classMatch3[1];
   } else {
-    console.log(`⚠️  Aviso: Não foi possível analisar a estrutura da classe ${modelName}Model.`);
+    console.log("⚠️  Aviso: Não foi possível analisar a estrutura da classe " + modelName + "Model.");
     console.log('Certifique-se de que a classe estende BaseModel e segue o padrão esperado.');
     return [];
   }
@@ -98,7 +90,7 @@ function analyzeModelFile(modelName: string): ModelProperty[] {
     });
   }
 
-  console.log(`✅ Analisado ${modelName}Model: ${properties.length} propriedades encontradas`);
+  console.log("✅ Analisado " + modelName + "Model: " + properties.length + " propriedades encontradas");
   return properties;
 }
 
@@ -129,48 +121,45 @@ function generateRepositoryTemplate(modelName: string): string {
   
   // Ajustar imports baseado no contexto
   const baseRepositoryImport = insideFramework 
-    ? `import { BaseRepository } from '../../../infra/repository/BaseRepository';`
-    : `import { BaseRepository } from 'framework-reactjs-api';`;
+    ? "import { BaseRepository } from '../../../infra/repository/BaseRepository';"
+    : "import { BaseRepository } from 'framework-reactjs-api';";
   
   const modelImport = insideFramework
-    ? `import { ${modelName}Model } from '../../../core/domain/models/${modelName}Model';`
-    : `import { ${modelName}Model } from '@/models/${modelName}Model';`;
+    ? "import { " + modelName + "Model } from '../../../core/domain/models/" + modelName + "Model';"
+    : "import { " + modelName + "Model } from '@/models/" + modelName + "Model';";
 
-  return `${baseRepositoryImport}
-${modelImport}
-
-/**
- * Repositório para ${modelName}
- * Estende BaseRepository para operações CRUD básicas
- */
-export class ${modelName}Repository extends BaseRepository<${modelName}Model> {
-  constructor() {
-    super(${modelName}Model);
-  }
-
-  /**
-   * Mapear dados do banco para o modelo ${modelName}
-   * @param data Dados brutos do banco de dados
-   * @returns Instância do modelo ${modelName}
-   */
-  protected mapToModel(data: any): ${modelName}Model {
-    const item = new ${modelName}Model();
-    Object.assign(item, data);
-    return item;
-  }
-
-  /**
-   * Buscar por condições customizadas
-   * @param conditions Condições de busca
-   * @param options Opções adicionais
-   */
-  async findByConditions(
-    conditions: Record<string, any>,
-    options?: { limit?: number; offset?: number; includes?: string[]; orderBy?: string }
-  ): Promise<${modelName}Model[]> {
-    return this.findBy(conditions, options);
-  }
-}`;
+  return baseRepositoryImport + "\n" +
+modelImport + "\n\n" +
+"/**\n" +
+" * Repositório para " + modelName + "\n" +
+" * Estende BaseRepository para operações CRUD básicas\n" +
+" */\n" +
+"export class " + modelName + "Repository extends BaseRepository<" + modelName + "Model> {\n" +
+"  constructor() {\n" +
+"    super(" + modelName + "Model);\n" +
+"  }\n\n" +
+"  /**\n" +
+"   * Mapear dados do banco para o modelo " + modelName + "\n" +
+"   * @param data Dados brutos do banco de dados\n" +
+"   * @returns Instância do modelo " + modelName + "\n" +
+"   */\n" +
+"  protected mapToModel(data: any): " + modelName + "Model {\n" +
+"    const item = new " + modelName + "Model();\n" +
+"    Object.assign(item, data);\n" +
+"    return item;\n" +
+"  }\n\n" +
+"  /**\n" +
+"   * Buscar por condições customizadas\n" +
+"   * @param conditions Condições de busca\n" +
+"   * @param options Opções adicionais\n" +
+"   */\n" +
+"  async findByConditions(\n" +
+"    conditions: Record<string, any>,\n" +
+"    options?: { limit?: number; offset?: number; includes?: string[]; orderBy?: string }\n" +
+"  ): Promise<" + modelName + "Model[]> {\n" +
+"    return this.findBy(conditions, options);\n" +
+"  }\n" +
+"}";
 }
 
 // Modelo para criar business
@@ -180,77 +169,72 @@ function generateBusinessTemplate(modelName: string): string {
   
   // Gerar mapeamento de propriedades para toDom
   const toDomProperties = properties
-    .map(p => `      ${p.name}: model.${p.name},`)
+    .map(p => "      " + p.name + ": model." + p.name + ",")
     .join('\n');
 
   // Ajustar imports baseado no contexto
   const baseBusinessImport = insideFramework 
-    ? `import { BaseBusiness } from '../../core/business/BaseBusiness';`
-    : `import { BaseBusiness } from 'framework-reactjs-api';`;
+    ? "import { BaseBusiness } from '../../core/business/BaseBusiness';"
+    : "import { BaseBusiness } from 'framework-reactjs-api';";
   
   const modelImport = insideFramework
-    ? `import { ${modelName}Model } from '../../core/domain/models/${modelName}Model';`
-    : `import { ${modelName}Model } from '@/models/${modelName}Model';`;
+    ? "import { " + modelName + "Model } from '../../core/domain/models/" + modelName + "Model';"
+    : "import { " + modelName + "Model } from '@/models/" + modelName + "Model';";
 
-  return `${baseBusinessImport}
-${modelImport}
-import { ${modelName}Repository } from './repository/${modelName}Repository';
-import { ${modelName}Dom } from './domains/${modelName}Dom';
-
-/**
- * Business para ${modelName}
- * Herda de BaseBusiness e delega operações CRUD para o Repository
- * Adicione aqui apenas regras de negócio específicas
- */
-export class ${modelName}Business extends BaseBusiness<${modelName}Model, ${modelName}Dom> {
-  constructor() {
-    const repository = new ${modelName}Repository();
-    super(repository);
-  }
-
-  /**
-   * Converter modelo para Dom (DTO)
-   * @param model Modelo do ${modelName}
-   * @returns Dom do ${modelName}
-   */
-  protected toDom(model: ${modelName}Model): ${modelName}Dom {
-    return {
-${toDomProperties || '      id: model.id,\n      // TODO: Mapear outras propriedades do modelo para o Dom aqui'}
-    };
-  }
-
-  /**
-   * Converter dados de criação para modelo (opcional - sobrescrever se necessário)
-   * @param data Dados de entrada
-   * @returns Dados formatados para o modelo
-   */
-  protected fromCreateData(data: any): Omit<${modelName}Model, 'id'> {
-    // TODO: Adicione validações e transformações de negócio aqui
-    // Exemplo:
-    // if (!data.name || data.name.trim().length === 0) {
-    //   throw new Error('Nome é obrigatório');
-    // }
-    
-    return data as Omit<${modelName}Model, 'id'>;
-  }
-
-  // Os métodos CRUD (findById, findAll, findBy, create, update, delete, count) 
-  // são herdados de BaseBusiness e delegam para o Repository
-  // Não é necessário reimplementá-los
-
-  // Adicione aqui apenas métodos de negócio específicos:
-  
-  /**
-   * Exemplo de método de negócio específico
-   * Descomente e adapte conforme necessário
-   */
-  /*
-  async findByCustomField(value: string): Promise<${modelName}Dom | null> {
-    const results = await this.findBy({ custom_field: value });
-    return results.length > 0 ? results[0] : null;
-  }
-  */
-}`;
+  return baseBusinessImport + "\n" +
+modelImport + "\n" +
+"import { " + modelName + "Repository } from './repository/" + modelName + "Repository';\n" +
+"import { " + modelName + "Dom } from './domains/" + modelName + "Dom';\n\n" +
+"/**\n" +
+" * Business para " + modelName + "\n" +
+" * Herda de BaseBusiness e delega operações CRUD para o Repository\n" +
+" * Adicione aqui apenas regras de negócio específicas\n" +
+" */\n" +
+"export class " + modelName + "Business extends BaseBusiness<" + modelName + "Model, " + modelName + "Dom> {\n" +
+"  constructor() {\n" +
+"    const repository = new " + modelName + "Repository();\n" +
+"    super(repository);\n" +
+"  }\n\n" +
+"  /**\n" +
+"   * Converter modelo para Dom (DTO)\n" +
+"   * @param model Modelo do " + modelName + "\n" +
+"   * @returns Dom do " + modelName + "\n" +
+"   */\n" +
+"  protected toDom(model: " + modelName + "Model): " + modelName + "Dom {\n" +
+"    return {\n" +
+(toDomProperties || "      id: model.id,\n      // TODO: Mapear outras propriedades do modelo para o Dom aqui") + "\n" +
+"    };\n" +
+"  }\n\n" +
+"  /**\n" +
+"   * Converter dados de criação para modelo (opcional - sobrescrever se necessário)\n" +
+"   * @param data Dados de entrada\n" +
+"   * @returns Dados formatados para o modelo\n" +
+"   */\n" +
+"  protected fromCreateData(data: any): Omit<" + modelName + "Model, 'id'> {\n" +
+"    // TODO: Adicione validações e transformações de negócio aqui\n" +
+"    // Exemplo:\n" +
+"    // if (!data.name || data.name.trim().length === 0) {\n" +
+"    //   throw new Error('Nome é obrigatório');\n" +
+"    // }\n" +
+"    \n" +
+"    return data as Omit<" + modelName + "Model, 'id'>;\n" +
+"  }\n\n" +
+"  // Os métodos CRUD (findById, findAll, findBy, create, update, delete, count) \n" +
+"  // são herdados de BaseBusiness e delegam para o Repository\n" +
+"  // Não é necessário reimplementá-los\n\n" +
+"  // Adicione aqui apenas métodos de negócio específicos:\n" +
+"  \n" +
+"  /**\n" +
+"   * Exemplo de método de negócio específico\n" +
+"   * Descomente e adapte conforme necessário\n" +
+"   */\n" +
+"  /*\n" +
+"  async findByCustomField(value: string): Promise<" + modelName + "Dom | null> {\n" +
+"    const results = await this.findBy({ custom_field: value });\n" +
+"    return results.length > 0 ? results[0] : null;\n" +
+"  }\n" +
+"  */\n" +
+"}";
 }
 
 // Modelo para criar domain
@@ -259,16 +243,16 @@ function generateDomainTemplate(modelName: string): string {
   
   // Gerar propriedades para Dom completo (todas as propriedades)
   const domProperties = properties
-    .map(p => `  ${p.name}${p.optional ? '?' : ''}: ${p.type};`)
+    .map(p => "  " + p.name + (p.optional ? "?" : "") + ": " + p.type + ";")
     .join('\n');
 
-  return `/**
- * Dom (DTO) para ${modelName}
- * Interface de transferência de dados
- */
-export interface ${modelName}Dom {
-${domProperties || '  id: number;\n  // TODO: Adicione aqui as propriedades do Dom'}
-}`;
+  return "/**\n" +
+" * Dom (DTO) para " + modelName + "\n" +
+" * Interface de transferência de dados\n" +
+" */\n" +
+"export interface " + modelName + "Dom {\n" +
+(domProperties || "  id: number;\n  // TODO: Adicione aqui as propriedades do Dom") + "\n" +
+"}";
 }
 
 // Modelo para criar service
@@ -277,189 +261,60 @@ function generateServiceTemplate(modelName: string): string {
   
   // Ajustar imports baseado no contexto
   const baseServiceImport = insideFramework 
-    ? `import { BaseService } from '../../core/services/BaseService';`
-    : `import { BaseService } from 'framework-reactjs-api';`;
+    ? "import { BaseService } from '../../core/services/BaseService';"
+    : "import { BaseService } from 'framework-reactjs-api';";
   
   const modelImport = insideFramework
-    ? `import { ${modelName}Model } from '../../core/domain/models/${modelName}Model';`
-    : `import { ${modelName}Model } from '@/models/${modelName}Model';`;
+    ? "import { " + modelName + "Model } from '../../core/domain/models/" + modelName + "Model';"
+    : "import { " + modelName + "Model } from '@/models/" + modelName + "Model';";
 
-  return `${baseServiceImport}
-${modelImport}
-import { ${modelName}Business } from './${modelName}Business';
-import { ${modelName}Dom } from './domains/${modelName}Dom';
-
-/**
- * Service para ${modelName}
- * Herda de BaseService e delega operações CRUD para o Business
- * Retorna respostas padronizadas: { status, data?, message? }
- */
-export class ${modelName}Service extends BaseService<${modelName}Model, ${modelName}Dom> {
-  constructor() {
-    const business = new ${modelName}Business();
-    super(business);
-  }
-
-  // Os métodos CRUD (findAll, findById, findBy, create, update, delete, count) 
-  // são herdados de BaseService e delegam para o Business
-  // Não é necessário reimplementá-los
-
-  // Adicione aqui apenas métodos de serviço específicos:
-
-  /**
-   * Exemplo de método de serviço específico
-   * Descomente e adapte conforme necessário
-   */
-  /*
-  async findByCustomField(value: string) {
-    try {
-      const business = this.business as ${modelName}Business;
-      const result = await business.findByCustomField(value);
-      
-      if (!result) {
-        return {
-          status: 404,
-          message: 'Registro não encontrado'
-        };
-      }
-
-      return {
-        status: 200,
-        data: result
-      };
-    } catch (error: any) {
-      return {
-        status: 500,
-        message: error.message || 'Erro ao buscar registro'
-      };
-    }
-  }
-  */
-}`;
-}
-
-// Modelo para criar arquivo de rotas
-function generateRoutesTemplate(modelName: string): string {
-  const insideFramework = isInsideFramework();
-  
-  // Ajustar import do AuthMiddleware baseado no contexto
-  const authImport = insideFramework
-    ? `import { AuthMiddleware } from '../../core/auth/AuthMiddleware';`
-    : `import { AuthMiddleware } from 'framework-reactjs-api';`;
-
-  return `import { Router, Request, Response } from 'express';
-import { ${modelName}Service } from '../${modelName}Service';
-${authImport}
-
-const router = Router();
-const service = new ${modelName}Service();
-const authMiddleware = new AuthMiddleware();
-
-/**
- * GET /${modelName.toLowerCase()}
- * Listar todos os registros (PRIVADO - Requer autenticação)
- */
-router.get('/', authMiddleware.authenticate(), async (req: Request, res: Response) => {
-  const { limit, offset, orderBy, ...conditions } = req.query;
-  
-  const result = await service.findAll({
-    conditions: Object.keys(conditions).length > 0 ? conditions as Record<string, any> : undefined,
-    limit: limit ? Number(limit) : undefined,
-    offset: offset ? Number(offset) : undefined,
-    orderBy: orderBy as string,
-    includes: req.query.includes ? String(req.query.includes).split(',') : undefined,
-  });
-
-  return res.status(result.status).json(result);
-});
-
-/**
- * GET /${modelName.toLowerCase()}/:id
- * Buscar registro por ID (PRIVADO - Requer autenticação)
- */
-router.get('/:id', authMiddleware.authenticate(), async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  
-  const result = await service.findById(id);
-  
-  return res.status(result.status).json(result);
-});
-
-/**
- * POST /${modelName.toLowerCase()}
- * Criar novo registro (PRIVADO - Requer autenticação)
- */
-router.post('/', authMiddleware.authenticate(), async (req: Request, res: Response) => {
-  const result = await service.create(req.body);
-  
-  return res.status(result.status).json(result);
-});
-
-/**
- * PUT /${modelName.toLowerCase()}/:id
- * Atualizar registro existente (PRIVADO - Requer autenticação)
- */
-router.put('/:id', authMiddleware.authenticate(), async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  
-  const result = await service.update(id, req.body);
-  
-  return res.status(result.status).json(result);
-});
-
-/**
- * DELETE /${modelName.toLowerCase()}/:id
- * Deletar registro (PRIVADO - Requer autenticação)
- */
-router.delete('/:id', authMiddleware.authenticate(), async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  
-  const result = await service.delete(id);
-  
-  return res.status(result.status).json(result);
-});
-
-/**
- * GET /${modelName.toLowerCase()}/count
- * Contar registros (PRIVADO - Requer autenticação)
- */
-router.get('/count', authMiddleware.authenticate(), async (req: Request, res: Response) => {
-  const result = await service.count(req.query as Record<string, any>);
-  
-  return res.status(result.status).json(result);
-});
-
-export default router;
-
-/**
- * Exemplo de uso em um app Express:
- * 
- * import express from 'express';
- * import ${modelName.toLowerCase()}Router from './use-cases/${modelName.toLowerCase()}/routes/${modelName}Routes';
- * import authRouter from 'framework-reactjs-api/routes/auth';  // Rota de login do framework
- * 
- * const app = express();
- * app.use(express.json());
- * 
- * // Rota de autenticação (pública)
- * app.use('/api/auth', authRouter);
- * 
- * // Rotas protegidas
- * app.use('/api/${modelName.toLowerCase()}', ${modelName.toLowerCase()}Router);
- * 
- * app.listen(3000, () => {
- *   console.log('Servidor rodando na porta 3000');
- * });
- * 
- * // Para fazer login:
- * // POST /api/auth/login
- * // Body: { "email": "user@example.com", "password": "senha123" }
- * // Retorna: { "success": true, "token": "jwt-token-aqui", "user": {...} }
- * 
- * // Para acessar rotas protegidas:
- * // GET /api/${modelName.toLowerCase()}
- * // Headers: { "Authorization": "Bearer jwt-token-aqui" }
- */`;
+  return baseServiceImport + "\n" +
+modelImport + "\n" +
+"import { " + modelName + "Business } from './" + modelName + "Business';\n" +
+"import { " + modelName + "Dom } from './domains/" + modelName + "Dom';\n\n" +
+"/**\n" +
+" * Service para " + modelName + "\n" +
+" * Herda de BaseService e delega operações CRUD para o Business\n" +
+" * Retorna respostas padronizadas: { status, data?, message? }\n" +
+" */\n" +
+"export class " + modelName + "Service extends BaseService<" + modelName + "Model, " + modelName + "Dom> {\n" +
+"  constructor() {\n" +
+"    const business = new " + modelName + "Business();\n" +
+"    super(business);\n" +
+"  }\n\n" +
+"  // Os métodos CRUD (findAll, findById, findBy, create, update, delete, count) \n" +
+"  // são herdados de BaseService e delegam para o Business\n" +
+"  // Não é necessário reimplementá-los\n\n" +
+"  // Adicione aqui apenas métodos de serviço específicos:\n\n" +
+"  /**\n" +
+"   * Exemplo de método de serviço específico\n" +
+"   * Descomente e adapte conforme necessário\n" +
+"   */\n" +
+"  /*\n" +
+"  async findByCustomField(value: string) {\n" +
+"    try {\n" +
+"      const business = this.business as " + modelName + "Business;\n" +
+"      const result = await business.findByCustomField(value);\n" +
+"      \n" +
+"      if (!result) {\n" +
+"        return {\n" +
+"          status: 404,\n" +
+"          message: 'Registro não encontrado'\n" +
+"        };\n" +
+"      }\n\n" +
+"      return {\n" +
+"        status: 200,\n" +
+"        data: result\n" +
+"      };\n" +
+"    } catch (error: any) {\n" +
+"      return {\n" +
+"        status: 500,\n" +
+"        message: error.message || 'Erro ao buscar registro'\n" +
+"      };\n" +
+"    }\n" +
+"  }\n" +
+"  */\n" +
+"}";
 }
 
 // Função principal para criar scaffolding
@@ -467,20 +322,20 @@ function createScaffolding(modelName: string) {
   try {
     // Possíveis locais onde o modelo pode estar
     const possibleModelPaths = [
-      path.join(process.cwd(), 'src', 'core', 'domain', 'models', `${modelName}Model.ts`),
-      path.join(process.cwd(), 'src', 'models', `${modelName}Model.ts`),
-      path.join(process.cwd(), 'models', `${modelName}Model.ts`),
-      path.join(process.cwd(), 'src', 'core', 'domain', 'models', `${modelName}Model.js`),
-      path.join(process.cwd(), 'src', 'models', `${modelName}Model.js`),
-      path.join(process.cwd(), 'models', `${modelName}Model.js`)
+      path.join(process.cwd(), 'src', 'core', 'domain', 'models', modelName + 'Model.ts'),
+      path.join(process.cwd(), 'src', 'models', modelName + 'Model.ts'),
+      path.join(process.cwd(), 'models', modelName + 'Model.ts'),
+      path.join(process.cwd(), 'src', 'core', 'domain', 'models', modelName + 'Model.js'),
+      path.join(process.cwd(), 'src', 'models', modelName + 'Model.js'),
+      path.join(process.cwd(), 'models', modelName + 'Model.js')
     ];
     
     // Verifica se o modelo existe em algum dos possíveis caminhos
-    const modelPath = possibleModelPaths.find(path => fs.existsSync(path));
+    const modelPath = possibleModelPaths.find(p => fs.existsSync(p));
     
     if (!modelPath) {
-      console.error(`\x1b[31mErro: O modelo ${modelName}Model.ts não foi encontrado em nenhum diretório conhecido.\x1b[0m`);
-      console.error(`\x1b[33mCaminhos verificados:\n- src/core/domain/models/\n- src/models/\n- models/\x1b[0m`);
+      console.error("Erro: O modelo " + modelName + "Model.ts não foi encontrado em nenhum diretório conhecido.");
+      console.error("Caminhos verificados:\n- src/core/domain/models/\n- src/models/\n- models/");
       return;
     }
 
@@ -511,58 +366,58 @@ function createScaffolding(modelName: string) {
     const repositoryDirPath = path.join(useCaseDirPath, 'repository');
     const domainsDirPath = path.join(useCaseDirPath, 'domains');
     const routesDirPath = path.join(useCaseDirPath, 'routes');
-    const repositoryPath = path.join(repositoryDirPath, `${modelName}Repository.ts`);
-    const businessPath = path.join(useCaseDirPath, `${modelName}Business.ts`);
-    const servicePath = path.join(useCaseDirPath, `${modelName}Service.ts`);
-    const domainPath = path.join(domainsDirPath, `${modelName}Dom.ts`);
-    const routesPath = path.join(routesDirPath, `${modelName}Routes.ts`);
+    const repositoryPath = path.join(repositoryDirPath, modelName + 'Repository.ts');
+    const businessPath = path.join(useCaseDirPath, modelName + 'Business.ts');
+    const servicePath = path.join(useCaseDirPath, modelName + 'Service.ts');
+    const domainPath = path.join(domainsDirPath, modelName + 'Dom.ts');
+    const routesPath = path.join(routesDirPath, modelName + 'Routes.ts');
 
     // Verificar idempotência (não sobrescrever se já existir)
     const filesToCreate = [
-      { path: repositoryPath, content: generateRepositoryTemplate(modelName), name: `${modelName}Repository.ts` },
-      { path: businessPath, content: generateBusinessTemplate(modelName), name: `${modelName}Business.ts` },
-      { path: servicePath, content: generateServiceTemplate(modelName), name: `${modelName}Service.ts` },
-      { path: domainPath, content: generateDomainTemplate(modelName), name: `${modelName}Dom.ts` },
-      { path: routesPath, content: generateRoutesTemplate(modelName), name: `${modelName}Routes.ts` }
+      { path: repositoryPath, content: generateRepositoryTemplate(modelName), name: modelName + 'Repository.ts' },
+      { path: businessPath, content: generateBusinessTemplate(modelName), name: modelName + 'Business.ts' },
+      { path: servicePath, content: generateServiceTemplate(modelName), name: modelName + 'Service.ts' },
+      { path: domainPath, content: generateDomainTemplate(modelName), name: modelName + 'Dom.ts' },
+      { path: routesPath, content: generateRoutesTemplate(modelName), name: modelName + 'Routes.ts' }
     ];
 
     // Criar diretórios necessários
     if (!fs.existsSync(useCaseDirPath)) {
       fs.mkdirSync(useCaseDirPath, { recursive: true });
-      console.log(`\x1b[32mDiretório criado: ${path.relative(process.cwd(), useCaseDirPath)}\x1b[0m`);
+      console.log("Diretório criado: " + path.relative(process.cwd(), useCaseDirPath));
     }
     
     // Criar diretório de repositório
     if (!fs.existsSync(repositoryDirPath)) {
       fs.mkdirSync(repositoryDirPath, { recursive: true });
-      console.log(`\x1b[32mDiretório criado: ${path.relative(process.cwd(), repositoryDirPath)}\x1b[0m`);
+      console.log("Diretório criado: " + path.relative(process.cwd(), repositoryDirPath));
     }
     
     // Criar diretório de domínios
     if (!fs.existsSync(domainsDirPath)) {
       fs.mkdirSync(domainsDirPath, { recursive: true });
-      console.log(`\x1b[32mDiretório criado: ${path.relative(process.cwd(), domainsDirPath)}\x1b[0m`);
+      console.log("Diretório criado: " + path.relative(process.cwd(), domainsDirPath));
     }
     
     // Criar diretório de rotas
     if (!fs.existsSync(routesDirPath)) {
       fs.mkdirSync(routesDirPath, { recursive: true });
-      console.log(`\x1b[32mDiretório criado: ${path.relative(process.cwd(), routesDirPath)}\x1b[0m`);
+      console.log("Diretório criado: " + path.relative(process.cwd(), routesDirPath));
     }
 
     // Criar cada arquivo se não existir
     for (const file of filesToCreate) {
       if (fs.existsSync(file.path)) {
-        console.log(`\x1b[33mArquivo ${file.name} já existe. Pulando...\x1b[0m`);
+        console.log("Arquivo " + file.name + " já existe. Pulando...");
       } else {
         fs.writeFileSync(file.path, file.content);
-        console.log(`\x1b[32mArquivo criado: ${file.name}\x1b[0m`);
+        console.log("Arquivo criado: " + file.name);
       }
     }
 
-    console.log(`\x1b[32mScaffolding para ${modelName} concluído com sucesso!\x1b[0m`);
+    console.log("Scaffolding para " + modelName + " concluído com sucesso!");
   } catch (error) {
-    console.error(`\x1b[31mErro ao criar scaffolding: ${error}\x1b[0m`);
+    console.error("Erro ao criar scaffolding: ", error);
   }
 }
 
@@ -574,14 +429,14 @@ function getModelNameFromArgs(): string | undefined {
 
 // Função principal
 function main() {
-  console.log('\x1b[34m=== Framework TypeScript DDD - Scaffolding de Use Cases ===\x1b[0m');
+  console.log('=== Framework TypeScript DDD - Scaffolding de Use Cases ===');
   
   const modelName = getModelNameFromArgs();
   
   if (!modelName) {
-    console.error('\x1b[31mErro: Nome do modelo não fornecido.\x1b[0m');
-    console.log('\x1b[33mUso: npm run usecases:dev <NomeDoModelo>\x1b[0m');
-    console.log('\x1b[33mExemplo: npm run usecases:dev User\x1b[0m');
+    console.error('Erro: Nome do modelo não fornecido.');
+    console.log('Uso: npm run usecases:dev <NomeDoModelo>');
+    console.log('Exemplo: npm run usecases:dev User');
     process.exit(1);
   }
 
