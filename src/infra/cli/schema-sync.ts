@@ -76,18 +76,30 @@ export async function syncSchema() {
     const jsFiles = files.filter(f => f.endsWith('.js'));
     const tsFiles = files.filter(f => f.endsWith('.ts'));
     
-    if (jsFiles.length === 0 && tsFiles.length > 0) {
-      console.error('\x1b[31m❌ Erro: Modelos TypeScript encontrados, mas não compilados!\x1b[0m');
-      console.log('\x1b[33m⚠️  O comando schema-sync requer que os modelos sejam compilados primeiro.\x1b[0m');
-      console.log('\x1b[36m\nPor favor, execute:\x1b[0m');
-      console.log('\x1b[32m  npm run build\x1b[0m');
-      console.log('\x1b[36mE depois execute novamente:\x1b[0m');
-      console.log('\x1b[32m  npx framework-reactjs-api-sync\x1b[0m\n');
+    // CRÍTICO: SOMENTE aceitar arquivos .js (compilados)
+    if (jsFiles.length === 0) {
+      console.error('\x1b[31m❌ Erro: Nenhum modelo compilado (.js) encontrado!\x1b[0m');
+      
+      if (tsFiles.length > 0) {
+        console.log('\x1b[33m⚠️  Modelos TypeScript (.ts) encontrados em:\x1b[0m');
+        console.log(`   ${modelsDir}`);
+        console.log('\x1b[33m⚠️  O Node.js não pode executar arquivos TypeScript diretamente.\x1b[0m');
+      }
+      
+      console.log('\x1b[36m\n📋 SOLUÇÃO - Execute estes comandos:\x1b[0m');
+      console.log('\x1b[32m  1. npm run build\x1b[0m        # Compila TypeScript para JavaScript');
+      console.log('\x1b[32m  2. npx framework-reactjs-api-sync\x1b[0m  # Executa sincronização\n');
+      console.log('\x1b[36m💡 Ou use comando único:\x1b[0m');
+      console.log('\x1b[32m  npm run build && npx framework-reactjs-api-sync\x1b[0m\n');
+      console.log('\x1b[33m📌 Verifique também:\x1b[0m');
+      console.log('  • tsconfig.json deve ter: \x1b[32m"outDir": "./dist"\x1b[0m');
+      console.log('  • Após compilar, verifique: \x1b[32mls dist/models/\x1b[0m');
+      console.log('  • Deve conter arquivos .js (não .ts)\n');
       process.exit(1);
     }
     
     let hasErrors = false;
-    const modelsToLoad = jsFiles.length > 0 ? jsFiles : tsFiles;
+    const modelsToLoad = jsFiles; // SOMENTE arquivos .js compilados
     
     for (const file of modelsToLoad) {
       const isModelFile = file.endsWith('Model.ts') || file.endsWith('Model.js');
