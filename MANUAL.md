@@ -305,7 +305,7 @@ const authService = new AuthService();
 const hash = await authService.hashPassword('senha123');
 
 // Comparar senha
-const isValid = await authService.comparePasswords('senha123', hash);
+const isValid = await authService.comparePassword('senha123', hash);
 
 // Gerar token
 const token = authService.generateToken({ userId: 1, email: 'user@example.com' });
