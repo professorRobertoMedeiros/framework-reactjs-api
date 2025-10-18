@@ -157,6 +157,9 @@ function checkDirectoryStructure() {
       
       if (migrationFiles.length > 0) {
         success.push(`✅ Encontrados ${migrationFiles.length} arquivos de migração em ${dir}`);
+        
+        // Verificar sintaxe dos arquivos SQL
+        checkSQLFiles(dir, migrationFiles);
       } else {
         warnings.push(`⚠️ Nenhum arquivo de migração (.sql) encontrado em ${dir}`);
       }
@@ -202,13 +205,20 @@ function checkModelFiles(dir, modelFiles) {
       
       // Verificar erros de sintaxe
       try {
-        // Não podemos executar completamente o TypeScript aqui
-        // Mas podemos verificar erros básicos de sintaxe
+        // Verificação básica de sintaxe
         const syntaxErrors = checkBasicSyntax(content);
         if (syntaxErrors) {
           errors.push(`❌ Possíveis erros de sintaxe em ${file}: ${syntaxErrors}`);
         } else {
-          success.push(`✅ Nenhum erro básico de sintaxe encontrado em ${file}`);
+          success.push(`✅ Verificação básica de sintaxe passou em ${file}`);
+        }
+        
+        // Verificação avançada (simulando como o migrate faz)
+        const advancedErrors = checkAdvancedSyntax(content, file);
+        if (advancedErrors) {
+          errors.push(`❌ ${advancedErrors}`);
+        } else {
+          success.push(`✅ Verificação avançada de sintaxe passou em ${file}`);
         }
       } catch (syntaxError) {
         errors.push(`❌ Erro ao verificar sintaxe em ${file}: ${syntaxError.message}`);
@@ -224,9 +234,67 @@ function checkModelFiles(dir, modelFiles) {
 function checkBasicSyntax(content) {
   // Verificar parênteses e chaves desbalanceados
   let openParens = 0, openBraces = 0, openBrackets = 0;
+  let inString = null; // Usado para detectar strings (' ou ")
+  let inComment = false; // Detectar comentários
+  let inMultilineComment = false; // Detectar comentários de múltiplas linhas
   
   for (let i = 0; i < content.length; i++) {
-    switch (content[i]) {
+    const char = content[i];
+    const nextChar = content[i+1];
+    
+    // Lidar com comentários
+    if (!inString) {
+      // Iniciar comentário de linha
+      if (char === '/' && nextChar === '/') {
+        inComment = true;
+        i++; // Pular o próximo caractere
+        continue;
+      }
+      
+      // Iniciar comentário de múltiplas linhas
+      if (char === '/' && nextChar === '*') {
+        inMultilineComment = true;
+        i++; // Pular o próximo caractere
+        continue;
+      }
+      
+      // Terminar comentário de múltiplas linhas
+      if (inMultilineComment && char === '*' && nextChar === '/') {
+        inMultilineComment = false;
+        i++; // Pular o próximo caractere
+        continue;
+      }
+    }
+    
+    // Pular caracteres dentro de comentários
+    if (inComment || inMultilineComment) {
+      // Terminar comentário de linha ao encontrar nova linha
+      if (inComment && char === '\n') {
+        inComment = false;
+      }
+      continue;
+    }
+    
+    // Lidar com strings
+    if ((char === "'" || char === '"' || char === '`') && 
+        (i === 0 || content[i-1] !== '\\')) {
+      if (inString === char) {
+        // Fechando string
+        inString = null;
+      } else if (inString === null) {
+        // Abrindo string
+        inString = char;
+      }
+      continue;
+    }
+    
+    // Ignorar caracteres dentro de strings
+    if (inString !== null) {
+      continue;
+    }
+    
+    // Verificar parênteses e chaves
+    switch (char) {
       case '(': openParens++; break;
       case ')': openParens--; break;
       case '{': openBraces++; break;
@@ -241,12 +309,159 @@ function checkBasicSyntax(content) {
     if (openBrackets < 0) return "Colchete fechando sem abertura";
   }
   
+  // Verificar se há strings não fechadas
+  if (inString !== null) return `String ${inString} não fechada`;
+  
+  // Verificar se há comentário de múltiplas linhas não fechado
+  if (inMultilineComment) return "Comentário de múltiplas linhas não fechado";
+  
   // No final, todos os contadores devem ser zero
   if (openParens > 0) return `${openParens} parênteses não fechados`;
   if (openBraces > 0) return `${openBraces} chaves não fechadas`;
   if (openBrackets > 0) return `${openBrackets} colchetes não fechados`;
   
   return null;
+}
+
+// Verificar arquivos SQL
+function checkSQLFiles(dir, sqlFiles) {
+  for (const file of sqlFiles) {
+    const filePath = path.join(projectDir, dir, file);
+    
+    try {
+      const content = fs.readFileSync(filePath, 'utf8');
+      
+      // Verificar se o arquivo está vazio
+      if (!content.trim()) {
+        warnings.push(`⚠️ Arquivo SQL vazio: ${file}`);
+        continue;
+      }
+      
+      // Verificar erros básicos de SQL
+      const sqlErrors = checkSQLSyntax(content, file);
+      if (sqlErrors) {
+        errors.push(`❌ ${sqlErrors}`);
+      } else {
+        success.push(`✅ Verificação de sintaxe SQL passou em ${file}`);
+      }
+    } catch (error) {
+      errors.push(`❌ Erro ao ler arquivo SQL ${file}: ${error.message}`);
+    }
+  }
+}
+
+// Verificar sintaxe de arquivos SQL
+function checkSQLSyntax(content, filename) {
+  try {
+    // Verificar se há ponto-e-vírgula faltando ao final das declarações
+    const statements = content.split(';').filter(stmt => stmt.trim().length > 0);
+    const lastStatement = content.trim();
+    if (lastStatement.length > 0 && !lastStatement.endsWith(';')) {
+      return `Erro em ${filename}: Ponto-e-vírgula faltando ao final do arquivo`;
+    }
+    
+    // Verificar palavras-chave de SQL incorretas comuns
+    const sqlKeywords = {
+      'CREATE TABLE': 'CREATE TABLEE',
+      'INSERT INTO': 'INSERT INTOO',
+      'SELECT': 'SELECCT',
+      'UPDATE': 'UPDATTE',
+      'DELETE FROM': 'DELETE FROMM',
+      'ALTER TABLE': 'ALTERR TABLE'
+    };
+    
+    for (const [correct, incorrect] of Object.entries(sqlKeywords)) {
+      if (content.toUpperCase().includes(incorrect)) {
+        return `Erro em ${filename}: Possível erro de digitação '${incorrect}' (deveria ser '${correct}')`;
+      }
+    }
+    
+    // Verificar caracteres inválidos específicos que causam problemas
+    const invalidChars = [
+      { char: '\u201C', name: 'aspas curvas de abertura (")' },
+      { char: '\u201D', name: 'aspas curvas de fechamento (")' },
+      { char: '\u2018', name: 'aspas simples curvas de abertura (\')' },
+      { char: '\u2019', name: 'aspas simples curvas de fechamento (\')' },
+      { char: '\u00A0', name: 'espaço não-quebrável' }
+    ];
+    
+    for (const { char, name } of invalidChars) {
+      if (content.includes(char)) {
+        return `Erro em ${filename}: caractere inválido (${name})`;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    return `Erro ao analisar sintaxe SQL em ${filename}: ${error.message}`;
+  }
+}
+
+// Verificação avançada de sintaxe (similar ao migrate)
+function checkAdvancedSyntax(content, filename) {
+  try {
+    // Verificar caracteres inválidos específicos que causam problemas no Node.js
+    const invalidChars = [
+      { char: '\u201C', name: 'aspas curvas de abertura (")' },
+      { char: '\u201D', name: 'aspas curvas de fechamento (")' },
+      { char: '\u2018', name: 'aspas simples curvas de abertura (\')' },
+      { char: '\u2019', name: 'aspas simples curvas de fechamento (\')' },
+      { char: '\u00A0', name: 'espaço não-quebrável' }
+    ];
+    
+    for (const { char, name } of invalidChars) {
+      if (content.includes(char)) {
+        const lines = content.split('\n');
+        let lineNumber = 0;
+        let charPosition = 0;
+        
+        // Encontrar a linha e posição do caractere inválido
+        for (let i = 0; i < lines.length; i++) {
+          const pos = lines[i].indexOf(char);
+          if (pos !== -1) {
+            lineNumber = i + 1;
+            charPosition = pos + 1;
+            break;
+          }
+        }
+        
+        return `Erro de sintaxe em ${filename}: caractere inválido (${name}) na linha ${lineNumber}, posição ${charPosition}`;
+      }
+    }
+    
+    // Verificar padrões de erro comuns
+    const errorPatterns = [
+      { pattern: /^import\s+.*?from\s+[^'"]/m, message: "Erro de sintaxe na declaração de importação" },
+      { pattern: /=\s*>\s*{/g, message: "Possível erro na arrow function (deve ser =>)" },
+      { pattern: /=\s*=\s*=[^=]/g, message: "Possível erro no operador de igualdade estrita (deve ser === ou ==)" }
+    ];
+    
+    for (const { pattern, message } of errorPatterns) {
+      if (pattern.test(content)) {
+        return `Erro potencial em ${filename}: ${message}`;
+      }
+    }
+    
+    // Verificar sintaxe do decorador
+    if (content.includes('@Entity') || content.includes('@Column') || content.includes('@Id')) {
+      // Verificar padrões de decoradores incorretos
+      const decoratorPatterns = [
+        { pattern: /@Entity\s*[^(]/m, message: "Erro no decorador @Entity (deve ser seguido por parênteses)" },
+        { pattern: /@Column\s*[^(]/m, message: "Erro no decorador @Column (deve ser seguido por parênteses)" },
+        { pattern: /@Id\s*[^(]/m, message: "Erro no decorador @Id (deve ser seguido por parênteses)" }
+      ];
+      
+      for (const { pattern, message } of decoratorPatterns) {
+        if (pattern.test(content)) {
+          return `Erro em ${filename}: ${message}`;
+        }
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    return `Erro ao analisar sintaxe avançada em ${filename}: ${error.message}`;
+  }
 }
 
 // Verificar configuração TypeScript

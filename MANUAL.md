@@ -566,19 +566,29 @@ Erro ao processar modelo ClienteNovoModel.ts: SyntaxError: Invalid or unexpected
 ```
 
 **Diagnóstico:**
-1. Verifique se o arquivo do modelo possui erros de sintaxe
-2. Confira se os decoradores estão sendo usados corretamente
-3. Certifique-se que o TypeScript está compilando sem erros
+1. Use a ferramenta de diagnóstico para identificar problemas antes de executar migrações:
+   ```bash
+   npx framework-reactjs-api-check
+   ```
+2. Verifique se o arquivo do modelo possui erros de sintaxe
+3. Confira se os decoradores estão sendo usados corretamente
+4. Verifique se há caracteres inválidos (como aspas curvas " " copiadas de editores de texto)
+5. Certifique-se que o TypeScript está compilando sem erros
 
 **Solução:**
 ```bash
-# Verifique erros de compilação
+# Primeiro verifique com a ferramenta de diagnóstico
+npx framework-reactjs-api-check
+
+# Verifique erros de compilação TypeScript
 tsc --noEmit
 
 # Corrija os erros nos arquivos indicados
 # Em seguida, execute novamente a migração
 npx framework-reactjs-api-migrate
 ```
+
+> **Dica**: Erros como `Invalid or unexpected token` frequentemente são causados por caracteres invisíveis ou aspas incorretas. A ferramenta de diagnóstico ajuda a identificar esses problemas.
 
 #### Erro: Módulo não Encontrado
 
