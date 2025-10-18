@@ -170,6 +170,10 @@ O comando executa arquivos SQL encontrados nos seguintes diretórios:
 
 As migrações são executadas em ordem alfabética/numérica dentro de cada diretório, e o sistema rastreia quais migrações já foram aplicadas, evitando duplicações. Por convenção, nomeie seus arquivos de migração começando com uma data para garantir a ordem correta, por exemplo: `20251018001_criar_tabela_usuarios.sql`.
 
+**Migrações incluídas no framework:**
+- `20251008000000_initial_schema.sql`: Cria a tabela de usuários e adiciona um usuário de exemplo
+- `20251018001_add_admin_user.sql`: Adiciona um usuário administrador com credenciais pré-definidas
+
 **Exemplo de arquivo de migração (migrations/20251017001_criar_tabela_produtos.sql)**:
 ```sql
 CREATE TABLE IF NOT EXISTS produtos (
@@ -628,5 +632,5 @@ npm update framework-reactjs-api
 
 ---
 
-**Versão:** 1.0.0  
-**Última atualização:** Outubro 2025
+**Versão:** 1.0.1  
+**Última atualização:** 18 de Outubro de 2025

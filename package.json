@@ -1,6 +1,6 @@
 {
   "name": "framework-reactjs-api",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Framework base para camada de data flow/API de projetos React com DDD, Clean Architecture e SOLID",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
