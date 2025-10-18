@@ -157,13 +157,18 @@ npx framework-reactjs-api-sync
 ### Migrações SQL
 
 ```bash
-# Executar migrações
+# Executar migrações SQL
 npx framework-reactjs-api-migrate
 ```
 
-O comando executa arquivos SQL encontrados em um dos seguintes diretórios:
-1. `./src/infra/migrations/`
-2. `./migrations/` (alternativo)
+O comando executa arquivos SQL encontrados nos seguintes diretórios:
+1. Migrações do framework (arquivos SQL internos do framework)
+2. Migrações do projeto em `./src/infra/migrations/`
+3. Migrações do projeto em `./migrations/` (alternativo)
+
+> **Nota:** O comando `migrate` executa apenas os arquivos SQL de migração e não processa os modelos TypeScript. Para sincronizar seus modelos com o banco de dados, use o comando `sync` mencionado acima.
+
+As migrações são executadas em ordem alfabética/numérica dentro de cada diretório, e o sistema rastreia quais migrações já foram aplicadas, evitando duplicações. Por convenção, nomeie seus arquivos de migração começando com uma data para garantir a ordem correta, por exemplo: `20251018001_criar_tabela_usuarios.sql`.
 
 **Exemplo de arquivo de migração (migrations/20251017001_criar_tabela_produtos.sql)**:
 ```sql
@@ -562,33 +567,36 @@ A verificação irá exibir:
 Quando executar `npx framework-reactjs-api-migrate` e encontrar erros como:
 
 ```
-Erro ao processar modelo ClienteNovoModel.ts: SyntaxError: Invalid or unexpected token
+Erro de conexão com o banco de dados. Verifique se o banco está disponível e as credenciais estão corretas no arquivo .env
 ```
 
 **Diagnóstico:**
-1. Use a ferramenta de diagnóstico para identificar problemas antes de executar migrações:
+1. Verifique se o banco de dados está rodando e acessível
+2. Confira as credenciais no arquivo `.env`
+3. Certifique-se de que o usuário tem permissões para criar e modificar tabelas
+
+**Problemas com Arquivos SQL:**
+1. Use a ferramenta de diagnóstico para verificar erros de sintaxe nos arquivos SQL:
    ```bash
    npx framework-reactjs-api-check
    ```
-2. Verifique se o arquivo do modelo possui erros de sintaxe
-3. Confira se os decoradores estão sendo usados corretamente
-4. Verifique se há caracteres inválidos (como aspas curvas " " copiadas de editores de texto)
-5. Certifique-se que o TypeScript está compilando sem erros
+2. Verifique se os arquivos SQL estão bem formados e terminam com ponto-e-vírgula
+3. Certifique-se de que não há caracteres inválidos (como aspas curvas " " copiadas de editores de texto)
 
 **Solução:**
 ```bash
-# Primeiro verifique com a ferramenta de diagnóstico
+# Verifique o projeto com a ferramenta de diagnóstico
 npx framework-reactjs-api-check
 
-# Verifique erros de compilação TypeScript
-tsc --noEmit
+# Verifique manualmente os arquivos SQL em migrations/
+cat migrations/*.sql
 
-# Corrija os erros nos arquivos indicados
+# Corrija os erros nos arquivos SQL indicados
 # Em seguida, execute novamente a migração
 npx framework-reactjs-api-migrate
 ```
 
-> **Dica**: Erros como `Invalid or unexpected token` frequentemente são causados por caracteres invisíveis ou aspas incorretas. A ferramenta de diagnóstico ajuda a identificar esses problemas.
+> **Dica**: Para problemas com seus modelos, use o comando `npx framework-reactjs-api-sync` que irá criar as tabelas baseadas nos seus modelos TypeScript. O comando `migrate` executa apenas scripts SQL e não processa os modelos.
 
 #### Erro: Módulo não Encontrado
 

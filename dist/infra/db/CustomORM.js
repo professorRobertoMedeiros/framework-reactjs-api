@@ -119,8 +119,18 @@ class CustomORM {
     }
     // Verificar se uma migração já foi executada
     async isMigrationExecuted(migrationName) {
-        const result = await this.query('SELECT COUNT(*) as count FROM schema_migrations WHERE name = $1', [migrationName]);
-        return parseInt(result.rows[0].count) > 0;
+        try {
+            const result = await this.query('SELECT COUNT(*) as count FROM schema_migrations WHERE name = $1', [migrationName]);
+            return parseInt(result.rows[0].count) > 0;
+        }
+        catch (error) {
+            console.error('Erro ao verificar migração:', error);
+            throw error;
+        }
+    }
+    // Obter caminho completo da migração
+    getMigrationFullPath(migrationsDir, file) {
+        return path.join(migrationsDir, file);
     }
     // Registrar migração como executada
     async registerMigration(migrationName) {

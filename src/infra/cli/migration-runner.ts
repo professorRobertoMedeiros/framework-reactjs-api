@@ -15,102 +15,85 @@ export async function runMigration(customMigrationsDir?: string): Promise<{ succ
     const orm = initializeORM();
     console.log('\x1b[32mConexão estabelecida com o banco de dados\x1b[0m');
     
-    // Diretório de migrações (padrão ou personalizado)
-    const migrationsDir = customMigrationsDir || 
-                         path.join(process.cwd(), 'src', 'infra', 'migrations');
+    // Lista para armazenar todos os diretórios de migrações a serem processados
+    const migrationDirs: string[] = [];
+    
+    // 1. Adicionar diretório de migrações do framework (se existir)
+    // Para determinar o diretório do framework, usamos o módulo atual
+    const frameworkDir = path.dirname(path.dirname(path.dirname(__dirname)));
+    const frameworkMigrationsDir = path.join(frameworkDir, 'dist', 'infra', 'migrations');
+    
+    if (fs.existsSync(frameworkMigrationsDir) && 
+        fs.readdirSync(frameworkMigrationsDir).some(file => file.endsWith('.sql'))) {
+      migrationDirs.push(frameworkMigrationsDir);
+      console.log(`\x1b[34mEncontrado diretório de migrações do framework: ${frameworkMigrationsDir}\x1b[0m`);
+    }
+    
+    // 2. Adicionar diretório de migrações do projeto (personalizado ou padrão)
+    const projectDir = process.cwd();
+    const projectMigrationsDir = customMigrationsDir || path.join(projectDir, 'src', 'infra', 'migrations');
     
     // Tentar diretório alternativo se o padrão não existir
-    let migrationsDirToUse = migrationsDir;
-    if (!fs.existsSync(migrationsDir)) {
-      const altMigrationsDir = path.join(process.cwd(), 'migrations');
-      if (fs.existsSync(altMigrationsDir)) {
-        migrationsDirToUse = altMigrationsDir;
-        console.log(`\x1b[33mUsando diretório de migrações alternativo: ${altMigrationsDir}\x1b[0m`);
-      } else {
-        console.log('\x1b[33mDiretório de migrações não encontrado. Criando...\x1b[0m');
-        fs.mkdirSync(migrationsDir, { recursive: true });
-        migrationsDirToUse = migrationsDir;
-      }
-    }
-    
-    // Verificar se existem arquivos de migração
-    const migrationFiles = fs.readdirSync(migrationsDirToUse)
-      .filter(file => file.endsWith('.sql'));
-      
-    if (migrationFiles.length === 0) {
-      console.log('\x1b[33mNenhuma migração encontrada\x1b[0m');
+    if (fs.existsSync(projectMigrationsDir)) {
+      migrationDirs.push(projectMigrationsDir);
+      console.log(`\x1b[34mUsando diretório de migrações do projeto: ${projectMigrationsDir}\x1b[0m`);
     } else {
-      console.log(`\x1b[34mEncontradas ${migrationFiles.length} migrações\x1b[0m`);
-      // Executar migrações
-      await orm.runMigrations(migrationsDirToUse);
-    }
-    
-    // Registrar os modelos
-    console.log('\x1b[34mRegistrando modelos de domínio...\x1b[0m');
-    
-    // Tentar encontrar diretório de modelos (diferentes estruturas possíveis)
-    const possibleModelsPaths = [
-      path.join(process.cwd(), 'src', 'core', 'domain', 'models'),
-      path.join(process.cwd(), 'src', 'models'),
-      path.join(process.cwd(), 'models')
-    ];
-    
-    // Usar o primeiro diretório de modelos que existir
-    const modelsDir = possibleModelsPaths.find(dir => fs.existsSync(dir));
-    
-    if (!modelsDir) {
-      const error = 'Diretório de modelos não encontrado. Verifique sua estrutura de projeto.';
-      console.log(`\x1b[33m${error}\x1b[0m`);
-      errors.push(error);
-      return { success: false, errors };
-    }
-    
-    console.log(`\x1b[34mUsando diretório de modelos: ${modelsDir}\x1b[0m`);
-    
-    // Processar todos os modelos
-    const modelFiles = fs.readdirSync(modelsDir)
-      .filter(file => file.endsWith('.ts') || file.endsWith('.js'));
-    
-    console.log(`\x1b[34mEncontrados ${modelFiles.length} arquivos de modelo\x1b[0m`);
-    
-    let hasModelErrors = false;
-    
-    for (const file of modelFiles) {
-      try {
-        const modulePath = path.join(modelsDir, file);
-        console.log(`\x1b[34mProcessando modelo: ${file}...\x1b[0m`);
-        
-        // Importar dinamicamente o modelo
-        const modelModule = require(modulePath);
-        
-        // Buscar a classe correta (assumindo que é a primeira classe exportada)
-        const modelClass = Object.values(modelModule)[0];
-        
-        // Registrar modelo no ORM
-        if (modelClass && typeof modelClass === 'function' && 
-            'getTableName' in modelClass && 'getColumns' in modelClass) {
-          orm.registerModel(modelClass as typeof BaseModel);
-          console.log(`\x1b[32mModelo ${file} registrado com sucesso!\x1b[0m`);
-        } else {
-          const error = `Erro: ${file} não exporta um modelo válido`;
-          console.error(`\x1b[31m${error}\x1b[0m`);
-          errors.push(error);
-          hasModelErrors = true;
-        }
-      } catch (error: any) {
-        const errorMsg = `Erro ao processar modelo ${file}: ${error.message || error}`;
-        console.error(`\x1b[31m${errorMsg}\x1b[0m`);
-        errors.push(errorMsg);
-        hasModelErrors = true;
+      const altProjectMigrationsDir = path.join(projectDir, 'migrations');
+      if (fs.existsSync(altProjectMigrationsDir)) {
+        migrationDirs.push(altProjectMigrationsDir);
+        console.log(`\x1b[34mUsando diretório alternativo de migrações do projeto: ${altProjectMigrationsDir}\x1b[0m`);
+      } else {
+        console.log('\x1b[33mNenhum diretório de migrações do projeto encontrado\x1b[0m');
       }
     }
     
-    if (hasModelErrors) {
-      console.warn('\x1b[33mAlguns modelos não puderam ser registrados\x1b[0m');
-      return { success: false, errors };
+    // Verificar se temos diretórios para processar
+    if (migrationDirs.length === 0) {
+      console.log('\x1b[33mNenhum diretório de migrações encontrado\x1b[0m');
+      return { success: true, errors: [] };
     }
     
-    console.log('\x1b[32mProcesso de migração finalizado com sucesso!\x1b[0m');
+    // Processar cada diretório de migrações
+    let totalMigrations = 0;
+    
+    for (const dir of migrationDirs) {
+      const migrationFiles = fs.readdirSync(dir)
+        .filter(file => file.endsWith('.sql'));
+      
+      if (migrationFiles.length > 0) {
+        totalMigrations += migrationFiles.length;
+        console.log(`\x1b[34mEncontradas ${migrationFiles.length} migrações em ${dir}\x1b[0m`);
+        
+        try {
+          // Executar migrações de cada diretório
+          await orm.runMigrations(dir);
+        } catch (sqlError: any) {
+          // Formatar uma mensagem de erro mais clara
+          let errorMessage: string;
+          
+          if (sqlError.code === 'ECONNREFUSED') {
+            errorMessage = 'Erro de conexão com o banco de dados. Verifique se o banco está disponível e as credenciais estão corretas no arquivo .env';
+          } else if (sqlError.message) {
+            errorMessage = `Erro ao executar migração SQL em ${dir}: ${sqlError.message}`;
+          } else if (typeof sqlError === 'object') {
+            errorMessage = `Erro ao executar migração SQL em ${dir}: ${JSON.stringify(sqlError)}`;
+          } else {
+            errorMessage = `Erro ao executar migração SQL em ${dir}: ${sqlError}`;
+          }
+          
+          console.error(`\x1b[31m${errorMessage}\x1b[0m`);
+          errors.push(errorMessage);
+          return { success: false, errors };
+        }
+      }
+    }
+    
+    if (totalMigrations === 0) {
+      console.log('\x1b[33mNenhuma migração encontrada em nenhum diretório\x1b[0m');
+    } else {
+      console.log(`\x1b[32mProcesso de migração finalizado com sucesso! Total de ${totalMigrations} migrações processadas.\x1b[0m`);
+    }
+    
     return { success: true, errors: [] };
   } catch (error: any) {
     const errorMsg = `Erro ao executar migrações: ${error.message || error}`;

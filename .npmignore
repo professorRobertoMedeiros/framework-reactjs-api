@@ -3,6 +3,9 @@ src/
 *.ts
 !*.d.ts
 
+# Garantir que os arquivos SQL sejam incluídos
+!src/infra/migrations/*.sql
+
 # Arquivos de desenvolvimento
 .gitignore
 tsconfig.json

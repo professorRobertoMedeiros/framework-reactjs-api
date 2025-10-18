@@ -21,6 +21,7 @@ export declare class CustomORM {
     query(text: string, params?: any[]): Promise<any>;
     private createMigrationsTable;
     private isMigrationExecuted;
+    private getMigrationFullPath;
     private registerMigration;
     private generateCreateTableSQL;
     private generateCreateIndexesSQL;
