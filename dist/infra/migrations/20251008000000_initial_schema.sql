@@ -20,7 +20,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users (email);
 -- Inserir um usuário de exemplo para testes
 INSERT INTO users (first_name, last_name, email, password_hash, active, created_at)
 VALUES
-  ('Admin', 'Sistema', 'admin@exemplo.com.br', '$2b$10$KdXjR3EnTmOkz1lyWCa1KubmRaHTh9CoCGpMZ9.5J1LvIYgFO1nEm', true, CURRENT_TIMESTAMP)
+  ('Admin', 'Sistema', 'admin@sistema.com', '$2a$10$jzs.JrAfB1BfYD1N4EWk9uVVvw3WlPJ0.xhYpEwxmkuD4O7WfvfJ6', true, CURRENT_TIMESTAMP)
 ON CONFLICT (email) DO NOTHING;
 
 -- Comentário para mostrar como adicionar permissões
