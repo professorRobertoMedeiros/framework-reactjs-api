@@ -176,8 +176,12 @@ export class ProdutoModel extends BaseModel {
 ```
 
 Quando você usa esses decoradores, o framework:
-1. Adiciona automaticamente as colunas correspondentes no banco de dados durante a sincronização
+1. Adiciona automaticamente as colunas correspondentes no banco de dados durante a sincronização:
+   - `@Timestamps()`: Adiciona as colunas `created_at` e `updated_at` do tipo TIMESTAMP
+   - `@SoftDelete()`: Adiciona a coluna `deleted_at` do tipo TIMESTAMP
 2. Inclui os campos nos arquivos Dom gerados pelo scaffold ou atualizados com o comando `update-dom`
+
+**Importante:** Após adicionar esses decoradores a um modelo existente, execute `npx framework-reactjs-api-sync` para que as colunas sejam adicionadas à tabela correspondente no banco de dados.
 
 ### Migrações SQL
 

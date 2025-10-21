@@ -1,5 +1,6 @@
 import { Pool, PoolClient } from 'pg';
 import { BaseModel, ENTITY_META_KEY, COLUMN_META_KEY, INDEX_META_KEY, BUSINESS_INDEX_META_KEY, ColumnOptions, IndexOptions } from '../../core/domain/models/BaseModel';
+import { TIMESTAMPS_META_KEY, SOFT_DELETE_META_KEY } from '../../core/domain/decorators/TimestampsDecorators';
 import { logger } from '../logger/Logger';
 import { TracingService } from '../../core/tracing/TracingService';
 import * as fs from 'fs';
@@ -135,6 +136,10 @@ export class CustomORM {
 
     let sql = `CREATE TABLE IF NOT EXISTS ${tableName} (\n`;
     
+    // Verificar se o modelo tem decoradores de timestamps e soft delete
+    const hasTimestamps = Reflect.getMetadata(TIMESTAMPS_META_KEY, model) !== undefined;
+    const hasSoftDelete = Reflect.getMetadata(SOFT_DELETE_META_KEY, model) !== undefined;
+    
     // Adiciona todas as colunas
     const columnDefinitions = Object.entries(columns).map(([columnName, options]) => {
       let def = `${columnName} ${options.type}`;
@@ -158,6 +163,16 @@ export class CustomORM {
       
       return def;
     });
+    
+    // Adicionar colunas extras para timestamps e soft delete
+    if (hasTimestamps) {
+      columnDefinitions.push('created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+      columnDefinitions.push('updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+    }
+    
+    if (hasSoftDelete) {
+      columnDefinitions.push('deleted_at TIMESTAMP DEFAULT NULL');
+    }
     
     sql += columnDefinitions.join(',\n');
     sql += '\n);';
@@ -207,31 +222,24 @@ export class CustomORM {
           console.log(`Índices para ${model.getTableName()} sincronizados`);
         }
         
-        // Verificar decoradores de timestamp e soft delete
+        // Não precisamos mais adicionar colunas de timestamp e soft delete aqui
+        // pois agora elas são adicionadas diretamente na criação da tabela
         try {
-          const hasTimestamps = Reflect.getMetadata('timestamps', model) !== undefined;
-          const hasSoftDelete = Reflect.getMetadata('softDelete', model) !== undefined;
+          // Verificamos os metadados aqui apenas para log
+          const hasTimestamps = Reflect.getMetadata(TIMESTAMPS_META_KEY, model) !== undefined;
+          const hasSoftDelete = Reflect.getMetadata(SOFT_DELETE_META_KEY, model) !== undefined;
           
-          // Adicionar colunas de timestamp se necessário
           if (hasTimestamps) {
-            console.log(`Adicionando colunas de timestamp para ${model.getTableName()}`);
-            await this.query(`
-              ALTER TABLE ${model.getTableName()}
-              ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-              ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            `);
+            console.log(`Modelo ${model.name} possui decorador @Timestamps`);
           }
           
-          // Adicionar coluna de soft delete se necessário
           if (hasSoftDelete) {
-            console.log(`Adicionando coluna de soft delete para ${model.getTableName()}`);
-            await this.query(`
-              ALTER TABLE ${model.getTableName()}
-              ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL
-            `);
+            console.log(`Modelo ${model.name} possui decorador @SoftDelete`);
           }
         } catch (error) {
-          console.error(`Erro ao processar decoradores para ${model.name}:`, error);
+          console.error(`Erro ao verificar decoradores para ${model.name}:`, error);
+          console.error(`TIMESTAMPS_META_KEY: ${String(TIMESTAMPS_META_KEY)}, SOFT_DELETE_META_KEY: ${String(SOFT_DELETE_META_KEY)}`);
+          console.error(`Metadados disponíveis para ${model.name}:`, Reflect.getMetadataKeys(model));
         }
       }
       

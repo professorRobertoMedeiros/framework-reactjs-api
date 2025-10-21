@@ -91,8 +91,9 @@ function analyzeModelFile(modelName: string): ModelProperty[] {
   }
   
   // Verificar decoradores @Timestamps e @SoftDelete
-  const hasTimestamps = content.includes('@Timestamps');
-  const hasSoftDelete = content.includes('@SoftDelete');
+  // Utilizando uma expressão regular mais precisa para identificar os decoradores
+  const hasTimestamps = /@Timestamps\s*\(.*?\)|@Timestamps\(\)|@Timestamps/.test(content);
+  const hasSoftDelete = /@SoftDelete\s*\(.*?\)|@SoftDelete\(\)|@SoftDelete/.test(content);
   
   // Se o modelo tem @Timestamps, adicionar as colunas de timestamp
   if (hasTimestamps) {
