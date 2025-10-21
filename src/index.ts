@@ -22,6 +22,10 @@ export {
 } from './core/domain/models/BaseModel';
 export { UserModel } from './core/domain/models/UserModel';
 
+// Sistema de Auditoria
+export { Auditable, AuditableOptions, AuditableMetadata } from './core/domain/decorators/AuditableDecorator';
+export { AuditLogModel, AuditActionType } from './core/domain/models/AuditLogModel';
+
 // Services
 export { 
   BaseService, 
@@ -36,6 +40,7 @@ export { BaseBusiness } from './core/business/BaseBusiness';
 // Autenticação
 export { AuthMiddleware } from './core/auth/AuthMiddleware';
 export { AuthService } from './core/auth/AuthService';
+export { AuditService, AuditUser } from './core/auth/AuditService';
 
 // Sistema de Rastreamento
 export { TracingService } from './core/tracing/TracingService';
@@ -99,6 +104,7 @@ export {
   QueryOptions as RepositoryQueryOptions,
   PaginatedResult 
 } from './infra/repository/BaseRepository';
+export { AuditLogRepository } from './infra/repository/AuditLogRepository';
 
 // Utilitários de Migração
 import { runMigration } from './infra/cli/migration-runner';

@@ -7,10 +7,13 @@
  */
 export { BaseModel, Entity, Column, Id, UniqueIndex, BusinessIndex, ColumnStage2 as Column5, IdStage2 as Id5, Timestamps, SoftDelete, TimestampsOptions, SoftDeleteOptions, hasTimestamps, hasSoftDelete, getCreatedAtField, getUpdatedAtField, getDeletedAtField } from './core/domain/models/BaseModel';
 export { UserModel } from './core/domain/models/UserModel';
+export { Auditable, AuditableOptions, AuditableMetadata } from './core/domain/decorators/AuditableDecorator';
+export { AuditLogModel, AuditActionType } from './core/domain/models/AuditLogModel';
 export { BaseService, ServiceResponse, PaginatedResponse, QueryOptions } from './core/services/BaseService';
 export { BaseBusiness } from './core/business/BaseBusiness';
 export { AuthMiddleware } from './core/auth/AuthMiddleware';
 export { AuthService } from './core/auth/AuthService';
+export { AuditService, AuditUser } from './core/auth/AuditService';
 export { TracingService } from './core/tracing/TracingService';
 export { TracingMiddleware } from './core/tracing/TracingMiddleware';
 export { LoggingService } from './core/tracing/LoggingService';
@@ -24,6 +27,7 @@ export { HTTPLoggerMiddleware } from './infra/logger/HTTPLoggerMiddleware';
 export { generateSwaggerSpec, swaggerUIOptions, authSwaggerDocs, SwaggerConfigOptions } from './infra/swagger';
 export { RabbitMQConnection, BaseProducer, BaseConsumer, MessagingService, ProducerOptions, ConsumerOptions } from './infra/messaging';
 export { BaseRepository, IRepository, PaginationOptions, QueryOptions as RepositoryQueryOptions, PaginatedResult } from './infra/repository/BaseRepository';
+export { AuditLogRepository } from './infra/repository/AuditLogRepository';
 import { runMigration } from './infra/cli/migration-runner';
 import { syncSchema } from './infra/cli/schema-sync';
 import { scaffoldUseCase } from './infra/cli/usecase-scaffold';
