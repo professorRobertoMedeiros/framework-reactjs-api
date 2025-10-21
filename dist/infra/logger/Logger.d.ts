@@ -22,6 +22,7 @@ export declare enum LogType {
 }
 export interface LogEntry {
     timestamp: string;
+    requestId: string;
     level: LogLevel;
     type: LogType;
     message: string;

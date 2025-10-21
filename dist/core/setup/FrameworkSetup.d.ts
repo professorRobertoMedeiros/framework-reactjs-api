@@ -1,4 +1,5 @@
 import { Express, Router } from 'express';
+import { SchedulerService, SchedulerOptions } from '../scheduler/SchedulerService';
 /**
  * Opções de configuração do framework
  */
@@ -19,6 +20,18 @@ export interface FrameworkOptions {
      * Habilitar logging HTTP (padrão: true se LOG_HTTP=true no .env)
      */
     enableHTTPLogging?: boolean;
+    /**
+     * Habilitar scheduler e suas rotas (padrão: false)
+     */
+    enableScheduler?: boolean;
+    /**
+     * Caminho customizado para rotas do scheduler (padrão: '/scheduler')
+     */
+    schedulerPath?: string;
+    /**
+     * Opções de configuração do scheduler
+     */
+    schedulerOptions?: SchedulerOptions;
     /**
      * Configurações adicionais do banco de dados
      */
@@ -79,3 +92,35 @@ export declare function setupFramework(app: Express, options?: FrameworkOptions)
  * ```
  */
 export declare function createFrameworkRouter(options?: Omit<FrameworkOptions, 'apiPrefix'>): Router;
+/**
+ * Retorna a instância do scheduler (se estiver habilitado)
+ *
+ * @returns Instância do SchedulerService ou null
+ *
+ * @example
+ * ```typescript
+ * import { getSchedulerInstance } from 'framework-reactjs-api';
+ *
+ * const scheduler = getSchedulerInstance();
+ * if (scheduler) {
+ *   await scheduler.runJobNow(jobId);
+ * }
+ * ```
+ */
+export declare function getSchedulerInstance(): SchedulerService | null;
+/**
+ * Para o scheduler de forma graceful
+ * Deve ser chamado no shutdown da aplicação
+ *
+ * @example
+ * ```typescript
+ * import { shutdownScheduler } from 'framework-reactjs-api';
+ *
+ * process.on('SIGINT', async () => {
+ *   console.log('Parando scheduler...');
+ *   await shutdownScheduler();
+ *   process.exit(0);
+ * });
+ * ```
+ */
+export declare function shutdownScheduler(): Promise<void>;

@@ -10,7 +10,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserRepository = exports.UserService = exports.UserBusiness = exports.scaffoldUseCase = exports.syncSchema = exports.runMigration = exports.BaseRepository = exports.HTTPLoggerMiddleware = exports.LogType = exports.LogLevel = exports.logger = exports.Logger = exports.Operator = exports.QueryBuilder = exports.initializeORM = exports.CustomORM = exports.createFrameworkRouter = exports.setupFramework = exports.authRoutes = exports.LoggingService = exports.TracingMiddleware = exports.TracingService = exports.AuthService = exports.AuthMiddleware = exports.BaseBusiness = exports.BaseService = exports.UserModel = exports.Id5 = exports.Column5 = exports.BusinessIndex = exports.UniqueIndex = exports.Id = exports.Column = exports.Entity = exports.BaseModel = void 0;
+exports.UserRepository = exports.UserService = exports.UserBusiness = exports.scaffoldUseCase = exports.syncSchema = exports.runMigration = exports.BaseRepository = exports.MessagingService = exports.BaseConsumer = exports.BaseProducer = exports.RabbitMQConnection = exports.HTTPLoggerMiddleware = exports.LogType = exports.LogLevel = exports.logger = exports.Logger = exports.Operator = exports.QueryBuilder = exports.initializeORM = exports.CustomORM = exports.shutdownScheduler = exports.getSchedulerInstance = exports.createFrameworkRouter = exports.setupFramework = exports.authRoutes = exports.JobStatus = exports.JobModel = exports.JobRepository = exports.JobExecutor = exports.SchedulerService = exports.LoggingService = exports.TracingMiddleware = exports.TracingService = exports.AuthService = exports.AuthMiddleware = exports.BaseBusiness = exports.BaseService = exports.UserModel = exports.Id5 = exports.Column5 = exports.BusinessIndex = exports.UniqueIndex = exports.Id = exports.Column = exports.Entity = exports.BaseModel = void 0;
 // Core
 var BaseModel_1 = require("./core/domain/models/BaseModel");
 Object.defineProperty(exports, "BaseModel", { enumerable: true, get: function () { return BaseModel_1.BaseModel; } });
@@ -44,6 +44,13 @@ var TracingMiddleware_1 = require("./core/tracing/TracingMiddleware");
 Object.defineProperty(exports, "TracingMiddleware", { enumerable: true, get: function () { return TracingMiddleware_1.TracingMiddleware; } });
 var LoggingService_1 = require("./core/tracing/LoggingService");
 Object.defineProperty(exports, "LoggingService", { enumerable: true, get: function () { return LoggingService_1.LoggingService; } });
+// Sistema de Agendamento (Scheduler)
+var scheduler_1 = require("./core/scheduler");
+Object.defineProperty(exports, "SchedulerService", { enumerable: true, get: function () { return scheduler_1.SchedulerService; } });
+Object.defineProperty(exports, "JobExecutor", { enumerable: true, get: function () { return scheduler_1.JobExecutor; } });
+Object.defineProperty(exports, "JobRepository", { enumerable: true, get: function () { return scheduler_1.JobRepository; } });
+Object.defineProperty(exports, "JobModel", { enumerable: true, get: function () { return scheduler_1.JobModel; } });
+Object.defineProperty(exports, "JobStatus", { enumerable: true, get: function () { return scheduler_1.JobStatus; } });
 // Rotas prontas para uso
 var auth_1 = require("./routes/auth");
 Object.defineProperty(exports, "authRoutes", { enumerable: true, get: function () { return __importDefault(auth_1).default; } });
@@ -51,6 +58,8 @@ Object.defineProperty(exports, "authRoutes", { enumerable: true, get: function (
 var FrameworkSetup_1 = require("./core/setup/FrameworkSetup");
 Object.defineProperty(exports, "setupFramework", { enumerable: true, get: function () { return FrameworkSetup_1.setupFramework; } });
 Object.defineProperty(exports, "createFrameworkRouter", { enumerable: true, get: function () { return FrameworkSetup_1.createFrameworkRouter; } });
+Object.defineProperty(exports, "getSchedulerInstance", { enumerable: true, get: function () { return FrameworkSetup_1.getSchedulerInstance; } });
+Object.defineProperty(exports, "shutdownScheduler", { enumerable: true, get: function () { return FrameworkSetup_1.shutdownScheduler; } });
 // Infraestrutura
 var CustomORM_1 = require("./infra/db/CustomORM");
 Object.defineProperty(exports, "CustomORM", { enumerable: true, get: function () { return CustomORM_1.CustomORM; } });
@@ -66,6 +75,12 @@ Object.defineProperty(exports, "LogLevel", { enumerable: true, get: function () 
 Object.defineProperty(exports, "LogType", { enumerable: true, get: function () { return Logger_1.LogType; } });
 var HTTPLoggerMiddleware_1 = require("./infra/logger/HTTPLoggerMiddleware");
 Object.defineProperty(exports, "HTTPLoggerMiddleware", { enumerable: true, get: function () { return HTTPLoggerMiddleware_1.HTTPLoggerMiddleware; } });
+// Messaging (RabbitMQ)
+var messaging_1 = require("./infra/messaging");
+Object.defineProperty(exports, "RabbitMQConnection", { enumerable: true, get: function () { return messaging_1.RabbitMQConnection; } });
+Object.defineProperty(exports, "BaseProducer", { enumerable: true, get: function () { return messaging_1.BaseProducer; } });
+Object.defineProperty(exports, "BaseConsumer", { enumerable: true, get: function () { return messaging_1.BaseConsumer; } });
+Object.defineProperty(exports, "MessagingService", { enumerable: true, get: function () { return messaging_1.MessagingService; } });
 // Repository Base
 var BaseRepository_1 = require("./infra/repository/BaseRepository");
 Object.defineProperty(exports, "BaseRepository", { enumerable: true, get: function () { return BaseRepository_1.BaseRepository; } });

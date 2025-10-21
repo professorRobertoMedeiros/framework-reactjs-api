@@ -36,6 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.logger = exports.Logger = exports.LogType = exports.LogLevel = void 0;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
+const TracingService_1 = require("../../core/tracing/TracingService");
 /**
  * Sistema de Logs do Framework
  *
@@ -107,7 +108,8 @@ class Logger {
         };
         const color = colors[entry.level] || '\x1b[0m';
         const reset = '\x1b[0m';
-        console.log(`${color}[${entry.timestamp}] [${entry.level.toUpperCase()}] [${entry.type.toUpperCase()}]${reset} ${entry.message}`);
+        const requestIdColor = '\x1b[35m'; // Magenta para RequestID
+        console.log(`${color}[${entry.timestamp}] [${entry.level.toUpperCase()}] [${entry.type.toUpperCase()}] ${requestIdColor}[RequestID: ${entry.requestId}]${reset} ${entry.message}`);
         if (entry.data) {
             console.log('Data:', entry.data);
         }
@@ -122,8 +124,10 @@ class Logger {
         }
     }
     log(entry) {
+        const requestId = TracingService_1.TracingService.getRequestId();
         const fullEntry = {
             timestamp: new Date().toISOString(),
+            requestId,
             level: entry.level || LogLevel.INFO,
             type: entry.type || LogType.APP,
             message: entry.message || '',

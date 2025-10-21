@@ -2,9 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HTTPLoggerMiddleware = void 0;
 const Logger_1 = require("./Logger");
+const TracingService_1 = require("../../core/tracing/TracingService");
 /**
- * Middleware para logging de requisições HTTP
- * Captura método, URL, status, duração e usuário autenticado (se houver)
+ * Middleware para logging de requisições HTTP com rastreamento por UUID
+ * Captura método, URL, status, duração, requestId e usuário autenticado (se houver)
+ *
+ * IMPORTANTE: Este middleware deve ser usado APÓS o TracingMiddleware
+ * para garantir que o requestId esteja disponível no contexto
  *
  * Nota: A interface Request já é estendida em AuthMiddleware.ts
  */
@@ -12,6 +16,7 @@ class HTTPLoggerMiddleware {
     static log() {
         return (req, res, next) => {
             const startTime = Date.now();
+            const requestId = TracingService_1.TracingService.getRequestId();
             // Capturar informações da requisição
             const method = req.method;
             const url = req.originalUrl || req.url;

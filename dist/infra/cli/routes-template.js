@@ -37,14 +37,17 @@ router.get('/', authMiddleware.authenticate(), async (req: Request, res: Respons
       query: req.query
     });
     
-    const { limit, offset, orderBy, ...conditions } = req.query;
+    // Extrair parâmetros de query
+    const { limit, offset, page, orderBy, includes, ...conditions } = req.query;
     
+    // Montar opções de consulta - O BaseRepository trata tudo automaticamente
     const result = await service.findAll({
       conditions: Object.keys(conditions).length > 0 ? conditions as Record<string, any> : undefined,
       limit: limit ? Number(limit) : undefined,
       offset: offset ? Number(offset) : undefined,
+      page: page ? Number(page) : undefined,
       orderBy: orderBy as string,
-      includes: req.query.includes ? String(req.query.includes).split(',') : undefined,
+      includes: includes ? String(includes).split(',') : undefined,
     });
     
     LoggingService.info('Registros encontrados', { 

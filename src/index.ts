@@ -37,6 +37,17 @@ export { TracingService } from './core/tracing/TracingService';
 export { TracingMiddleware } from './core/tracing/TracingMiddleware';
 export { LoggingService } from './core/tracing/LoggingService';
 
+// Sistema de Agendamento (Scheduler)
+export { 
+  SchedulerService, 
+  SchedulerOptions,
+  JobExecutor,
+  JobExecutionResult,
+  JobRepository,
+  JobModel,
+  JobStatus
+} from './core/scheduler';
+
 // Rotas prontas para uso
 export { default as authRoutes } from './routes/auth';
 
@@ -44,6 +55,8 @@ export { default as authRoutes } from './routes/auth';
 export { 
   setupFramework, 
   createFrameworkRouter,
+  getSchedulerInstance,
+  shutdownScheduler,
   FrameworkOptions 
 } from './core/setup/FrameworkSetup';
 
@@ -55,11 +68,22 @@ export { QueryBuilder, Operator } from './infra/db/query/QueryBuilder';
 export { Logger, logger, LogLevel, LogType, LogEntry } from './infra/logger/Logger';
 export { HTTPLoggerMiddleware } from './infra/logger/HTTPLoggerMiddleware';
 
+// Messaging (RabbitMQ)
+export { 
+  RabbitMQConnection,
+  BaseProducer,
+  BaseConsumer,
+  MessagingService,
+  ProducerOptions,
+  ConsumerOptions
+} from './infra/messaging';
+
 // Repository Base
 export { 
   BaseRepository, 
   IRepository, 
-  PaginationOptions, 
+  PaginationOptions,
+  QueryOptions as RepositoryQueryOptions,
   PaginatedResult 
 } from './infra/repository/BaseRepository';
 

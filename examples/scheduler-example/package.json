@@ -1,0 +1,31 @@
+{
+  "name": "scheduler-example",
+  "version": "1.0.0",
+  "description": "Exemplo de uso do scheduler do framework",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "seed": "psql -d scheduler_example -f seeds/001_insert_example_jobs.sql"
+  },
+  "keywords": [
+    "scheduler",
+    "cron",
+    "jobs",
+    "framework"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "framework-reactjs-api": "file:../..",
+    "express": "^4.18.2",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

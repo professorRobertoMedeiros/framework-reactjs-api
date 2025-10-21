@@ -1,6 +1,8 @@
 import { Express, Router } from 'express';
 import authRoutes from '../../routes/auth';
+import schedulerRoutes, { registerSchedulerInstance } from '../../routes/scheduler';
 import { HTTPLoggerMiddleware } from '../../infra/logger/HTTPLoggerMiddleware';
+import { SchedulerService, SchedulerOptions } from '../scheduler/SchedulerService';
 
 /**
  * Opções de configuração do framework
@@ -27,6 +29,21 @@ export interface FrameworkOptions {
   enableHTTPLogging?: boolean;
   
   /**
+   * Habilitar scheduler e suas rotas (padrão: false)
+   */
+  enableScheduler?: boolean;
+  
+  /**
+   * Caminho customizado para rotas do scheduler (padrão: '/scheduler')
+   */
+  schedulerPath?: string;
+  
+  /**
+   * Opções de configuração do scheduler
+   */
+  schedulerOptions?: SchedulerOptions;
+  
+  /**
    * Configurações adicionais do banco de dados
    */
   databaseConfig?: {
@@ -46,7 +63,19 @@ const defaultOptions: FrameworkOptions = {
   enableAuth: true,
   authPath: '/auth',
   enableHTTPLogging: process.env.LOG_HTTP === 'true',
+  enableScheduler: process.env.SCHEDULER_ENABLED === 'true',
+  schedulerPath: '/scheduler',
+  schedulerOptions: {
+    enabled: process.env.SCHEDULER_ENABLED === 'true',
+    autoStart: process.env.SCHEDULER_AUTO_START !== 'false', // true por padrão
+    maxConcurrent: parseInt(process.env.SCHEDULER_MAX_CONCURRENT || '5', 10),
+    checkInterval: parseInt(process.env.SCHEDULER_CHECK_INTERVAL || '60000', 10),
+    stuckJobThreshold: parseInt(process.env.SCHEDULER_STUCK_THRESHOLD || '30', 10)
+  }
 };
+
+// Armazenar instância do scheduler para shutdown graceful
+let schedulerServiceInstance: SchedulerService | null = null;
 
 /**
  * Inicializa o framework e configura rotas automáticas
@@ -91,6 +120,48 @@ export function setupFramework(app: Express, options: FrameworkOptions = {}): vo
     console.log(`   - POST ${authRoutePath}/login`);
     console.log(`   - POST ${authRoutePath}/register`);
     console.log(`   - GET ${authRoutePath}/me`);
+  }
+
+  // Configurar scheduler e suas rotas
+  if (config.enableScheduler) {
+    // Criar instância do scheduler
+    schedulerServiceInstance = new SchedulerService(config.schedulerOptions);
+    
+    // Registrar instância para as rotas
+    registerSchedulerInstance(schedulerServiceInstance);
+    
+    // Iniciar scheduler automaticamente se configurado
+    if (config.schedulerOptions?.autoStart !== false) {
+      schedulerServiceInstance.start()
+        .then(() => {
+          console.log('🚀 Scheduler iniciado automaticamente');
+        })
+        .catch((error) => {
+          console.error('❌ Erro ao iniciar scheduler automaticamente:', error);
+        });
+    } else {
+      console.log('⏸️  Scheduler criado mas não iniciado (autoStart=false)');
+      console.log('   Para iniciar: POST /api/scheduler/start');
+    }
+    
+    // Configurar rotas do scheduler
+    const schedulerRoutePath = `${config.apiPrefix}${config.schedulerPath}`;
+    app.use(schedulerRoutePath, schedulerRoutes);
+    
+    console.log(`✅ Scheduler habilitado e rotas configuradas em: ${schedulerRoutePath}`);
+    console.log(`   - GET ${schedulerRoutePath}/status`);
+    console.log(`   - POST ${schedulerRoutePath}/reload`);
+    console.log(`   - POST ${schedulerRoutePath}/start`);
+    console.log(`   - POST ${schedulerRoutePath}/stop`);
+    console.log(`   - GET ${schedulerRoutePath}/jobs`);
+    console.log(`   - POST ${schedulerRoutePath}/jobs`);
+    console.log(`   - GET ${schedulerRoutePath}/jobs/:id`);
+    console.log(`   - PUT ${schedulerRoutePath}/jobs/:id`);
+    console.log(`   - DELETE ${schedulerRoutePath}/jobs/:id`);
+    console.log(`   - POST ${schedulerRoutePath}/jobs/:id/run`);
+    console.log(`   - POST ${schedulerRoutePath}/jobs/:id/enable`);
+    console.log(`   - POST ${schedulerRoutePath}/jobs/:id/disable`);
+    console.log(`   - POST ${schedulerRoutePath}/reload/:id`);
   }
 
   // Configurar variáveis de ambiente do banco de dados se fornecidas
@@ -139,5 +210,57 @@ export function createFrameworkRouter(options: Omit<FrameworkOptions, 'apiPrefix
     console.log(`✅ Router do framework criado com rotas de autenticação em: ${config.authPath}`);
   }
 
+  // Adicionar rotas do scheduler
+  if (config.enableScheduler) {
+    if (!schedulerServiceInstance) {
+      schedulerServiceInstance = new SchedulerService(config.schedulerOptions);
+      registerSchedulerInstance(schedulerServiceInstance);
+    }
+    
+    router.use(config.schedulerPath!, schedulerRoutes);
+    console.log(`✅ Router do framework criado com rotas do scheduler em: ${config.schedulerPath}`);
+  }
+
   return router;
+}
+
+/**
+ * Retorna a instância do scheduler (se estiver habilitado)
+ * 
+ * @returns Instância do SchedulerService ou null
+ * 
+ * @example
+ * ```typescript
+ * import { getSchedulerInstance } from 'framework-reactjs-api';
+ * 
+ * const scheduler = getSchedulerInstance();
+ * if (scheduler) {
+ *   await scheduler.runJobNow(jobId);
+ * }
+ * ```
+ */
+export function getSchedulerInstance(): SchedulerService | null {
+  return schedulerServiceInstance;
+}
+
+/**
+ * Para o scheduler de forma graceful
+ * Deve ser chamado no shutdown da aplicação
+ * 
+ * @example
+ * ```typescript
+ * import { shutdownScheduler } from 'framework-reactjs-api';
+ * 
+ * process.on('SIGINT', async () => {
+ *   console.log('Parando scheduler...');
+ *   await shutdownScheduler();
+ *   process.exit(0);
+ * });
+ * ```
+ */
+export async function shutdownScheduler(): Promise<void> {
+  if (schedulerServiceInstance) {
+    await schedulerServiceInstance.stop();
+    schedulerServiceInstance = null;
+  }
 }

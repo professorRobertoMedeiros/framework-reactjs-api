@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { TracingService } from '../../core/tracing/TracingService';
 
 /**
  * Sistema de Logs do Framework
@@ -28,6 +29,7 @@ export enum LogType {
 
 export interface LogEntry {
   timestamp: string;
+  requestId: string;
   level: LogLevel;
   type: LogType;
   message: string;
@@ -118,8 +120,9 @@ export class Logger {
 
     const color = colors[entry.level] || '\x1b[0m';
     const reset = '\x1b[0m';
+    const requestIdColor = '\x1b[35m'; // Magenta para RequestID
 
-    console.log(`${color}[${entry.timestamp}] [${entry.level.toUpperCase()}] [${entry.type.toUpperCase()}]${reset} ${entry.message}`);
+    console.log(`${color}[${entry.timestamp}] [${entry.level.toUpperCase()}] [${entry.type.toUpperCase()}] ${requestIdColor}[RequestID: ${entry.requestId}]${reset} ${entry.message}`);
     
     if (entry.data) {
       console.log('Data:', entry.data);
@@ -136,8 +139,11 @@ export class Logger {
   }
 
   private log(entry: Partial<LogEntry>): void {
+    const requestId = TracingService.getRequestId();
+    
     const fullEntry: LogEntry = {
       timestamp: new Date().toISOString(),
+      requestId,
       level: entry.level || LogLevel.INFO,
       type: entry.type || LogType.APP,
       message: entry.message || '',

@@ -6,7 +6,15 @@ import { BaseModel } from '../../core/domain/models/BaseModel';
 export interface PaginationOptions {
     page?: number;
     limit?: number;
+    offset?: number;
     orderBy?: string;
+}
+/**
+ * Interface para opções de consulta avançada
+ */
+export interface QueryOptions extends PaginationOptions {
+    conditions?: Record<string, any>;
+    includes?: string[];
 }
 /**
  * Interface para resultado paginado
@@ -29,15 +37,17 @@ export interface PaginatedResult<T> {
  * @template ID Tipo do identificador único (geralmente number)
  */
 export interface IRepository<T extends BaseModel, ID = number> {
-    findById(id: ID): Promise<T | null>;
-    findAll(options?: PaginationOptions): Promise<T[]>;
-    findAllPaginated(options?: PaginationOptions): Promise<PaginatedResult<T>>;
+    findById(id: ID, includes?: string[]): Promise<T | null>;
+    findAll(options?: QueryOptions): Promise<T[]>;
+    findAllPaginated(options?: QueryOptions): Promise<PaginatedResult<T>>;
     findBy(conditions: Record<string, any>, options?: PaginationOptions): Promise<T[]>;
     findByPaginated(conditions: Record<string, any>, options?: PaginationOptions): Promise<PaginatedResult<T>>;
-    findOneBy(conditions: Record<string, any>): Promise<T | null>;
+    findOneBy(conditions: Record<string, any>, includes?: string[]): Promise<T | null>;
     create(entity: Omit<T, 'id'>): Promise<T>;
     update(id: ID, entity: Partial<T>): Promise<T | null>;
+    updateBy(conditions: Record<string, any>, entity: Partial<T>): Promise<number>;
     delete(id: ID): Promise<boolean>;
+    deleteBy(conditions: Record<string, any>): Promise<number>;
     count(conditions?: Record<string, any>): Promise<number>;
 }
 /**
@@ -71,23 +81,36 @@ export declare abstract class BaseRepository<T extends BaseModel, ID = number> i
         orderBy?: string;
     };
     /**
+     * Formata as opções de consulta avançada
+     * @param options Opções de consulta
+     * @returns Opções formatadas
+     */
+    protected formatQueryOptions(options?: QueryOptions): {
+        conditions?: Record<string, any>;
+        limit?: number;
+        offset?: number;
+        orderBy?: string;
+        includes?: string[];
+    };
+    /**
      * Buscar entidade por ID
      * @param id ID da entidade
+     * @param includes Lista de relacionamentos a incluir
      * @returns Entidade encontrada ou null se não existir
      */
-    findById(id: ID): Promise<T | null>;
+    findById(id: ID, includes?: string[]): Promise<T | null>;
     /**
-     * Buscar todas as entidades com opções de paginação e ordenação
-     * @param options Opções de paginação
+     * Buscar todas as entidades com opções de consulta avançada
+     * @param options Opções de consulta (conditions, paginação, ordenação, includes)
      * @returns Lista de entidades
      */
-    findAll(options?: PaginationOptions): Promise<T[]>;
+    findAll(options?: QueryOptions): Promise<T[]>;
     /**
      * Buscar todas as entidades com resultado paginado
-     * @param options Opções de paginação
+     * @param options Opções de consulta (conditions, paginação, ordenação, includes)
      * @returns Resultado paginado
      */
-    findAllPaginated(options?: PaginationOptions): Promise<PaginatedResult<T>>;
+    findAllPaginated(options?: QueryOptions): Promise<PaginatedResult<T>>;
     /**
      * Buscar entidades por condições
      * @param conditions Condições de filtro (pares chave/valor)
@@ -105,9 +128,10 @@ export declare abstract class BaseRepository<T extends BaseModel, ID = number> i
     /**
      * Buscar uma única entidade por condições
      * @param conditions Condições de filtro (pares chave/valor)
+     * @param includes Lista de relacionamentos a incluir
      * @returns Entidade ou null se não encontrada
      */
-    findOneBy(conditions: Record<string, any>): Promise<T | null>;
+    findOneBy(conditions: Record<string, any>, includes?: string[]): Promise<T | null>;
     /**
      * Criar uma nova entidade
      * @param entity Dados da entidade (sem ID)
@@ -133,6 +157,19 @@ export declare abstract class BaseRepository<T extends BaseModel, ID = number> i
      * @returns true se a entidade foi excluída, false se não encontrada
      */
     delete(id: ID): Promise<boolean>;
+    /**
+     * Atualizar entidades que correspondem às condições
+     * @param conditions Condições para filtrar as entidades a serem atualizadas
+     * @param entity Dados parciais para atualização
+     * @returns Número de entidades atualizadas
+     */
+    updateBy(conditions: Record<string, any>, entity: Partial<T>): Promise<number>;
+    /**
+     * Excluir entidades que correspondem às condições
+     * @param conditions Condições para filtrar as entidades a serem excluídas
+     * @returns Número de entidades excluídas
+     */
+    deleteBy(conditions: Record<string, any>): Promise<number>;
     /**
      * Contar entidades com condições opcionais
      * @param conditions Condições de filtro (pares chave/valor)

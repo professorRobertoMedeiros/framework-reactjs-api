@@ -1,6 +1,7 @@
 import { Pool, PoolClient } from 'pg';
 import { BaseModel, ENTITY_META_KEY, COLUMN_META_KEY, INDEX_META_KEY, BUSINESS_INDEX_META_KEY, ColumnOptions, IndexOptions } from '../../core/domain/models/BaseModel';
 import { logger } from '../logger/Logger';
+import { TracingService } from '../../core/tracing/TracingService';
 import * as fs from 'fs';
 import * as path from 'path';
 import 'dotenv/config';

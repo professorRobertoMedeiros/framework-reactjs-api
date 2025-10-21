@@ -1,9 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from './Logger';
+import { TracingService } from '../../core/tracing/TracingService';
 
 /**
- * Middleware para logging de requisições HTTP
- * Captura método, URL, status, duração e usuário autenticado (se houver)
+ * Middleware para logging de requisições HTTP com rastreamento por UUID
+ * Captura método, URL, status, duração, requestId e usuário autenticado (se houver)
+ * 
+ * IMPORTANTE: Este middleware deve ser usado APÓS o TracingMiddleware
+ * para garantir que o requestId esteja disponível no contexto
  * 
  * Nota: A interface Request já é estendida em AuthMiddleware.ts
  */
@@ -12,6 +16,7 @@ export class HTTPLoggerMiddleware {
   public static log() {
     return (req: Request, res: Response, next: NextFunction) => {
       const startTime = Date.now();
+      const requestId = TracingService.getRequestId();
 
       // Capturar informações da requisição
       const method = req.method;
