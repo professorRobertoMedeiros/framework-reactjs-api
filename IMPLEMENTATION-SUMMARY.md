@@ -1,8 +1,440 @@
 # 📋 Resumo das Implementações
 
-## 🆕 Última Implementação: Sistema de Mensageria RabbitMQ
+## 🆕 Última Implementação: Integração com Swagger UI
 
-### ✅ Implementado em: 20 de Janeiro de 2025
+### ✅ Implementado em: 21 de Outubro de 2025
+
+#### 📌 Objetivo
+Implementar **Swagger UI** (OpenAPI 3.0) no framework, permitindo que projetos tenham documentação interativa automática de suas APIs REST.
+
+#### 🎯 Problema Resolvido
+Antes: Projetos precisavam configurar Swagger manualmente com muito boilerplate
+Depois: Swagger é configurado automaticamente via `setupFramework()` com documentação pronta para uso
+
+---
+
+### 📦 Componentes Criados
+
+#### 1. **SwaggerConfig.ts**
+**Arquivo:** `src/infra/swagger/SwaggerConfig.ts`
+
+**Funcionalidades:**
+- ✅ Geração automática de especificação OpenAPI 3.0
+- ✅ Configuração via interface `SwaggerConfigOptions`
+- ✅ Suporte a múltiplos servidores (dev, staging, prod)
+- ✅ Autenticação JWT integrada
+- ✅ Tags para organização de endpoints
+- ✅ Schemas reutilizáveis (Error, SuccessResponse)
+- ✅ Documentação das rotas de autenticação incluída
+
+**Interface de Configuração:**
+```typescript
+interface SwaggerConfigOptions {
+  title?: string;
+  description?: string;
+  version?: string;
+  serverUrl?: string;
+  servers?: Array<{ url: string; description: string }>;
+  tags?: Array<{ name: string; description: string }>;
+  apis?: string[];
+  contact?: { name: string; email?: string; url?: string };
+  license?: { name: string; url?: string };
+  enableJWT?: boolean;
+  securitySchemes?: Record<string, any>;
+}
+```
+
+**Uso:**
+```typescript
+import { generateSwaggerSpec } from 'framework-reactjs-api';
+
+const swaggerSpec = generateSwaggerSpec({
+  title: 'My API',
+  version: '1.0.0',
+  apis: ['./src/**/*.ts']
+});
+```
+
+---
+
+#### 2. **FrameworkSetup.ts** (Atualizado)
+**Arquivo:** `src/core/setup/FrameworkSetup.ts`
+
+**Mudanças:**
+- ✅ Adicionada opção `enableSwagger` (padrão: true em development)
+- ✅ Adicionada opção `swaggerPath` (padrão: '/docs')
+- ✅ Adicionada opção `swaggerOptions` para configuração detalhada
+- ✅ Configuração automática do Swagger UI
+
+**Exemplo de Uso:**
+```typescript
+import { setupFramework } from 'framework-reactjs-api';
+
+setupFramework(app, {
+  enableSwagger: true,
+  swaggerPath: '/docs',
+  swaggerOptions: {
+    title: 'Products API',
+    description: 'API de gerenciamento de produtos',
+    version: '1.0.0',
+    contact: {
+      name: 'API Support',
+      email: 'support@example.com'
+    },
+    tags: [
+      { name: 'Products', description: 'Product endpoints' },
+      { name: 'Orders', description: 'Order endpoints' }
+    ]
+  }
+});
+```
+
+---
+
+#### 3. **Documentação Automática de Rotas de Autenticação**
+
+O framework já inclui documentação Swagger para todas as rotas de autenticação:
+
+- **POST** `/api/auth/login` - Login
+- **POST** `/api/auth/register` - Registro
+- **GET** `/api/auth/me` - Usuário atual
+
+**Exemplo de Output:**
+```yaml
+/api/auth/login:
+  post:
+    tags: [Authentication]
+    summary: Login to the system
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email: { type: string, format: email }
+              password: { type: string, format: password }
+    responses:
+      200:
+        description: Login successful
+        content:
+          application/json:
+            schema:
+              properties:
+                token: { type: string }
+                user: { type: object }
+```
+
+---
+
+### 📝 Como Documentar Rotas Personalizadas
+
+#### Exemplo Básico
+
+```typescript
+/**
+ * @swagger
+ * /api/products:
+ *   get:
+ *     tags:
+ *       - Products
+ *     summary: List all products
+ *     responses:
+ *       200:
+ *         description: Success
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Product'
+ */
+router.get('/api/products', (req, res) => {
+  // ...
+});
+```
+
+#### Definir Schemas
+
+```typescript
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Product:
+ *       type: object
+ *       required:
+ *         - name
+ *         - price
+ *       properties:
+ *         id: { type: number }
+ *         name: { type: string }
+ *         price: { type: number, format: float }
+ *         stock: { type: number }
+ *       example:
+ *         id: 1
+ *         name: Notebook
+ *         price: 3500.00
+ *         stock: 10
+ */
+```
+
+#### Endpoint com Autenticação
+
+```typescript
+/**
+ * @swagger
+ * /api/products:
+ *   post:
+ *     tags: [Products]
+ *     summary: Create product
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Product'
+ *     responses:
+ *       201:
+ *         description: Created
+ */
+```
+
+---
+
+### 🎨 Interface do Swagger UI
+
+Ao acessar `/docs`, você terá:
+
+1. **Visão Geral**: Título, descrição, versão da API
+2. **Servidores**: Lista de ambientes (dev, staging, prod)
+3. **Autenticação**: Botão "Authorize" para JWT
+4. **Endpoints**: Organizados por tags
+5. **Try it Out**: Testar endpoints diretamente
+6. **Schemas**: Documentação de modelos de dados
+7. **Filtros**: Busca por endpoints
+
+**Recursos:**
+- ✅ Teste endpoints diretamente no navegador
+- ✅ Autenticação JWT persistente
+- ✅ Exemplos de requisições/respostas
+- ✅ Validação de parâmetros
+- ✅ Download da especificação OpenAPI
+
+---
+
+### 📦 Exemplo Completo
+
+**Arquivo:** `examples/swagger-example/`
+
+Criado exemplo funcional demonstrando:
+
+**Estrutura:**
+```
+swagger-example/
+├── .env.example          # Configurações
+├── package.json          # Dependências
+├── tsconfig.json         # TypeScript config
+├── README.md             # Documentação
+└── src/
+    ├── index.ts          # Express app com Swagger
+    └── routes/
+        └── products.ts   # CRUD completo documentado
+```
+
+**Endpoints Documentados:**
+- GET `/api/products` - Listar produtos (com filtros)
+- GET `/api/products/:id` - Buscar por ID
+- POST `/api/products` - Criar produto (autenticado)
+- PUT `/api/products/:id` - Atualizar (autenticado)
+- DELETE `/api/products/:id` - Deletar (autenticado)
+
+**Schemas Definidos:**
+- `Product` - Modelo de produto completo
+- `Error` - Resposta de erro padrão
+- `SuccessResponse` - Resposta de sucesso padrão
+
+---
+
+### ✅ Benefícios
+
+#### 1. **Documentação Automática**
+- ✅ API documentada em tempo real
+- ✅ Sempre sincronizada com o código
+- ✅ Interface interativa para desenvolvedores
+
+#### 2. **Testes Integrados**
+- ✅ Teste endpoints sem Postman/Insomnia
+- ✅ Autenticação JWT integrada
+- ✅ Exemplos prontos para usar
+
+#### 3. **Onboarding Facilitado**
+- ✅ Novos desenvolvedores entendem a API rapidamente
+- ✅ Documentação visual e interativa
+- ✅ Exemplos de uso claros
+
+#### 4. **Geração de Clientes**
+- ✅ Especificação OpenAPI exportável
+- ✅ Gere clientes em qualquer linguagem
+- ✅ Padrão da indústria
+
+#### 5. **Zero Configuração**
+- ✅ Ativa automaticamente com `enableSwagger: true`
+- ✅ Documentação de autenticação já incluída
+- ✅ Schemas comuns pré-configurados
+
+---
+
+### 📋 Arquivos Criados/Modificados
+
+#### Core (src/infra/swagger/):
+1. ✅ `SwaggerConfig.ts` - Configuração e geração de spec (303 linhas)
+2. ✅ `index.ts` - Exports públicos
+
+#### Setup:
+1. ✅ `src/core/setup/FrameworkSetup.ts` - Integração do Swagger (modificado)
+2. ✅ `src/index.ts` - Exports do Swagger (modificado)
+
+#### Exemplo (examples/swagger-example/):
+1. ✅ `package.json` - Dependências
+2. ✅ `tsconfig.json` - Config TypeScript
+3. ✅ `.env.example` - Configurações
+4. ✅ `src/index.ts` - Express app (74 linhas)
+5. ✅ `src/routes/products.ts` - CRUD documentado (408 linhas)
+6. ✅ `README.md` - Documentação completa (322 linhas)
+
+#### Documentação:
+1. ✅ `docs/SWAGGER-GUIDE.md` - Guia completo (548 linhas)
+2. ✅ `.env.example` - Adicionadas variáveis SWAGGER_ENABLED e API_URL
+
+#### Dependências (package.json):
+1. ✅ `swagger-ui-express: ^5.0.0`
+2. ✅ `swagger-jsdoc: ^6.2.8`
+3. ✅ `@types/swagger-ui-express: ^4.1.6`
+4. ✅ `@types/swagger-jsdoc: ^6.0.4`
+
+---
+
+### 🚀 Como Usar
+
+#### 1. Configuração Básica
+
+```typescript
+import express from 'express';
+import { setupFramework } from 'framework-reactjs-api';
+
+const app = express();
+app.use(express.json());
+
+setupFramework(app, {
+  enableSwagger: true
+});
+
+app.listen(3000);
+```
+
+#### 2. Acessar Documentação
+
+```
+http://localhost:3000/docs
+```
+
+#### 3. Documentar suas Rotas
+
+```typescript
+/**
+ * @swagger
+ * /api/your-route:
+ *   get:
+ *     tags: [YourTag]
+ *     summary: Your endpoint
+ *     responses:
+ *       200:
+ *         description: Success
+ */
+router.get('/api/your-route', handler);
+```
+
+---
+
+### ⚙️ Configurações Disponíveis
+
+#### Variáveis de Ambiente:
+```bash
+# Swagger
+SWAGGER_ENABLED=true
+API_URL=http://localhost:3000
+
+# Servidor
+NODE_ENV=development  # Swagger auto-habilitado em dev
+```
+
+#### Opções do setupFramework():
+```typescript
+{
+  enableSwagger: boolean;        // Habilitar Swagger UI
+  swaggerPath: string;           // Caminho da documentação
+  swaggerOptions: {
+    title: string;               // Título da API
+    description: string;         // Descrição
+    version: string;             // Versão
+    serverUrl: string;           // URL base
+    servers: Array<...>;         // Múltiplos ambientes
+    tags: Array<...>;            // Tags de organização
+    apis: string[];              // Paths para escanear
+    enableJWT: boolean;          // Autenticação JWT
+    contact: {...};              // Informações de contato
+    license: {...};              // Licença
+  }
+}
+```
+
+---
+
+### 🎯 Casos de Uso
+
+#### 1. **API Pública**
+```typescript
+swaggerOptions: {
+  title: 'Public API',
+  description: 'API aberta para desenvolvedores',
+  servers: [
+    { url: 'https://api.myapp.com', description: 'Production' }
+  ]
+}
+```
+
+#### 2. **API Interna**
+```typescript
+swaggerOptions: {
+  title: 'Internal API',
+  description: 'API de uso interno',
+  enableJWT: true,  // Requer autenticação
+  tags: [
+    { name: 'Admin', description: 'Admin endpoints' },
+    { name: 'Reports', description: 'Report generation' }
+  ]
+}
+```
+
+#### 3. **Múltiplos Ambientes**
+```typescript
+swaggerOptions: {
+  servers: [
+    { url: 'http://localhost:3000', description: 'Local' },
+    { url: 'https://staging-api.com', description: 'Staging' },
+    { url: 'https://api.com', description: 'Production' }
+  ]
+}
+```
+
+---
+
+## 📋 Histórico de Implementações
+
+### ✅ 4. Sistema de Mensageria RabbitMQ (Janeiro 2025)
 
 #### 📌 Objetivo
 Criar uma implementação completa e prática de **RabbitMQ** para o framework, permitindo que cada projeto crie facilmente seus **producers** e **consumers** de mensagens. Implementação simples, objetiva e baseada em classes base abstratas.

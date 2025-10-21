@@ -21,6 +21,7 @@ export { CustomORM, initializeORM } from './infra/db/CustomORM';
 export { QueryBuilder, Operator } from './infra/db/query/QueryBuilder';
 export { Logger, logger, LogLevel, LogType, LogEntry } from './infra/logger/Logger';
 export { HTTPLoggerMiddleware } from './infra/logger/HTTPLoggerMiddleware';
+export { generateSwaggerSpec, swaggerUIOptions, authSwaggerDocs, SwaggerConfigOptions } from './infra/swagger';
 export { RabbitMQConnection, BaseProducer, BaseConsumer, MessagingService, ProducerOptions, ConsumerOptions } from './infra/messaging';
 export { BaseRepository, IRepository, PaginationOptions, QueryOptions as RepositoryQueryOptions, PaginatedResult } from './infra/repository/BaseRepository';
 import { runMigration } from './infra/cli/migration-runner';

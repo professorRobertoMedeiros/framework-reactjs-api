@@ -255,7 +255,9 @@ export class ProdutoBusiness extends BaseBusiness<ProdutoModel, ProdutoDom> {
     super(repo);
   }
   
-  // Converter modelo para Dom
+  // OPCIONAL: Converter modelo para Dom apenas se precisar transformar dados
+  // Por padrão, BaseBusiness retorna o próprio modelo sem transformação
+  /*
   protected toDom(model: ProdutoModel): ProdutoDom {
     return {
       id: model.id,
@@ -264,6 +266,7 @@ export class ProdutoBusiness extends BaseBusiness<ProdutoModel, ProdutoDom> {
       ativo: model.ativo
     };
   }
+  */
   
   // Método de negócio customizado
   async desativar(id: number): Promise<void> {

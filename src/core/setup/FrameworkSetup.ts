@@ -1,8 +1,14 @@
 import { Express, Router } from 'express';
+import swaggerUi from 'swagger-ui-express';
 import authRoutes from '../../routes/auth';
 import schedulerRoutes, { registerSchedulerInstance } from '../../routes/scheduler';
 import { HTTPLoggerMiddleware } from '../../infra/logger/HTTPLoggerMiddleware';
 import { SchedulerService, SchedulerOptions } from '../scheduler/SchedulerService';
+import { 
+  generateSwaggerSpec, 
+  swaggerUIOptions, 
+  SwaggerConfigOptions 
+} from '../../infra/swagger/SwaggerConfig';
 
 /**
  * Opções de configuração do framework
@@ -44,6 +50,21 @@ export interface FrameworkOptions {
   schedulerOptions?: SchedulerOptions;
   
   /**
+   * Habilitar Swagger UI (padrão: true em desenvolvimento)
+   */
+  enableSwagger?: boolean;
+  
+  /**
+   * Caminho para documentação Swagger (padrão: '/docs')
+   */
+  swaggerPath?: string;
+  
+  /**
+   * Opções de configuração do Swagger
+   */
+  swaggerOptions?: SwaggerConfigOptions;
+  
+  /**
    * Configurações adicionais do banco de dados
    */
   databaseConfig?: {
@@ -65,6 +86,8 @@ const defaultOptions: FrameworkOptions = {
   enableHTTPLogging: process.env.LOG_HTTP === 'true',
   enableScheduler: process.env.SCHEDULER_ENABLED === 'true',
   schedulerPath: '/scheduler',
+  enableSwagger: process.env.NODE_ENV !== 'production',
+  swaggerPath: '/docs',
   schedulerOptions: {
     enabled: process.env.SCHEDULER_ENABLED === 'true',
     autoStart: process.env.SCHEDULER_AUTO_START !== 'false', // true por padrão
@@ -110,6 +133,15 @@ export function setupFramework(app: Express, options: FrameworkOptions = {}): vo
   if (config.enableHTTPLogging) {
     app.use(HTTPLoggerMiddleware.log());
     console.log('✅ Logging HTTP habilitado');
+  }
+
+  // Configurar Swagger UI
+  if (config.enableSwagger) {
+    const swaggerSpec = generateSwaggerSpec(config.swaggerOptions);
+    app.use(config.swaggerPath!, swaggerUi.serve);
+    app.get(config.swaggerPath!, swaggerUi.setup(swaggerSpec, swaggerUIOptions));
+    console.log(`📚 Documentação Swagger disponível em: ${config.swaggerPath}`);
+    console.log(`   Acesse: http://localhost:${process.env.PORT || 3000}${config.swaggerPath}`);
   }
 
   // Configurar rotas de autenticação automaticamente

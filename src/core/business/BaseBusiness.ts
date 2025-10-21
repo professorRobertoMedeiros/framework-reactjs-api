@@ -16,9 +16,15 @@ export abstract class BaseBusiness<T = any, TDom = T> {
 
   /**
    * Converter modelo para Dom (DTO)
-   * Deve ser implementado pelas classes filhas
+   * Por padrão, retorna o próprio modelo sem transformação
+   * Sobrescreva este método se precisar transformar os dados
+   * 
+   * @param model Modelo do banco de dados
+   * @returns Dom (DTO) ou o próprio modelo se não houver transformação
    */
-  protected abstract toDom(model: T): TDom;
+  protected toDom(model: T): TDom {
+    return model as unknown as TDom;
+  }
 
   /**
    * Converter dados de entrada para modelo

@@ -68,6 +68,14 @@ export { QueryBuilder, Operator } from './infra/db/query/QueryBuilder';
 export { Logger, logger, LogLevel, LogType, LogEntry } from './infra/logger/Logger';
 export { HTTPLoggerMiddleware } from './infra/logger/HTTPLoggerMiddleware';
 
+// Swagger
+export { 
+  generateSwaggerSpec,
+  swaggerUIOptions,
+  authSwaggerDocs,
+  SwaggerConfigOptions
+} from './infra/swagger';
+
 // Messaging (RabbitMQ)
 export { 
   RabbitMQConnection,

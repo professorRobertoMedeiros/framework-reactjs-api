@@ -1,5 +1,6 @@
 import { Express, Router } from 'express';
 import { SchedulerService, SchedulerOptions } from '../scheduler/SchedulerService';
+import { SwaggerConfigOptions } from '../../infra/swagger/SwaggerConfig';
 /**
  * Opções de configuração do framework
  */
@@ -32,6 +33,18 @@ export interface FrameworkOptions {
      * Opções de configuração do scheduler
      */
     schedulerOptions?: SchedulerOptions;
+    /**
+     * Habilitar Swagger UI (padrão: true em desenvolvimento)
+     */
+    enableSwagger?: boolean;
+    /**
+     * Caminho para documentação Swagger (padrão: '/docs')
+     */
+    swaggerPath?: string;
+    /**
+     * Opções de configuração do Swagger
+     */
+    swaggerOptions?: SwaggerConfigOptions;
     /**
      * Configurações adicionais do banco de dados
      */

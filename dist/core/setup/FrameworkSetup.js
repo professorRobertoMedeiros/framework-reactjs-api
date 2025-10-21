@@ -41,10 +41,12 @@ exports.createFrameworkRouter = createFrameworkRouter;
 exports.getSchedulerInstance = getSchedulerInstance;
 exports.shutdownScheduler = shutdownScheduler;
 const express_1 = require("express");
+const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
 const auth_1 = __importDefault(require("../../routes/auth"));
 const scheduler_1 = __importStar(require("../../routes/scheduler"));
 const HTTPLoggerMiddleware_1 = require("../../infra/logger/HTTPLoggerMiddleware");
 const SchedulerService_1 = require("../scheduler/SchedulerService");
+const SwaggerConfig_1 = require("../../infra/swagger/SwaggerConfig");
 /**
  * Configuração padrão do framework
  */
@@ -55,6 +57,8 @@ const defaultOptions = {
     enableHTTPLogging: process.env.LOG_HTTP === 'true',
     enableScheduler: process.env.SCHEDULER_ENABLED === 'true',
     schedulerPath: '/scheduler',
+    enableSwagger: process.env.NODE_ENV !== 'production',
+    swaggerPath: '/docs',
     schedulerOptions: {
         enabled: process.env.SCHEDULER_ENABLED === 'true',
         autoStart: process.env.SCHEDULER_AUTO_START !== 'false', // true por padrão
@@ -96,6 +100,14 @@ function setupFramework(app, options = {}) {
     if (config.enableHTTPLogging) {
         app.use(HTTPLoggerMiddleware_1.HTTPLoggerMiddleware.log());
         console.log('✅ Logging HTTP habilitado');
+    }
+    // Configurar Swagger UI
+    if (config.enableSwagger) {
+        const swaggerSpec = (0, SwaggerConfig_1.generateSwaggerSpec)(config.swaggerOptions);
+        app.use(config.swaggerPath, swagger_ui_express_1.default.serve);
+        app.get(config.swaggerPath, swagger_ui_express_1.default.setup(swaggerSpec, SwaggerConfig_1.swaggerUIOptions));
+        console.log(`📚 Documentação Swagger disponível em: ${config.swaggerPath}`);
+        console.log(`   Acesse: http://localhost:${process.env.PORT || 3000}${config.swaggerPath}`);
     }
     // Configurar rotas de autenticação automaticamente
     if (config.enableAuth) {
