@@ -104,13 +104,62 @@ function analyzeModelFile(modelName) {
             isTimestamp
         });
     }
+    // Verificar decoradores @Timestamps e @SoftDelete
+    const hasTimestamps = content.includes('@Timestamps');
+    const hasSoftDelete = content.includes('@SoftDelete');
+    // Se o modelo tem @Timestamps, adicionar as colunas de timestamp
+    if (hasTimestamps) {
+        // Verificar se já existe created_at
+        if (!properties.some(p => p.name === 'created_at')) {
+            properties.push({
+                name: 'created_at',
+                type: 'Date',
+                optional: false,
+                isId: false,
+                isTimestamp: true
+            });
+        }
+        // Verificar se já existe updated_at
+        if (!properties.some(p => p.name === 'updated_at')) {
+            properties.push({
+                name: 'updated_at',
+                type: 'Date',
+                optional: false,
+                isId: false,
+                isTimestamp: true
+            });
+        }
+    }
+    // Se o modelo tem @SoftDelete, adicionar a coluna de deleted_at
+    if (hasSoftDelete) {
+        // Verificar se já existe deleted_at
+        if (!properties.some(p => p.name === 'deleted_at')) {
+            properties.push({
+                name: 'deleted_at',
+                type: 'Date',
+                optional: true,
+                isId: false,
+                isTimestamp: true
+            });
+        }
+    }
+    console.log(`✅ ${hasTimestamps ? "Detectado @Timestamps" : "Sem @Timestamps"}, ${hasSoftDelete ? "Detectado @SoftDelete" : "Sem @SoftDelete"}`);
+    return properties;
     console.log("✅ Analisado " + modelName + "Model: " + properties.length + " propriedades encontradas");
     return properties;
 }
 // Função para geração de scaffolding de casos de uso
 function scaffoldUseCase(modelName) {
-    // Implementação
-    createScaffolding(toPascalCase(modelName));
+    // Verificar se há um comando especial nos argumentos
+    const args = process.argv.slice(2);
+    if (args.length >= 2 && args[0] === 'update-dom') {
+        // Se for update-dom, chamar a função updateDomFromModel
+        updateDomFromModel(toPascalCase(modelName));
+    }
+    else {
+        // Caso contrário, criar scaffolding normalmente
+        createScaffolding(toPascalCase(modelName));
+    }
 }
 // Função para converter nome em kebab-case (para pastas)
 function toKebabCase(str) {
@@ -405,19 +454,79 @@ function getModelNameFromArgs() {
     const args = process.argv.slice(2);
     return args[0]; // O primeiro argumento deve ser o nome do modelo
 }
+// Função para atualizar o arquivo Dom a partir do modelo
+function updateDomFromModel(modelName) {
+    try {
+        console.log('=== Framework TypeScript DDD - Atualização de Dom ===');
+        console.log(`Atualizando Dom para o modelo ${modelName}...`);
+        // Verificar se o arquivo Dom existe
+        const baseDir = process.cwd();
+        const useCasesDir = fs.existsSync(path.join(baseDir, 'src', 'use-cases'))
+            ? path.join(baseDir, 'src', 'use-cases')
+            : fs.existsSync(path.join(baseDir, 'src', 'usecases'))
+                ? path.join(baseDir, 'src', 'usecases')
+                : fs.existsSync(path.join(baseDir, 'use-cases'))
+                    ? path.join(baseDir, 'use-cases')
+                    : path.join(baseDir, 'usecases');
+        const kebabCaseName = modelName.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+        const domainsDirPath = path.join(useCasesDir, kebabCaseName, 'domains');
+        const domainPath = path.join(domainsDirPath, modelName + 'Dom.ts');
+        if (!fs.existsSync(domainPath)) {
+            console.error(`Erro: Arquivo ${modelName}Dom.ts não encontrado em ${domainsDirPath}`);
+            console.log('Criando nova estrutura de Dom...');
+            createScaffolding(modelName);
+            return;
+        }
+        // Criar backup do arquivo Dom atual
+        const backupPath = domainPath + '.bak';
+        fs.copyFileSync(domainPath, backupPath);
+        console.log(`Backup criado em ${backupPath}`);
+        // Gerar novo conteúdo do Dom
+        const newDomContent = generateDomainTemplate(modelName);
+        // Sobrescrever o arquivo Dom existente
+        fs.writeFileSync(domainPath, newDomContent);
+        console.log(`${modelName}Dom.ts atualizado com sucesso.`);
+    }
+    catch (error) {
+        console.error('Erro ao atualizar Dom:', error);
+    }
+}
+// Processar argumentos da linha de comando
+function parseCommandArgs() {
+    const args = process.argv.slice(2);
+    // Verificar se o primeiro argumento é um comando especial
+    if (args.length >= 2 && args[0] === 'update-dom') {
+        return {
+            command: 'update-dom',
+            modelName: args[1]
+        };
+    }
+    // Caso padrão - criar scaffolding
+    return {
+        command: 'create',
+        modelName: args[0] || ''
+    };
+}
 // Função principal
 function main() {
     console.log('=== Framework TypeScript DDD - Scaffolding de Use Cases ===');
-    const modelName = getModelNameFromArgs();
+    const { command, modelName } = parseCommandArgs();
     if (!modelName) {
         console.error('Erro: Nome do modelo não fornecido.');
-        console.log('Uso: npm run usecases:dev <NomeDoModelo>');
-        console.log('Exemplo: npm run usecases:dev User');
+        console.log('Uso: npm run scaffold <NomeDoModelo>');
+        console.log('     npm run scaffold update-dom <NomeDoModelo>');
+        console.log('Exemplo: npm run scaffold User');
+        console.log('         npm run scaffold update-dom User');
         process.exit(1);
     }
     // Converter para PascalCase para garantir formatação correta
     const pascalCaseModelName = toPascalCase(modelName);
-    createScaffolding(pascalCaseModelName);
+    if (command === 'update-dom') {
+        updateDomFromModel(pascalCaseModelName);
+    }
+    else {
+        createScaffolding(pascalCaseModelName);
+    }
 }
 // Executar o script apenas se for chamado diretamente (não quando importado)
 if (require.main === module) {

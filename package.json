@@ -25,6 +25,7 @@
     "prepublishOnly": "npm run build",
     "postinstall": "chmod +x ./bin/*.js",
     "scaffold": "ts-node src/infra/cli/usecase-scaffold.ts",
+    "scaffold:update-dom": "ts-node src/infra/cli/usecase-scaffold.ts update-dom",
     "migration:run": "ts-node src/infra/cli/migration-runner.ts",
     "schema:sync": "ts-node src/infra/cli/schema-sync.ts sync",
     "docs:manual": "cat MANUAL.md",

@@ -199,6 +199,31 @@ class CustomORM {
                 if (createIndexesSQL.length > 0) {
                     console.log(`Índices para ${model.getTableName()} sincronizados`);
                 }
+                // Verificar decoradores de timestamp e soft delete
+                try {
+                    const hasTimestamps = Reflect.getMetadata('timestamps', model) !== undefined;
+                    const hasSoftDelete = Reflect.getMetadata('softDelete', model) !== undefined;
+                    // Adicionar colunas de timestamp se necessário
+                    if (hasTimestamps) {
+                        console.log(`Adicionando colunas de timestamp para ${model.getTableName()}`);
+                        await this.query(`
+              ALTER TABLE ${model.getTableName()}
+              ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            `);
+                    }
+                    // Adicionar coluna de soft delete se necessário
+                    if (hasSoftDelete) {
+                        console.log(`Adicionando coluna de soft delete para ${model.getTableName()}`);
+                        await this.query(`
+              ALTER TABLE ${model.getTableName()}
+              ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL
+            `);
+                    }
+                }
+                catch (error) {
+                    console.error(`Erro ao processar decoradores para ${model.name}:`, error);
+                }
             }
             console.log('Sincronização de esquema concluída com sucesso!');
         }

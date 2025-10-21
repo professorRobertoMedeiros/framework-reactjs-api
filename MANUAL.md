@@ -154,6 +154,31 @@ npm run build
 npx framework-reactjs-api-sync
 ```
 
+### Decoradores para Timestamps e Soft Delete
+
+O framework oferece decoradores para adicionar automaticamente campos de timestamp e soft delete aos seus modelos:
+
+```typescript
+import { BaseModel, Entity, Column, Id, Timestamps, SoftDelete } from 'framework-reactjs-api';
+
+@Entity('produtos')
+@Timestamps() // Adiciona created_at e updated_at
+@SoftDelete() // Adiciona deleted_at
+export class ProdutoModel extends BaseModel {
+  @Id()
+  id!: number;
+  
+  @Column({ type: 'VARCHAR', nullable: false, length: 255 })
+  nome!: string;
+  
+  // ... outras colunas
+}
+```
+
+Quando você usa esses decoradores, o framework:
+1. Adiciona automaticamente as colunas correspondentes no banco de dados durante a sincronização
+2. Inclui os campos nos arquivos Dom gerados pelo scaffold ou atualizados com o comando `update-dom`
+
 ### Migrações SQL
 
 ```bash
@@ -787,6 +812,7 @@ npm run scaffold:update-dom User
 - O arquivo de backup será nomeado como `[NomeDoModelo]Dom.ts.bak`
 - O novo arquivo Dom será gerado com base nas propriedades atuais do modelo
 - Qualquer customização feita manualmente no arquivo Dom original será perdida
+- O comando incluirá campos de timestamp (`created_at`, `updated_at`) e soft delete (`deleted_at`) se os decoradores `@Timestamps` e `@SoftDelete` forem usados no modelo
 
 ## Boas Práticas
 
