@@ -636,4 +636,164 @@ npm update framework-reactjs-api
 ---
 
 **Versão:** 1.0.1  
-**Última atualização:** 18 de Outubro de 2025
+**Última atualização:** 18 de Outubro de 2025# Sistema de Auditoria
+
+O sistema de auditoria permite rastrear alterações em modelos específicos, registrando quem criou, alterou ou deletou dados, bem como os valores antigos e novos. Apenas as colunas marcadas para auditoria serão rastreadas.
+
+## Tabela `audit_logs`
+
+```sql
+CREATE TABLE audit_logs (
+  id SERIAL PRIMARY KEY,
+  table_name VARCHAR(255) NOT NULL,
+  record_id INTEGER NOT NULL,
+  column_name VARCHAR(255) NOT NULL,
+  action_type VARCHAR(50) NOT NULL, -- 'CREATE', 'UPDATE', 'DELETE'
+  old_value TEXT,
+  new_value TEXT,
+  user_id INTEGER,
+  user_email VARCHAR(255),
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+## Configurando Colunas Auditáveis
+
+Use o decorador `@Auditable()` para marcar as colunas que devem ser auditadas:
+
+```typescript
+import { BaseModel, Entity, Column, Id } from 'framework-reactjs-api';
+import { Auditable } from 'framework-reactjs-api';
+
+@Entity('produtos')
+export class ProdutoModel extends BaseModel {
+  @Id()
+  id!: number;
+  
+  @Column({ type: 'VARCHAR', nullable: false })
+  @Auditable() // Auditar em todas as operações (create, update, delete)
+  nome!: string;
+  
+  @Column({ type: 'TEXT', nullable: true })
+  @Auditable({ onCreate: true, onUpdate: true, onDelete: false }) // Não auditar na deleção
+  descricao?: string;
+  
+  @Column({ type: 'DECIMAL', nullable: false })
+  @Auditable({ onCreate: false, onUpdate: true, onDelete: true }) // Não auditar na criação
+  preco!: number;
+  
+  @Column({ type: 'INTEGER', nullable: false })
+  estoque!: number; // Sem decorador @Auditable - não será auditada
+}
+```
+
+### Opções do Decorador `@Auditable`
+
+| Opção | Tipo | Padrão | Descrição |
+|-------|------|--------|-----------|
+| `onCreate` | boolean | `true` | Auditar quando o registro for criado |
+| `onUpdate` | boolean | `true` | Auditar quando o registro for atualizado |
+| `onDelete` | boolean | `true` | Auditar quando o registro for excluído |
+
+## Habilitando Auditoria no Repositório
+
+```typescript
+import { BaseRepository, AuditUser } from 'framework-reactjs-api';
+import { ProdutoModel } from './ProdutoModel';
+
+export class ProdutoRepository extends BaseRepository<ProdutoModel> {
+  constructor(currentUser?: AuditUser) {
+    // Parâmetros: Modelo, habilitar auditoria, usuário atual
+    super(ProdutoModel, true, currentUser);
+  }
+}
+```
+
+## Definindo o Usuário Atual
+
+```typescript
+// Ao criar o repositório
+const userLogado = { id: 1, email: 'usuario@example.com' };
+const produtoRepo = new ProdutoRepository(userLogado);
+
+// Ou posteriormente
+produtoRepo.setAuditUser({ id: 2, email: 'outro@example.com' });
+```
+
+## Consultando o Histórico de Alterações
+
+```typescript
+import { AuditService } from 'framework-reactjs-api';
+
+// Criar serviço de auditoria
+const auditService = new AuditService();
+
+// Obter histórico completo de um registro
+const historico = await auditService.getRecordHistory('produtos', 123);
+
+// Obter histórico de uma coluna específica
+const historicoPreco = await auditService.getColumnHistory('produtos', 123, 'preco');
+
+// Exemplo de saída:
+// [
+//   {
+//     id: 1,
+//     tableName: 'produtos',
+//     recordId: 123,
+//     columnName: 'preco',
+//     actionType: 'UPDATE',
+//     oldValue: '29.90',
+//     newValue: '34.90',
+//     userId: 1,
+//     userEmail: 'usuario@example.com',
+//     createdAt: '2025-10-21T14:30:15.123Z'
+//   },
+//   ...
+// ]
+```
+
+## Comportamento Padrão
+
+- Apenas colunas marcadas com `@Auditable` serão auditadas
+- Alterações em colunas não marcadas não geram registros de auditoria
+- O sistema audita automaticamente nas operações CRUD do BaseRepository
+- A auditoria funciona tanto para exclusão física quanto para soft delete# Atualização de Arquivos de Domínio (Dom)
+
+## Sobre o Recurso
+
+Quando novas colunas são adicionadas a um modelo, o arquivo de domínio (Dom) correspondente no use case não é mais atualizado automaticamente. Isto foi implementado para evitar a perda de personalizações e métodos adicionados manualmente aos arquivos Dom.
+
+## Como Atualizar o Dom
+
+Quando você adicionar novas colunas ao seu modelo e quiser que o arquivo Dom seja atualizado para refletir essas mudanças, utilize o comando específico para esta finalidade:
+
+```bash
+# Usando npm
+npm run scaffold:update-dom NomeDoModelo
+
+# Ou usando npx
+npx framework-reactjs-api-scaffold update-dom NomeDoModelo
+```
+
+Por exemplo, se você adicionou novas colunas ao modelo `UserModel` e deseja atualizar o arquivo `UserDom.ts`:
+
+```bash
+npm run scaffold:update-dom User
+```
+
+## Comportamento
+
+- O comando criará um backup do arquivo Dom atual antes de substituí-lo
+- O arquivo de backup será nomeado como `[NomeDoModelo]Dom.ts.bak`
+- O novo arquivo Dom será gerado com base nas propriedades atuais do modelo
+- Qualquer customização feita manualmente no arquivo Dom original será perdida
+
+## Boas Práticas
+
+1. **Crie um backup manual** se você tiver customizações importantes no arquivo Dom.
+2. **Realize um commit antes** de executar o comando de atualização.
+3. **Compare os arquivos** após a atualização para recuperar customizações importantes.
+
+---
+
+**Observação:** Esta funcionalidade foi implementada para permitir maior controle sobre os arquivos de domínio, evitando sobrescritas acidentais durante o desenvolvimento.

@@ -6,6 +6,21 @@ export const COLUMN_META_KEY = Symbol('column');
 export const INDEX_META_KEY = Symbol('index');
 export const BUSINESS_INDEX_META_KEY = Symbol('businessIndex');
 
+// Exportar decorators de timestamps e soft delete
+export { 
+  Timestamps, 
+  SoftDelete,
+  TimestampsOptions,
+  SoftDeleteOptions,
+  hasTimestamps,
+  hasSoftDelete,
+  getCreatedAtField,
+  getUpdatedAtField,
+  getDeletedAtField,
+  SOFT_DELETE_META_KEY,
+  TIMESTAMPS_META_KEY
+} from '../decorators/TimestampsDecorators';
+
 // Interface para opções de coluna
 export interface ColumnOptions {
   type: 'SERIAL' | 'VARCHAR' | 'INT' | 'BOOLEAN' | 'TIMESTAMP' | 'TEXT' | 'JSONB';

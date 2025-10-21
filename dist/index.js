@@ -10,7 +10,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserRepository = exports.UserService = exports.UserBusiness = exports.scaffoldUseCase = exports.syncSchema = exports.runMigration = exports.BaseRepository = exports.MessagingService = exports.BaseConsumer = exports.BaseProducer = exports.RabbitMQConnection = exports.authSwaggerDocs = exports.swaggerUIOptions = exports.generateSwaggerSpec = exports.HTTPLoggerMiddleware = exports.LogType = exports.LogLevel = exports.logger = exports.Logger = exports.Operator = exports.QueryBuilder = exports.initializeORM = exports.CustomORM = exports.shutdownScheduler = exports.getSchedulerInstance = exports.createFrameworkRouter = exports.setupFramework = exports.authRoutes = exports.JobStatus = exports.JobModel = exports.JobRepository = exports.JobExecutor = exports.SchedulerService = exports.LoggingService = exports.TracingMiddleware = exports.TracingService = exports.AuthService = exports.AuthMiddleware = exports.BaseBusiness = exports.BaseService = exports.UserModel = exports.Id5 = exports.Column5 = exports.BusinessIndex = exports.UniqueIndex = exports.Id = exports.Column = exports.Entity = exports.BaseModel = void 0;
+exports.BaseRepository = exports.MessagingService = exports.BaseConsumer = exports.BaseProducer = exports.RabbitMQConnection = exports.authSwaggerDocs = exports.swaggerUIOptions = exports.generateSwaggerSpec = exports.HTTPLoggerMiddleware = exports.LogType = exports.LogLevel = exports.logger = exports.Logger = exports.Operator = exports.QueryBuilder = exports.initializeORM = exports.CustomORM = exports.shutdownScheduler = exports.getSchedulerInstance = exports.createFrameworkRouter = exports.setupFramework = exports.authRoutes = exports.JobStatus = exports.JobModel = exports.JobRepository = exports.JobExecutor = exports.SchedulerService = exports.LoggingService = exports.TracingMiddleware = exports.TracingService = exports.AuthService = exports.AuthMiddleware = exports.BaseBusiness = exports.BaseService = exports.UserModel = exports.getDeletedAtField = exports.getUpdatedAtField = exports.getCreatedAtField = exports.hasSoftDelete = exports.hasTimestamps = exports.SoftDelete = exports.Timestamps = exports.Id5 = exports.Column5 = exports.BusinessIndex = exports.UniqueIndex = exports.Id = exports.Column = exports.Entity = exports.BaseModel = void 0;
+exports.UserRepository = exports.UserService = exports.UserBusiness = exports.scaffoldUseCase = exports.syncSchema = exports.runMigration = void 0;
 // Core
 var BaseModel_1 = require("./core/domain/models/BaseModel");
 Object.defineProperty(exports, "BaseModel", { enumerable: true, get: function () { return BaseModel_1.BaseModel; } });
@@ -24,6 +25,14 @@ Object.defineProperty(exports, "BusinessIndex", { enumerable: true, get: functio
 // Note: Mesmo com estes decoradores, use SEMPRE com parênteses: @Id5()
 Object.defineProperty(exports, "Column5", { enumerable: true, get: function () { return BaseModel_1.ColumnStage2; } });
 Object.defineProperty(exports, "Id5", { enumerable: true, get: function () { return BaseModel_1.IdStage2; } });
+// Decoradores de Timestamps e Soft Delete
+Object.defineProperty(exports, "Timestamps", { enumerable: true, get: function () { return BaseModel_1.Timestamps; } });
+Object.defineProperty(exports, "SoftDelete", { enumerable: true, get: function () { return BaseModel_1.SoftDelete; } });
+Object.defineProperty(exports, "hasTimestamps", { enumerable: true, get: function () { return BaseModel_1.hasTimestamps; } });
+Object.defineProperty(exports, "hasSoftDelete", { enumerable: true, get: function () { return BaseModel_1.hasSoftDelete; } });
+Object.defineProperty(exports, "getCreatedAtField", { enumerable: true, get: function () { return BaseModel_1.getCreatedAtField; } });
+Object.defineProperty(exports, "getUpdatedAtField", { enumerable: true, get: function () { return BaseModel_1.getUpdatedAtField; } });
+Object.defineProperty(exports, "getDeletedAtField", { enumerable: true, get: function () { return BaseModel_1.getDeletedAtField; } });
 var UserModel_1 = require("./core/domain/models/UserModel");
 Object.defineProperty(exports, "UserModel", { enumerable: true, get: function () { return UserModel_1.UserModel; } });
 // Services

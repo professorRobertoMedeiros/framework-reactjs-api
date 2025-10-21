@@ -13,7 +13,12 @@ export {
   Entity, Column, Id, UniqueIndex, BusinessIndex,
   // Decoradores alternativos para TypeScript 5.0+
   // Note: Mesmo com estes decoradores, use SEMPRE com parênteses: @Id5()
-  ColumnStage2 as Column5, IdStage2 as Id5
+  ColumnStage2 as Column5, IdStage2 as Id5,
+  // Decoradores de Timestamps e Soft Delete
+  Timestamps, SoftDelete,
+  TimestampsOptions, SoftDeleteOptions,
+  hasTimestamps, hasSoftDelete,
+  getCreatedAtField, getUpdatedAtField, getDeletedAtField
 } from './core/domain/models/BaseModel';
 export { UserModel } from './core/domain/models/UserModel';
 

@@ -196,37 +196,29 @@ modelImport + "\n" +
 "    super(repository);\n" +
 "  }\n\n" +
 "  /**\n" +
-"   * Converter modelo para Dom (DTO) - OPCIONAL\n" +
-"   * Por padrão, o BaseBusiness retorna o próprio modelo sem transformação.\n" +
-"   * Descomente e implemente apenas se precisar transformar os dados.\n" +
-"   * \n" +
+"   * Converter modelo para Dom (DTO)\n" +
 "   * @param model Modelo do " + modelName + "\n" +
 "   * @returns Dom do " + modelName + "\n" +
 "   */\n" +
-"  /*\n" +
 "  protected toDom(model: " + modelName + "Model): " + modelName + "Dom {\n" +
 "    return {\n" +
 (toDomProperties || "      id: model.id,\n      // TODO: Mapear outras propriedades do modelo para o Dom aqui") + "\n" +
 "    };\n" +
-"  }\n" +
-"  */\n\n" +
+"  }\n\n" +
 "  /**\n" +
-"   * Converter dados de criação para modelo - OPCIONAL\n" +
-"   * Sobrescreva apenas se precisar de validações ou transformações específicas.\n" +
-"   * \n" +
+"   * Converter dados de criação para modelo (opcional - sobrescrever se necessário)\n" +
 "   * @param data Dados de entrada\n" +
 "   * @returns Dados formatados para o modelo\n" +
 "   */\n" +
-"  /*\n" +
 "  protected fromCreateData(data: any): Omit<" + modelName + "Model, 'id'> {\n" +
-"    // Exemplo de validação:\n" +
+"    // TODO: Adicione validações e transformações de negócio aqui\n" +
+"    // Exemplo:\n" +
 "    // if (!data.name || data.name.trim().length === 0) {\n" +
 "    //   throw new Error('Nome é obrigatório');\n" +
 "    // }\n" +
 "    \n" +
 "    return data as Omit<" + modelName + "Model, 'id'>;\n" +
-"  }\n" +
-"  */\n\n" +
+"  }\n\n" +
 "  // Os métodos CRUD (findById, findAll, findBy, create, update, delete, count) \n" +
 "  // são herdados de BaseBusiness e delegam para o Repository\n" +
 "  // Não é necessário reimplementá-los\n\n" +

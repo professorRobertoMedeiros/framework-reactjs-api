@@ -3,6 +3,7 @@ export declare const ENTITY_META_KEY: unique symbol;
 export declare const COLUMN_META_KEY: unique symbol;
 export declare const INDEX_META_KEY: unique symbol;
 export declare const BUSINESS_INDEX_META_KEY: unique symbol;
+export { Timestamps, SoftDelete, TimestampsOptions, SoftDeleteOptions, hasTimestamps, hasSoftDelete, getCreatedAtField, getUpdatedAtField, getDeletedAtField, SOFT_DELETE_META_KEY, TIMESTAMPS_META_KEY } from '../decorators/TimestampsDecorators';
 export interface ColumnOptions {
     type: 'SERIAL' | 'VARCHAR' | 'INT' | 'BOOLEAN' | 'TIMESTAMP' | 'TEXT' | 'JSONB';
     primaryKey?: boolean;

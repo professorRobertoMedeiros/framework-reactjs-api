@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BaseModel = exports.BUSINESS_INDEX_META_KEY = exports.INDEX_META_KEY = exports.COLUMN_META_KEY = exports.ENTITY_META_KEY = void 0;
+exports.BaseModel = exports.TIMESTAMPS_META_KEY = exports.SOFT_DELETE_META_KEY = exports.getDeletedAtField = exports.getUpdatedAtField = exports.getCreatedAtField = exports.hasSoftDelete = exports.hasTimestamps = exports.SoftDelete = exports.Timestamps = exports.BUSINESS_INDEX_META_KEY = exports.INDEX_META_KEY = exports.COLUMN_META_KEY = exports.ENTITY_META_KEY = void 0;
 exports.Entity = Entity;
 exports.Column = Column;
 exports.ColumnStage2 = ColumnStage2;
@@ -14,6 +14,17 @@ exports.ENTITY_META_KEY = Symbol('entity');
 exports.COLUMN_META_KEY = Symbol('column');
 exports.INDEX_META_KEY = Symbol('index');
 exports.BUSINESS_INDEX_META_KEY = Symbol('businessIndex');
+// Exportar decorators de timestamps e soft delete
+var TimestampsDecorators_1 = require("../decorators/TimestampsDecorators");
+Object.defineProperty(exports, "Timestamps", { enumerable: true, get: function () { return TimestampsDecorators_1.Timestamps; } });
+Object.defineProperty(exports, "SoftDelete", { enumerable: true, get: function () { return TimestampsDecorators_1.SoftDelete; } });
+Object.defineProperty(exports, "hasTimestamps", { enumerable: true, get: function () { return TimestampsDecorators_1.hasTimestamps; } });
+Object.defineProperty(exports, "hasSoftDelete", { enumerable: true, get: function () { return TimestampsDecorators_1.hasSoftDelete; } });
+Object.defineProperty(exports, "getCreatedAtField", { enumerable: true, get: function () { return TimestampsDecorators_1.getCreatedAtField; } });
+Object.defineProperty(exports, "getUpdatedAtField", { enumerable: true, get: function () { return TimestampsDecorators_1.getUpdatedAtField; } });
+Object.defineProperty(exports, "getDeletedAtField", { enumerable: true, get: function () { return TimestampsDecorators_1.getDeletedAtField; } });
+Object.defineProperty(exports, "SOFT_DELETE_META_KEY", { enumerable: true, get: function () { return TimestampsDecorators_1.SOFT_DELETE_META_KEY; } });
+Object.defineProperty(exports, "TIMESTAMPS_META_KEY", { enumerable: true, get: function () { return TimestampsDecorators_1.TIMESTAMPS_META_KEY; } });
 // Decorador Entity
 function Entity(tableName) {
     return function (constructor) {

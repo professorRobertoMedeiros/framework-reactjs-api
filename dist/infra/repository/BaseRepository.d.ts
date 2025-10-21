@@ -1,5 +1,6 @@
 import { CustomORM } from '../db/CustomORM';
 import { BaseModel } from '../../core/domain/models/BaseModel';
+import { AuditService, AuditUser } from '../../core/auth/AuditService';
 /**
  * Interface para opções de paginação
  */
@@ -59,11 +60,39 @@ export declare abstract class BaseRepository<T extends BaseModel, ID = number> i
     protected modelClass: new () => T;
     protected orm: CustomORM;
     protected tableName: string;
+    protected auditService?: AuditService;
+    protected enableAudit: boolean;
     /**
      * Cria uma nova instância do repositório base
      * @param modelClass Classe do modelo para o qual o repositório é usado
+     * @param enableAudit Habilitar auditoria automática para este repositório
+     * @param currentUser Usuário atual para registro de auditoria
      */
-    constructor(modelClass: new () => T);
+    constructor(modelClass: new () => T, enableAudit?: boolean, currentUser?: AuditUser);
+    /**
+     * Define o usuário atual para auditoria
+     * @param user Usuário atual
+     */
+    setAuditUser(user: AuditUser): void;
+    /**
+     * Verifica se a entidade tem timestamps habilitados
+     */
+    protected hasTimestamps(): boolean;
+    /**
+     * Verifica se a entidade tem soft delete habilitado
+     */
+    protected hasSoftDelete(): boolean;
+    /**
+     * Adiciona timestamps aos dados
+     * @param data Dados da entidade
+     * @param isUpdate Se é uma atualização (inclui updated_at)
+     */
+    protected addTimestamps(data: any, isUpdate?: boolean): any;
+    /**
+     * Adiciona condição de soft delete às consultas (excluir registros deletados)
+     * @param conditions Condições existentes
+     */
+    protected addSoftDeleteCondition(conditions?: Record<string, any>): Record<string, any>;
     /**
      * Converte um objeto de dados bruto para uma instância do modelo
      * @param data Dados brutos do banco de dados
@@ -155,8 +184,18 @@ export declare abstract class BaseRepository<T extends BaseModel, ID = number> i
      * Excluir uma entidade
      * @param id ID da entidade a excluir
      * @returns true se a entidade foi excluída, false se não encontrada
+     *
+     * @remarks
+     * Se a entidade tiver soft delete habilitado, apenas marca como deletada.
+     * Caso contrário, deleta fisicamente do banco de dados.
      */
     delete(id: ID): Promise<boolean>;
+    /**
+     * Forçar exclusão física de uma entidade (ignora soft delete)
+     * @param id ID da entidade a excluir
+     * @returns true se a entidade foi excluída, false se não encontrada
+     */
+    forceDelete(id: ID): Promise<boolean>;
     /**
      * Atualizar entidades que correspondem às condições
      * @param conditions Condições para filtrar as entidades a serem atualizadas
@@ -168,8 +207,18 @@ export declare abstract class BaseRepository<T extends BaseModel, ID = number> i
      * Excluir entidades que correspondem às condições
      * @param conditions Condições para filtrar as entidades a serem excluídas
      * @returns Número de entidades excluídas
+     *
+     * @remarks
+     * Se a entidade tiver soft delete habilitado, apenas marca como deletada.
+     * Caso contrário, deleta fisicamente do banco de dados.
      */
     deleteBy(conditions: Record<string, any>): Promise<number>;
+    /**
+     * Forçar exclusão física de entidades (ignora soft delete)
+     * @param conditions Condições para filtrar as entidades a serem excluídas
+     * @returns Número de entidades excluídas
+     */
+    forceDeleteBy(conditions: Record<string, any>): Promise<number>;
     /**
      * Contar entidades com condições opcionais
      * @param conditions Condições de filtro (pares chave/valor)
@@ -182,6 +231,28 @@ export declare abstract class BaseRepository<T extends BaseModel, ID = number> i
      * @returns true se existe pelo menos uma entidade, false caso contrário
      */
     exists(conditions: Record<string, any>): Promise<boolean>;
+    /**
+     * Restaurar uma entidade deletada (soft delete)
+     * @param id ID da entidade a restaurar
+     * @returns true se restaurada, false se não encontrada
+     *
+     * @remarks
+     * Funciona apenas se a entidade tiver soft delete habilitado.
+     * Coloca deleted_at como null.
+     */
+    restore(id: ID): Promise<boolean>;
+    /**
+     * Buscar apenas registros deletados (soft delete)
+     * @param options Opções de consulta
+     * @returns Lista de entidades deletadas
+     */
+    findDeleted(options?: QueryOptions): Promise<T[]>;
+    /**
+     * Buscar todos os registros incluindo deletados (soft delete)
+     * @param options Opções de consulta
+     * @returns Lista de todas as entidades (incluindo deletadas)
+     */
+    findAllWithDeleted(options?: QueryOptions): Promise<T[]>;
     /**
      * Executa uma operação em transação
      * @param operation Função que recebe a transação e executa operações
