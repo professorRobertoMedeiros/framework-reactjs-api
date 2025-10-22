@@ -202,11 +202,13 @@ class CustomORM {
       FROM information_schema.columns 
       WHERE table_name = $1
     `, [tableName]);
-        const existingColumns = result.rows.map((row) => row.column_name);
+        // Normalizar nomes para lowercase para comparação case-insensitive
+        const existingColumns = result.rows.map((row) => row.column_name.toLowerCase());
         // 1. Adicionar colunas regulares do modelo que não existem
         const modelColumns = model.getColumns();
         for (const [columnName, options] of Object.entries(modelColumns)) {
-            if (!existingColumns.includes(columnName)) {
+            // Verificar se a coluna já existe (case-insensitive)
+            if (!existingColumns.includes(columnName.toLowerCase())) {
                 let columnDef = `${options.type}`;
                 // Adicionar comprimento para VARCHAR
                 if (options.type === 'VARCHAR' && options.length) {
@@ -219,37 +221,66 @@ class CustomORM {
                 if (options.default !== undefined) {
                     alterSQL += ` DEFAULT ${options.default}`;
                 }
-                await this.query(alterSQL);
-                console.log(`✅ Coluna ${columnName} adicionada à tabela ${tableName}`);
+                try {
+                    await this.query(alterSQL);
+                    console.log(`✅ Coluna ${columnName} adicionada à tabela ${tableName}`);
+                }
+                catch (error) {
+                    // Ignorar erro se a coluna já existir
+                    if (!error.message.includes('already exists')) {
+                        throw error;
+                    }
+                }
             }
         }
         // 2. Adicionar colunas de timestamps se necessário
         const hasTimestamps = Reflect.getMetadata(BaseModel_1.TIMESTAMPS_METADATA_KEY, model) !== undefined;
         if (hasTimestamps) {
             if (!existingColumns.includes('created_at')) {
-                await this.query(`
-          ALTER TABLE ${tableName} 
-          ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        `);
-                console.log(`✅ Coluna created_at adicionada à tabela ${tableName}`);
+                try {
+                    await this.query(`
+            ALTER TABLE ${tableName} 
+            ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          `);
+                    console.log(`✅ Coluna created_at adicionada à tabela ${tableName}`);
+                }
+                catch (error) {
+                    if (!error.message.includes('already exists')) {
+                        throw error;
+                    }
+                }
             }
             if (!existingColumns.includes('updated_at')) {
-                await this.query(`
-          ALTER TABLE ${tableName} 
-          ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        `);
-                console.log(`✅ Coluna updated_at adicionada à tabela ${tableName}`);
+                try {
+                    await this.query(`
+            ALTER TABLE ${tableName} 
+            ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          `);
+                    console.log(`✅ Coluna updated_at adicionada à tabela ${tableName}`);
+                }
+                catch (error) {
+                    if (!error.message.includes('already exists')) {
+                        throw error;
+                    }
+                }
             }
         }
         // 3. Adicionar coluna de soft delete se necessário
         const hasSoftDelete = Reflect.getMetadata(BaseModel_1.SOFT_DELETE_METADATA_KEY, model) !== undefined;
         if (hasSoftDelete) {
             if (!existingColumns.includes('deleted_at')) {
-                await this.query(`
-          ALTER TABLE ${tableName} 
-          ADD COLUMN deleted_at TIMESTAMP DEFAULT NULL
-        `);
-                console.log(`✅ Coluna deleted_at adicionada à tabela ${tableName}`);
+                try {
+                    await this.query(`
+            ALTER TABLE ${tableName} 
+            ADD COLUMN deleted_at TIMESTAMP DEFAULT NULL
+          `);
+                    console.log(`✅ Coluna deleted_at adicionada à tabela ${tableName}`);
+                }
+                catch (error) {
+                    if (!error.message.includes('already exists')) {
+                        throw error;
+                    }
+                }
             }
         }
     }

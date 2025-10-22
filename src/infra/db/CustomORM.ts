@@ -209,12 +209,14 @@ export class CustomORM {
       WHERE table_name = $1
     `, [tableName]);
     
-    const existingColumns = result.rows.map((row: any) => row.column_name);
+    // Normalizar nomes para lowercase para comparação case-insensitive
+    const existingColumns = result.rows.map((row: any) => row.column_name.toLowerCase());
     
     // 1. Adicionar colunas regulares do modelo que não existem
     const modelColumns = model.getColumns();
     for (const [columnName, options] of Object.entries(modelColumns)) {
-      if (!existingColumns.includes(columnName)) {
+      // Verificar se a coluna já existe (case-insensitive)
+      if (!existingColumns.includes(columnName.toLowerCase())) {
         let columnDef = `${options.type}`;
         
         // Adicionar comprimento para VARCHAR
@@ -232,8 +234,15 @@ export class CustomORM {
           alterSQL += ` DEFAULT ${options.default}`;
         }
         
-        await this.query(alterSQL);
-        console.log(`✅ Coluna ${columnName} adicionada à tabela ${tableName}`);
+        try {
+          await this.query(alterSQL);
+          console.log(`✅ Coluna ${columnName} adicionada à tabela ${tableName}`);
+        } catch (error: any) {
+          // Ignorar erro se a coluna já existir
+          if (!error.message.includes('already exists')) {
+            throw error;
+          }
+        }
       }
     }
     
@@ -241,19 +250,31 @@ export class CustomORM {
     const hasTimestamps = Reflect.getMetadata(TIMESTAMPS_METADATA_KEY, model) !== undefined;
     if (hasTimestamps) {
       if (!existingColumns.includes('created_at')) {
-        await this.query(`
-          ALTER TABLE ${tableName} 
-          ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        `);
-        console.log(`✅ Coluna created_at adicionada à tabela ${tableName}`);
+        try {
+          await this.query(`
+            ALTER TABLE ${tableName} 
+            ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          `);
+          console.log(`✅ Coluna created_at adicionada à tabela ${tableName}`);
+        } catch (error: any) {
+          if (!error.message.includes('already exists')) {
+            throw error;
+          }
+        }
       }
       
       if (!existingColumns.includes('updated_at')) {
-        await this.query(`
-          ALTER TABLE ${tableName} 
-          ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        `);
-        console.log(`✅ Coluna updated_at adicionada à tabela ${tableName}`);
+        try {
+          await this.query(`
+            ALTER TABLE ${tableName} 
+            ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          `);
+          console.log(`✅ Coluna updated_at adicionada à tabela ${tableName}`);
+        } catch (error: any) {
+          if (!error.message.includes('already exists')) {
+            throw error;
+          }
+        }
       }
     }
     
@@ -261,11 +282,17 @@ export class CustomORM {
     const hasSoftDelete = Reflect.getMetadata(SOFT_DELETE_METADATA_KEY, model) !== undefined;
     if (hasSoftDelete) {
       if (!existingColumns.includes('deleted_at')) {
-        await this.query(`
-          ALTER TABLE ${tableName} 
-          ADD COLUMN deleted_at TIMESTAMP DEFAULT NULL
-        `);
-        console.log(`✅ Coluna deleted_at adicionada à tabela ${tableName}`);
+        try {
+          await this.query(`
+            ALTER TABLE ${tableName} 
+            ADD COLUMN deleted_at TIMESTAMP DEFAULT NULL
+          `);
+          console.log(`✅ Coluna deleted_at adicionada à tabela ${tableName}`);
+        } catch (error: any) {
+          if (!error.message.includes('already exists')) {
+            throw error;
+          }
+        }
       }
     }
   }
