@@ -191,27 +191,35 @@ async function syncSchema() {
         let hasErrors = false;
         const modelsToLoad = jsFiles; // SOMENTE arquivos .js compilados
         for (const file of modelsToLoad) {
-            const isModelFile = file.endsWith('Model.ts') || file.endsWith('Model.js');
+            // Ignorar arquivos que não são modelos
             const isNotBaseModel = file !== 'BaseModel.ts' && file !== 'BaseModel.js';
-            if (isModelFile && isNotBaseModel) {
+            const isNotDecoratorFile = !file.includes('decorators') && !file.includes('Decorator');
+            if (isNotBaseModel && isNotDecoratorFile) {
                 try {
                     const absoluteModulePath = path.join(modelsDir, file);
-                    const moduleName = file.replace(/\.(ts|js)$/, '');
-                    console.log(`\x1b[33mCarregando modelo: ${file}\x1b[0m`);
-                    // Importa o modelo
+                    console.log(`\x1b[33mCarregando arquivo: ${file}\x1b[0m`);
+                    // Importa o módulo
                     const modelModule = require(absoluteModulePath);
-                    const modelName = Object.keys(modelModule).find(key => key.includes('Model'));
-                    if (!modelName) {
-                        console.warn(`\x1b[31mNenhuma classe Model encontrada em ${file}\x1b[0m`);
-                        continue;
+                    // Procurar por qualquer classe exportada que estende BaseModel
+                    let foundModel = false;
+                    for (const exportName of Object.keys(modelModule)) {
+                        const ExportedClass = modelModule[exportName];
+                        // Verificar se é uma classe que extende BaseModel
+                        if (ExportedClass &&
+                            typeof ExportedClass === 'function' &&
+                            ExportedClass.prototype instanceof BaseModel_1.BaseModel) {
+                            // Registrar o modelo no ORM para sincronização
+                            orm.registerModel(ExportedClass);
+                            console.log(`\x1b[32m✓ Modelo ${exportName} carregado e registrado com sucesso\x1b[0m`);
+                            foundModel = true;
+                        }
                     }
-                    const Model = modelModule[modelName];
-                    // Registrar o modelo no ORM para sincronização
-                    orm.registerModel(Model);
-                    console.log(`\x1b[32m✓ Modelo ${modelName} carregado e registrado com sucesso\x1b[0m`);
+                    if (!foundModel) {
+                        console.log(`\x1b[33m⚠️  Nenhuma classe que extende BaseModel encontrada em ${file}\x1b[0m`);
+                    }
                 }
                 catch (error) {
-                    console.error(`\x1b[31m✗ Erro ao carregar modelo ${file}:\x1b[0m`, error);
+                    console.error(`\x1b[31m✗ Erro ao carregar arquivo ${file}:\x1b[0m`, error);
                     hasErrors = true;
                 }
             }

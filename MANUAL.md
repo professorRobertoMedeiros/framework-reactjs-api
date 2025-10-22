@@ -149,10 +149,14 @@ export class ProdutoModel extends BaseModel {
 ### Sincronizar Modelos com o Banco
 
 ```bash
-# Compila TypeScript e cria/atualiza tabelas no banco
-npm run build
+# Modo Produção (usa código já compilado)
 npx framework-reactjs-api-sync
+
+# Modo Desenvolvimento (compila o projeto automaticamente antes de sincronizar)
+npx framework-reactjs-api-sync-dev
 ```
+
+> **Nota:** O comando `-dev` executa automaticamente `npm run build` do seu projeto antes de sincronizar o esquema. Use-o durante o desenvolvimento para garantir que as alterações nos modelos sejam compiladas antes da sincronização. Certifique-se de ter um script `build` no `package.json` do seu projeto.
 
 ### Decoradores para Timestamps e Soft Delete
 
@@ -181,7 +185,7 @@ Quando você usa esses decoradores, o framework:
    - `@SoftDelete()`: Adiciona a coluna `deleted_at` do tipo TIMESTAMP
 2. Inclui os campos nos arquivos Dom gerados pelo scaffold ou atualizados com o comando `update-dom`
 
-**Importante:** Após adicionar esses decoradores a um modelo existente, execute `npx framework-reactjs-api-sync` para que as colunas sejam adicionadas à tabela correspondente no banco de dados.
+**Importante:** Após adicionar esses decoradores a um modelo existente, execute `npx framework-reactjs-api-sync-dev` (em desenvolvimento) ou `npx framework-reactjs-api-sync` (em produção) para que as colunas sejam adicionadas à tabela correspondente no banco de dados.
 
 ### Migrações SQL
 
