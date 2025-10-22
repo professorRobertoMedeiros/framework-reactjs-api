@@ -454,15 +454,30 @@ export class CustomORM {
     options: { limit?: number; offset?: number; orderBy?: string } = {}
   ): Promise<T[]> {
     const columns = Object.keys(conditions);
-    const values = Object.values(conditions);
     
     if (columns.length === 0) {
       return this.findAll(tableName, options);
     }
     
     let query = `SELECT * FROM ${tableName} WHERE `;
+    const values: any[] = [];
+    const whereConditions: string[] = [];
     
-    const whereConditions = columns.map((column, index) => `${column} = $${index + 1}`);
+    let paramIndex = 1;
+    for (const column of columns) {
+      const value = conditions[column];
+      
+      if (value === null) {
+        // Para valores null, usar IS NULL ao invés de = NULL
+        whereConditions.push(`${column} IS NULL`);
+      } else {
+        // Para outros valores, usar = $n
+        whereConditions.push(`${column} = $${paramIndex}`);
+        values.push(value);
+        paramIndex++;
+      }
+    }
+    
     query += whereConditions.join(' AND ');
     
     // Adicionar ordenação
@@ -546,16 +561,34 @@ export class CustomORM {
     conditions: Record<string, any> = {}
   ): Promise<number> {
     const columns = Object.keys(conditions);
-    const values = Object.values(conditions);
     
     let query = `SELECT COUNT(*) as total FROM ${tableName}`;
     
     if (columns.length > 0) {
-      const whereConditions = columns.map((column, index) => `${column} = $${index + 1}`);
+      const values: any[] = [];
+      const whereConditions: string[] = [];
+      
+      let paramIndex = 1;
+      for (const column of columns) {
+        const value = conditions[column];
+        
+        if (value === null) {
+          // Para valores null, usar IS NULL ao invés de = NULL
+          whereConditions.push(`${column} IS NULL`);
+        } else {
+          // Para outros valores, usar = $n
+          whereConditions.push(`${column} = $${paramIndex}`);
+          values.push(value);
+          paramIndex++;
+        }
+      }
+      
       query += ` WHERE ${whereConditions.join(' AND ')}`;
+      const result = await this.query(query, values);
+      return parseInt(result.rows[0].total);
     }
     
-    const result = await this.query(query, values);
+    const result = await this.query(query, []);
     return parseInt(result.rows[0].total);
   }
 }
