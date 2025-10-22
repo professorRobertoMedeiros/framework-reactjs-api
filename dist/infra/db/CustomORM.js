@@ -196,12 +196,6 @@ class CustomORM {
     // Adicionar colunas faltantes em tabelas existentes
     async addMissingColumns(model) {
         const tableName = model.getTableName();
-        // Verificar se o modelo tem decoradores de timestamps e soft delete
-        const hasTimestamps = Reflect.getMetadata(BaseModel_1.TIMESTAMPS_METADATA_KEY, model) !== undefined;
-        const hasSoftDelete = Reflect.getMetadata(BaseModel_1.SOFT_DELETE_METADATA_KEY, model) !== undefined;
-        if (!hasTimestamps && !hasSoftDelete) {
-            return; // Nada a fazer
-        }
         // Consultar colunas existentes na tabela
         const result = await this.query(`
       SELECT column_name 
@@ -209,7 +203,28 @@ class CustomORM {
       WHERE table_name = $1
     `, [tableName]);
         const existingColumns = result.rows.map((row) => row.column_name);
-        // Adicionar colunas de timestamps se necessário
+        // 1. Adicionar colunas regulares do modelo que não existem
+        const modelColumns = model.getColumns();
+        for (const [columnName, options] of Object.entries(modelColumns)) {
+            if (!existingColumns.includes(columnName)) {
+                let columnDef = `${options.type}`;
+                // Adicionar comprimento para VARCHAR
+                if (options.type === 'VARCHAR' && options.length) {
+                    columnDef = `${options.type}(${options.length})`;
+                }
+                let alterSQL = `ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDef}`;
+                if (options.nullable === false) {
+                    alterSQL += ' NOT NULL';
+                }
+                if (options.default !== undefined) {
+                    alterSQL += ` DEFAULT ${options.default}`;
+                }
+                await this.query(alterSQL);
+                console.log(`✅ Coluna ${columnName} adicionada à tabela ${tableName}`);
+            }
+        }
+        // 2. Adicionar colunas de timestamps se necessário
+        const hasTimestamps = Reflect.getMetadata(BaseModel_1.TIMESTAMPS_METADATA_KEY, model) !== undefined;
         if (hasTimestamps) {
             if (!existingColumns.includes('created_at')) {
                 await this.query(`
@@ -226,7 +241,8 @@ class CustomORM {
                 console.log(`✅ Coluna updated_at adicionada à tabela ${tableName}`);
             }
         }
-        // Adicionar coluna de soft delete se necessário
+        // 3. Adicionar coluna de soft delete se necessário
+        const hasSoftDelete = Reflect.getMetadata(BaseModel_1.SOFT_DELETE_METADATA_KEY, model) !== undefined;
         if (hasSoftDelete) {
             if (!existingColumns.includes('deleted_at')) {
                 await this.query(`

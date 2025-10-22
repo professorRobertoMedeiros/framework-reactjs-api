@@ -24,6 +24,7 @@ test-*.js
 src/test/
 src/tests/
 client-test/
+.test-project/
 docker-compose.test.yml
 TESTE-*.md
 
