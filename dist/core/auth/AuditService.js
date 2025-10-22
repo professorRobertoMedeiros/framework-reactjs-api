@@ -4,6 +4,7 @@ exports.AuditService = void 0;
 const AuditLogRepository_1 = require("../../infra/repository/AuditLogRepository");
 const AuditLogModel_1 = require("../domain/models/AuditLogModel");
 const AuditableDecorator_1 = require("../domain/decorators/AuditableDecorator");
+const Entity_1 = require("../domain/models/decorators/Entity");
 /**
  * Serviço para gerenciar auditoria de alterações em modelos
  */
@@ -107,9 +108,8 @@ class AuditService {
      */
     getTableName(model) {
         // Obter nome da tabela a partir dos metadados da entidade
-        // Esta implementação depende de como os metadados da entidade são armazenados
-        // no BaseModel. Aqui estamos assumindo uma implementação simples.
-        return model.constructor.tableName;
+        const entityMetadata = (0, Entity_1.getEntityMetadata)(model.constructor);
+        return entityMetadata?.tableName;
     }
     /**
      * Obtém o ID do registro a partir do modelo

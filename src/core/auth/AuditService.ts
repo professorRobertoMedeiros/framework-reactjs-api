@@ -2,6 +2,7 @@ import { AuditLogRepository } from '../../infra/repository/AuditLogRepository';
 import { AuditActionType } from '../domain/models/AuditLogModel';
 import { AuditableMetadata } from '../domain/decorators/AuditableDecorator';
 import { BaseModel } from '../domain/models/BaseModel';
+import { getEntityMetadata } from '../domain/models/decorators/Entity';
 
 /**
  * Interface que representa um usuário para fins de auditoria
@@ -164,9 +165,8 @@ export class AuditService {
    */
   private getTableName(model: BaseModel): string | undefined {
     // Obter nome da tabela a partir dos metadados da entidade
-    // Esta implementação depende de como os metadados da entidade são armazenados
-    // no BaseModel. Aqui estamos assumindo uma implementação simples.
-    return (model.constructor as any).tableName;
+    const entityMetadata = getEntityMetadata(model.constructor as Function);
+    return entityMetadata?.tableName;
   }
 
   /**
