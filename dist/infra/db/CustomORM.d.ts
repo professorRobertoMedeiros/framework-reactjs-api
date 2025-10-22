@@ -25,6 +25,7 @@ export declare class CustomORM {
     private registerMigration;
     private generateCreateTableSQL;
     private generateCreateIndexesSQL;
+    private addMissingColumns;
     syncSchema(): Promise<void>;
     runMigrations(migrationsDir: string): Promise<void>;
     create<T extends BaseModel>(tableName: string, data: Record<string, any>): Promise<any>;

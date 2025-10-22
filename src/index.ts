@@ -13,13 +13,30 @@ export {
   Entity, Column, Id, UniqueIndex, BusinessIndex,
   // Decoradores alternativos para TypeScript 5.0+
   // Note: Mesmo com estes decoradores, use SEMPRE com parênteses: @Id5()
-  ColumnStage2 as Column5, IdStage2 as Id5,
-  // Decoradores de Timestamps e Soft Delete
-  Timestamps, SoftDelete,
-  TimestampsOptions, SoftDeleteOptions,
-  hasTimestamps, hasSoftDelete,
-  getCreatedAtField, getUpdatedAtField, getDeletedAtField
+  ColumnStage2 as Column5, IdStage2 as Id5
 } from './core/domain/models/BaseModel';
+
+// Decoradores de Timestamps e Soft Delete
+export { 
+  Timestamps, 
+  TimestampsOptions, 
+  TIMESTAMPS_METADATA_KEY 
+} from './core/domain/models/decorators/Timestamps';
+
+export { 
+  SoftDelete, 
+  SoftDeleteOptions, 
+  SOFT_DELETE_METADATA_KEY 
+} from './core/domain/models/decorators/SoftDelete';
+
+// Funções auxiliares para Timestamps e SoftDelete
+export {
+  hasTimestamps,
+  hasSoftDelete,
+  getCreatedAtField,
+  getUpdatedAtField,
+  getDeletedAtField
+} from './core/domain/models/decorators/TimestampHelpers';
 export { UserModel } from './core/domain/models/UserModel';
 
 // Sistema de Auditoria

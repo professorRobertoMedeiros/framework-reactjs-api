@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BaseModel = exports.TIMESTAMPS_META_KEY = exports.SOFT_DELETE_META_KEY = exports.getDeletedAtField = exports.getUpdatedAtField = exports.getCreatedAtField = exports.hasSoftDelete = exports.hasTimestamps = exports.SoftDelete = exports.Timestamps = exports.BUSINESS_INDEX_META_KEY = exports.INDEX_META_KEY = exports.COLUMN_META_KEY = exports.ENTITY_META_KEY = void 0;
+exports.BaseModel = exports.SOFT_DELETE_METADATA_KEY = exports.TIMESTAMPS_METADATA_KEY = exports.SoftDelete = exports.Timestamps = exports.BUSINESS_INDEX_META_KEY = exports.INDEX_META_KEY = exports.COLUMN_META_KEY = exports.ENTITY_META_KEY = void 0;
 exports.Entity = Entity;
 exports.Column = Column;
 exports.ColumnStage2 = ColumnStage2;
@@ -9,26 +9,27 @@ exports.IdStage2 = IdStage2;
 exports.UniqueIndex = UniqueIndex;
 exports.BusinessIndex = BusinessIndex;
 require("reflect-metadata");
-// Símbolos para metadados
-exports.ENTITY_META_KEY = Symbol('entity');
+// Importando decoradores de entity
+const Entity_1 = require("./decorators/Entity");
+// Símbolos para metadados - mantendo para retrocompatibilidade
+exports.ENTITY_META_KEY = Entity_1.ENTITY_METADATA_KEY;
 exports.COLUMN_META_KEY = Symbol('column');
 exports.INDEX_META_KEY = Symbol('index');
 exports.BUSINESS_INDEX_META_KEY = Symbol('businessIndex');
-// Exportar decorators de timestamps e soft delete
-var TimestampsDecorators_1 = require("../decorators/TimestampsDecorators");
-Object.defineProperty(exports, "Timestamps", { enumerable: true, get: function () { return TimestampsDecorators_1.Timestamps; } });
-Object.defineProperty(exports, "SoftDelete", { enumerable: true, get: function () { return TimestampsDecorators_1.SoftDelete; } });
-Object.defineProperty(exports, "hasTimestamps", { enumerable: true, get: function () { return TimestampsDecorators_1.hasTimestamps; } });
-Object.defineProperty(exports, "hasSoftDelete", { enumerable: true, get: function () { return TimestampsDecorators_1.hasSoftDelete; } });
-Object.defineProperty(exports, "getCreatedAtField", { enumerable: true, get: function () { return TimestampsDecorators_1.getCreatedAtField; } });
-Object.defineProperty(exports, "getUpdatedAtField", { enumerable: true, get: function () { return TimestampsDecorators_1.getUpdatedAtField; } });
-Object.defineProperty(exports, "getDeletedAtField", { enumerable: true, get: function () { return TimestampsDecorators_1.getDeletedAtField; } });
-Object.defineProperty(exports, "SOFT_DELETE_META_KEY", { enumerable: true, get: function () { return TimestampsDecorators_1.SOFT_DELETE_META_KEY; } });
-Object.defineProperty(exports, "TIMESTAMPS_META_KEY", { enumerable: true, get: function () { return TimestampsDecorators_1.TIMESTAMPS_META_KEY; } });
+// Import dos novos decorators
+const Timestamps_1 = require("./decorators/Timestamps");
+Object.defineProperty(exports, "Timestamps", { enumerable: true, get: function () { return Timestamps_1.Timestamps; } });
+Object.defineProperty(exports, "TIMESTAMPS_METADATA_KEY", { enumerable: true, get: function () { return Timestamps_1.TIMESTAMPS_METADATA_KEY; } });
+const SoftDelete_1 = require("./decorators/SoftDelete");
+Object.defineProperty(exports, "SoftDelete", { enumerable: true, get: function () { return SoftDelete_1.SoftDelete; } });
+Object.defineProperty(exports, "SOFT_DELETE_METADATA_KEY", { enumerable: true, get: function () { return SoftDelete_1.SOFT_DELETE_METADATA_KEY; } });
 // Decorador Entity
-function Entity(tableName) {
+function Entity(tableNameOrOptions) {
+    const options = typeof tableNameOrOptions === 'string'
+        ? { tableName: tableNameOrOptions }
+        : tableNameOrOptions;
     return function (constructor) {
-        Reflect.defineMetadata(exports.ENTITY_META_KEY, { tableName }, constructor);
+        Reflect.defineMetadata(exports.ENTITY_META_KEY, options, constructor);
     };
 }
 // Decorador Column (versão original)
@@ -104,7 +105,8 @@ function BusinessIndex(indexName, columns, type) {
 class BaseModel {
     // Método auxiliar para obter o nome da tabela
     static getTableName() {
-        const metadata = Reflect.getMetadata(exports.ENTITY_META_KEY, this);
+        // Verificar primeiro com a nova chave de metadados
+        const metadata = Reflect.getMetadata(exports.ENTITY_META_KEY, this) || Reflect.getMetadata(Symbol('entity'), this);
         return metadata ? metadata.tableName : '';
     }
     // Método auxiliar para obter todas as colunas

@@ -1,9 +1,13 @@
 import 'reflect-metadata';
-export declare const ENTITY_META_KEY: unique symbol;
+import { EntityOptions as EntityOpts } from './decorators/Entity';
+export declare const ENTITY_META_KEY: symbol;
 export declare const COLUMN_META_KEY: unique symbol;
 export declare const INDEX_META_KEY: unique symbol;
 export declare const BUSINESS_INDEX_META_KEY: unique symbol;
-export { Timestamps, SoftDelete, TimestampsOptions, SoftDeleteOptions, hasTimestamps, hasSoftDelete, getCreatedAtField, getUpdatedAtField, getDeletedAtField, SOFT_DELETE_META_KEY, TIMESTAMPS_META_KEY } from '../decorators/TimestampsDecorators';
+export type EntityOptions = EntityOpts;
+import { Timestamps, TIMESTAMPS_METADATA_KEY, TimestampsOptions } from './decorators/Timestamps';
+import { SoftDelete, SOFT_DELETE_METADATA_KEY, SoftDeleteOptions } from './decorators/SoftDelete';
+export { Timestamps, TimestampsOptions, SoftDelete, SoftDeleteOptions, TIMESTAMPS_METADATA_KEY, SOFT_DELETE_METADATA_KEY };
 export interface ColumnOptions {
     type: 'SERIAL' | 'VARCHAR' | 'INT' | 'BOOLEAN' | 'TIMESTAMP' | 'TEXT' | 'JSONB';
     primaryKey?: boolean;
@@ -16,7 +20,7 @@ export interface IndexOptions {
     columns: string[];
     type?: 'UNIQUE' | 'INDEX' | 'FULLTEXT';
 }
-export declare function Entity(tableName: string): (constructor: Function) => void;
+export declare function Entity(tableNameOrOptions: string | EntityOptions): (constructor: Function) => void;
 export declare function Column(options: ColumnOptions): (target: any, propertyKey: string) => void;
 export declare function ColumnStage2(optionsOrTarget: ColumnOptions | any, contextOrPropertyKey?: ClassFieldDecoratorContext | any): (target: any, context: ClassFieldDecoratorContext) => void;
 export declare function Id(): (target: any, propertyKey: string) => void;

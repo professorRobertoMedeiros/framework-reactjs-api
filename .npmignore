@@ -19,6 +19,13 @@ __tests__/
 *.test.ts
 *.spec.js  
 *.spec.ts
+test-*.ts
+test-*.js
+src/test/
+src/tests/
+client-test/
+docker-compose.test.yml
+TESTE-*.md
 
 # Logs
 logs/

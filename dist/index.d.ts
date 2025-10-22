@@ -5,7 +5,10 @@
  * exportando todas as classes, interfaces e funções que podem ser
  * usadas por projetos que implementam este framework como dependência.
  */
-export { BaseModel, Entity, Column, Id, UniqueIndex, BusinessIndex, ColumnStage2 as Column5, IdStage2 as Id5, Timestamps, SoftDelete, TimestampsOptions, SoftDeleteOptions, hasTimestamps, hasSoftDelete, getCreatedAtField, getUpdatedAtField, getDeletedAtField } from './core/domain/models/BaseModel';
+export { BaseModel, Entity, Column, Id, UniqueIndex, BusinessIndex, ColumnStage2 as Column5, IdStage2 as Id5 } from './core/domain/models/BaseModel';
+export { Timestamps, TimestampsOptions, TIMESTAMPS_METADATA_KEY } from './core/domain/models/decorators/Timestamps';
+export { SoftDelete, SoftDeleteOptions, SOFT_DELETE_METADATA_KEY } from './core/domain/models/decorators/SoftDelete';
+export { hasTimestamps, hasSoftDelete, getCreatedAtField, getUpdatedAtField, getDeletedAtField } from './core/domain/models/decorators/TimestampHelpers';
 export { UserModel } from './core/domain/models/UserModel';
 export { Auditable, AuditableOptions, AuditableMetadata } from './core/domain/decorators/AuditableDecorator';
 export { AuditLogModel, AuditActionType } from './core/domain/models/AuditLogModel';

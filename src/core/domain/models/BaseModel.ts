@@ -1,25 +1,44 @@
 import 'reflect-metadata';
 
-// Símbolos para metadados
-export const ENTITY_META_KEY = Symbol('entity');
+// Importando decoradores de entity
+import {
+  ENTITY_METADATA_KEY,
+  EntityOptions as EntityOpts
+} from './decorators/Entity';
+
+// Símbolos para metadados - mantendo para retrocompatibilidade
+export const ENTITY_META_KEY = ENTITY_METADATA_KEY;
 export const COLUMN_META_KEY = Symbol('column');
 export const INDEX_META_KEY = Symbol('index');
 export const BUSINESS_INDEX_META_KEY = Symbol('businessIndex');
 
-// Exportar decorators de timestamps e soft delete
-export { 
-  Timestamps, 
-  SoftDelete,
+// Exportando tipo EntityOptions
+export type EntityOptions = EntityOpts;
+
+// Import dos novos decorators
+import { 
+  Timestamps,
+  TIMESTAMPS_METADATA_KEY,
   TimestampsOptions,
+  getTimestampsMetadata
+} from './decorators/Timestamps';
+
+import { 
+  SoftDelete,
+  SOFT_DELETE_METADATA_KEY,
   SoftDeleteOptions,
-  hasTimestamps,
-  hasSoftDelete,
-  getCreatedAtField,
-  getUpdatedAtField,
-  getDeletedAtField,
-  SOFT_DELETE_META_KEY,
-  TIMESTAMPS_META_KEY
-} from '../decorators/TimestampsDecorators';
+  getSoftDeleteMetadata
+} from './decorators/SoftDelete';
+
+// Re-export para uso externo
+export {
+  Timestamps,
+  TimestampsOptions,
+  SoftDelete,
+  SoftDeleteOptions,
+  TIMESTAMPS_METADATA_KEY,
+  SOFT_DELETE_METADATA_KEY
+};
 
 // Interface para opções de coluna
 export interface ColumnOptions {
@@ -38,9 +57,13 @@ export interface IndexOptions {
 }
 
 // Decorador Entity
-export function Entity(tableName: string) {
+export function Entity(tableNameOrOptions: string | EntityOptions) {
+  const options = typeof tableNameOrOptions === 'string' 
+    ? { tableName: tableNameOrOptions } 
+    : tableNameOrOptions;
+    
   return function (constructor: Function) {
-    Reflect.defineMetadata(ENTITY_META_KEY, { tableName }, constructor);
+    Reflect.defineMetadata(ENTITY_META_KEY, options, constructor);
   };
 }
 
@@ -128,7 +151,8 @@ export function BusinessIndex(indexName: string, columns: string[], type: 'INDEX
 export abstract class BaseModel {
   // Método auxiliar para obter o nome da tabela
   static getTableName(): string {
-    const metadata = Reflect.getMetadata(ENTITY_META_KEY, this);
+    // Verificar primeiro com a nova chave de metadados
+    const metadata = Reflect.getMetadata(ENTITY_META_KEY, this) || Reflect.getMetadata(Symbol('entity'), this);
     return metadata ? metadata.tableName : '';
   }
 

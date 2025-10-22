@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BaseRepository = void 0;
 const CustomORM_1 = require("../db/CustomORM");
-const BaseModel_1 = require("../../core/domain/models/BaseModel");
+const TimestampHelpers_1 = require("../../core/domain/models/decorators/TimestampHelpers");
 const AuditService_1 = require("../../core/auth/AuditService");
 /**
  * Classe base para implementações de repositório
@@ -44,13 +44,13 @@ class BaseRepository {
      * Verifica se a entidade tem timestamps habilitados
      */
     hasTimestamps() {
-        return (0, BaseModel_1.hasTimestamps)(this.modelClass) !== undefined;
+        return (0, TimestampHelpers_1.hasTimestamps)(this.modelClass) !== undefined;
     }
     /**
      * Verifica se a entidade tem soft delete habilitado
      */
     hasSoftDelete() {
-        return (0, BaseModel_1.hasSoftDelete)(this.modelClass) !== undefined;
+        return (0, TimestampHelpers_1.hasSoftDelete)(this.modelClass) !== undefined;
     }
     /**
      * Adiciona timestamps aos dados
@@ -62,8 +62,8 @@ class BaseRepository {
             return data;
         }
         const result = { ...data };
-        const createdAtField = (0, BaseModel_1.getCreatedAtField)(this.modelClass);
-        const updatedAtField = (0, BaseModel_1.getUpdatedAtField)(this.modelClass);
+        const createdAtField = (0, TimestampHelpers_1.getCreatedAtField)(this.modelClass);
+        const updatedAtField = (0, TimestampHelpers_1.getUpdatedAtField)(this.modelClass);
         if (!isUpdate && !result[createdAtField]) {
             result[createdAtField] = new Date();
         }
@@ -80,7 +80,7 @@ class BaseRepository {
         if (!this.hasSoftDelete()) {
             return conditions;
         }
-        const deletedAtField = (0, BaseModel_1.getDeletedAtField)(this.modelClass);
+        const deletedAtField = (0, TimestampHelpers_1.getDeletedAtField)(this.modelClass);
         return {
             ...conditions,
             [deletedAtField]: null // Apenas registros não deletados
@@ -340,8 +340,8 @@ class BaseRepository {
         let result = false;
         // Se tem soft delete, fazer update ao invés de delete
         if (this.hasSoftDelete()) {
-            const deletedAtField = (0, BaseModel_1.getDeletedAtField)(this.modelClass);
-            const updatedAtField = (0, BaseModel_1.getUpdatedAtField)(this.modelClass);
+            const deletedAtField = (0, TimestampHelpers_1.getDeletedAtField)(this.modelClass);
+            const updatedAtField = (0, TimestampHelpers_1.getUpdatedAtField)(this.modelClass);
             const updateData = {
                 [deletedAtField]: new Date()
             };
@@ -418,13 +418,13 @@ class BaseRepository {
         }
         // Se tem soft delete, fazer update ao invés de delete
         if (this.hasSoftDelete()) {
-            const deletedAtField = (0, BaseModel_1.getDeletedAtField)(this.modelClass);
+            const deletedAtField = (0, TimestampHelpers_1.getDeletedAtField)(this.modelClass);
             const updateData = {
                 [deletedAtField]: new Date()
             };
             // Adicionar updated_at se tiver timestamps
             if (this.hasTimestamps()) {
-                const updatedAtField = (0, BaseModel_1.getUpdatedAtField)(this.modelClass);
+                const updatedAtField = (0, TimestampHelpers_1.getUpdatedAtField)(this.modelClass);
                 updateData[updatedAtField] = new Date();
             }
             return await this.updateBy(conditions, updateData);
@@ -495,8 +495,8 @@ class BaseRepository {
         if (!this.hasSoftDelete()) {
             throw new Error('Esta entidade não possui soft delete habilitado');
         }
-        const deletedAtField = (0, BaseModel_1.getDeletedAtField)(this.modelClass);
-        const updatedAtField = (0, BaseModel_1.getUpdatedAtField)(this.modelClass);
+        const deletedAtField = (0, TimestampHelpers_1.getDeletedAtField)(this.modelClass);
+        const updatedAtField = (0, TimestampHelpers_1.getUpdatedAtField)(this.modelClass);
         const updateData = {
             [deletedAtField]: null
         };
@@ -527,7 +527,7 @@ class BaseRepository {
         if (!this.hasSoftDelete()) {
             throw new Error('Esta entidade não possui soft delete habilitado');
         }
-        const deletedAtField = (0, BaseModel_1.getDeletedAtField)(this.modelClass);
+        const deletedAtField = (0, TimestampHelpers_1.getDeletedAtField)(this.modelClass);
         const conditions = {
             ...options.conditions,
             [`${deletedAtField} IS NOT`]: null // deleted_at IS NOT NULL

@@ -1,12 +1,12 @@
 import { CustomORM } from '../db/CustomORM';
+import { BaseModel } from '../../core/domain/models/BaseModel';
 import { 
-  BaseModel, 
   hasTimestamps, 
   hasSoftDelete,
   getCreatedAtField,
   getUpdatedAtField,
   getDeletedAtField
-} from '../../core/domain/models/BaseModel';
+} from '../../core/domain/models/decorators/TimestampHelpers';
 import { AuditService, AuditUser } from '../../core/auth/AuditService';
 import { AuditableMetadata } from '../../core/domain/decorators/AuditableDecorator';
 
