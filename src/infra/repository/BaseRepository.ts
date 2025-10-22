@@ -116,14 +116,14 @@ export abstract class BaseRepository<T extends BaseModel, ID = number> implement
    * Verifica se a entidade tem timestamps habilitados
    */
   protected hasTimestamps(): boolean {
-    return hasTimestamps(this.modelClass) !== undefined;
+    return hasTimestamps(this.modelClass);
   }
 
   /**
    * Verifica se a entidade tem soft delete habilitado
    */
   protected hasSoftDelete(): boolean {
-    return hasSoftDelete(this.modelClass) !== undefined;
+    return hasSoftDelete(this.modelClass);
   }
 
   /**

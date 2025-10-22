@@ -44,13 +44,13 @@ class BaseRepository {
      * Verifica se a entidade tem timestamps habilitados
      */
     hasTimestamps() {
-        return (0, TimestampHelpers_1.hasTimestamps)(this.modelClass) !== undefined;
+        return (0, TimestampHelpers_1.hasTimestamps)(this.modelClass);
     }
     /**
      * Verifica se a entidade tem soft delete habilitado
      */
     hasSoftDelete() {
-        return (0, TimestampHelpers_1.hasSoftDelete)(this.modelClass) !== undefined;
+        return (0, TimestampHelpers_1.hasSoftDelete)(this.modelClass);
     }
     /**
      * Adiciona timestamps aos dados
