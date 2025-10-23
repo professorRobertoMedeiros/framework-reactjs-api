@@ -5,6 +5,7 @@ const AuditLogRepository_1 = require("../../infra/repository/AuditLogRepository"
 const AuditLogModel_1 = require("../domain/models/AuditLogModel");
 const AuditableDecorator_1 = require("../domain/decorators/AuditableDecorator");
 const Entity_1 = require("../domain/models/decorators/Entity");
+const RequestContext_1 = require("../context/RequestContext");
 /**
  * Serviço para gerenciar auditoria de alterações em modelos
  */
@@ -19,6 +20,14 @@ class AuditService {
      */
     setCurrentUser(user) {
         this.currentUser = user;
+    }
+    /**
+     * Obtém o usuário atual para auditoria de forma dinâmica
+     * Prioridade: 1. Usuário definido explicitamente, 2. Usuário do RequestContext
+     * @returns Usuário atual ou undefined
+     */
+    getCurrentUserForAudit() {
+        return this.currentUser || RequestContext_1.RequestContext.getCurrentUser();
     }
     /**
      * Registra a criação de um modelo
@@ -38,10 +47,11 @@ class AuditService {
             return;
         }
         // Registrar cada propriedade auditável
+        const user = this.getCurrentUserForAudit();
         for (const prop of auditableProps) {
             if (prop in model) {
                 const value = model[prop];
-                await this.repository.logAction(tableName, recordId, prop, AuditLogModel_1.AuditActionType.CREATE, null, value, this.currentUser?.id, this.currentUser?.email);
+                await this.repository.logAction(tableName, recordId, prop, AuditLogModel_1.AuditActionType.CREATE, null, value, user?.id, user?.email);
             }
         }
     }
@@ -64,6 +74,7 @@ class AuditService {
             return;
         }
         // Registrar cada propriedade alterada que é auditável
+        const user = this.getCurrentUserForAudit();
         for (const prop of auditableProps) {
             // Verificar se a propriedade foi alterada
             if (prop in oldValues && prop in model) {
@@ -71,7 +82,7 @@ class AuditService {
                 const newValue = model[prop];
                 // Somente registrar se o valor realmente mudou
                 if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
-                    await this.repository.logAction(tableName, recordId, prop, AuditLogModel_1.AuditActionType.UPDATE, oldValue, newValue, this.currentUser?.id, this.currentUser?.email);
+                    await this.repository.logAction(tableName, recordId, prop, AuditLogModel_1.AuditActionType.UPDATE, oldValue, newValue, user?.id, user?.email);
                 }
             }
         }
@@ -94,10 +105,11 @@ class AuditService {
             return;
         }
         // Registrar cada propriedade auditável
+        const user = this.getCurrentUserForAudit();
         for (const prop of auditableProps) {
             if (prop in model) {
                 const value = model[prop];
-                await this.repository.logAction(tableName, recordId, prop, AuditLogModel_1.AuditActionType.DELETE, value, null, this.currentUser?.id, this.currentUser?.email);
+                await this.repository.logAction(tableName, recordId, prop, AuditLogModel_1.AuditActionType.DELETE, value, null, user?.id, user?.email);
             }
         }
     }

@@ -102,10 +102,13 @@ docker-compose up -d
 # 3. Rodar migrations
 npm run migrate
 
-# 4. Iniciar servidor
+# 4. (Opcional) Rodar seed de produtos
+npx ts-node seeds/products.seed.ts
+
+# 5. Iniciar servidor
 npm run dev
 
-# 5. Testar endpoints
+# 6. Testar endpoints
 # Login
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
@@ -170,3 +173,27 @@ class ProductService {
 - Cada requisição HTTP tem seu próprio contexto isolado
 - Se não houver usuário autenticado, `RequestContext.getCurrentUser()` retorna `undefined`
 - Você ainda pode passar `currentUser` explicitamente se quiser sobrescrever
+
+## Scripts e Seeds
+
+Para scripts que rodam **fora** do Express (seeds, migrations, testes), você **DEVE** usar `RequestContext.run()` manualmente:
+
+```typescript
+import { RequestContext } from 'framework-reactjs-api';
+
+async function seed() {
+  await initializeORM();
+  
+  // CRÍTICO: Envolver em RequestContext.run()
+  await RequestContext.run({ requestId: 'seed-001' }, async () => {
+    RequestContext.setCurrentUser({ id: 0, email: 'system@seed.com' });
+    
+    const repo = new ProductRepository(ProductModel, true);
+    await repo.create({ name: 'Produto', price: 99.90 });
+  });
+}
+```
+
+**Exemplo de seed:** Veja `seeds/products.seed.ts` para um exemplo completo.
+
+**Por que?** Porque não há middlewares Express executando para inicializar o `AsyncLocalStorage` automaticamente.

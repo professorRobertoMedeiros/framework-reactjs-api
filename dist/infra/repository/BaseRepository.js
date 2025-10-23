@@ -4,7 +4,6 @@ exports.BaseRepository = void 0;
 const CustomORM_1 = require("../db/CustomORM");
 const TimestampHelpers_1 = require("../../core/domain/models/decorators/TimestampHelpers");
 const AuditService_1 = require("../../core/auth/AuditService");
-const RequestContext_1 = require("../../core/context/RequestContext");
 /**
  * Classe base para implementações de repositório
  * @template T Tipo do modelo associado ao repositório
@@ -29,9 +28,10 @@ class BaseRepository {
         // Configurar auditoria se habilitada
         this.enableAudit = enableAudit;
         if (enableAudit) {
-            // Se currentUser não foi passado, tenta obter do RequestContext
-            const auditUser = currentUser || RequestContext_1.RequestContext.getCurrentUser();
-            this.auditService = new AuditService_1.AuditService(auditUser);
+            // Inicializa AuditService sem usuário específico
+            // O usuário será obtido dinamicamente pelo AuditService no momento da operação
+            // via getCurrentUserForAudit() que busca do RequestContext
+            this.auditService = new AuditService_1.AuditService(currentUser);
         }
     }
     /**

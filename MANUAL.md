@@ -801,7 +801,31 @@ app.use(requestContextWithUserMiddleware); // Contexto + Captura em um só
 ✅ **Familiar**: Padrão similar ao Spring Security (Java)  
 ✅ **Auditoria Automática**: Logs sem código extra  
 
-### Usando RequestContext Manualmente
+### Usando RequestContext em Scripts/Seeds/Testes
+
+⚠️ **IMPORTANTE**: Para scripts que rodam **fora do Express** (seeds, migrations, testes), você precisa inicializar o contexto manualmente:
+
+```typescript
+import { RequestContext } from 'framework-reactjs-api';
+
+async function seedDatabase() {
+  // Envolver código em RequestContext.run()
+  await RequestContext.run({ requestId: 'seed-001' }, async () => {
+    // Definir usuário manualmente
+    RequestContext.setCurrentUser({ id: 1, email: 'system@seed.com' });
+
+    // Agora o repository consegue pegar o usuário
+    const repo = new ProdutoRepository();
+    await repo.create({ nome: 'Produto 1', preco: 99.90 });
+    
+    console.log('✅ Seed concluído com auditoria!');
+  });
+}
+
+seedDatabase().catch(console.error);
+```
+
+### Métodos do RequestContext
 
 ```typescript
 import { RequestContext } from 'framework-reactjs-api';
@@ -819,11 +843,16 @@ if (RequestContext.hasUser()) {
 
 // Obter ID da requisição
 const requestId = RequestContext.getRequestId();
+
+// Valores customizados
+RequestContext.setValue('customKey', 'value');
+const value = RequestContext.getValue('customKey');
 ```
 
-### Exemplo Completo
+### Documentação Completa
 
-Veja o exemplo completo em `examples/context-example/`
+- Veja exemplo completo em `examples/context-example/`
+- Guia detalhado em `REQUEST_CONTEXT_GUIDE.md`
 
 ## Definindo o Usuário Atual
 

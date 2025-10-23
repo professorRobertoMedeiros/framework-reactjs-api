@@ -19,6 +19,12 @@ export declare class AuditService {
      */
     setCurrentUser(user: AuditUser): void;
     /**
+     * Obtém o usuário atual para auditoria de forma dinâmica
+     * Prioridade: 1. Usuário definido explicitamente, 2. Usuário do RequestContext
+     * @returns Usuário atual ou undefined
+     */
+    private getCurrentUserForAudit;
+    /**
      * Registra a criação de um modelo
      *
      * @param model Modelo criado

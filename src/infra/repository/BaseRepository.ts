@@ -99,9 +99,10 @@ export abstract class BaseRepository<T extends BaseModel, ID = number> implement
     // Configurar auditoria se habilitada
     this.enableAudit = enableAudit;
     if (enableAudit) {
-      // Se currentUser não foi passado, tenta obter do RequestContext
-      const auditUser = currentUser || RequestContext.getCurrentUser();
-      this.auditService = new AuditService(auditUser);
+      // Inicializa AuditService sem usuário específico
+      // O usuário será obtido dinamicamente pelo AuditService no momento da operação
+      // via getCurrentUserForAudit() que busca do RequestContext
+      this.auditService = new AuditService(currentUser);
     }
   }
   

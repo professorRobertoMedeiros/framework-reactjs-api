@@ -3,6 +3,7 @@ import { AuditActionType } from '../domain/models/AuditLogModel';
 import { AuditableMetadata } from '../domain/decorators/AuditableDecorator';
 import { BaseModel } from '../domain/models/BaseModel';
 import { getEntityMetadata } from '../domain/models/decorators/Entity';
+import { RequestContext } from '../context/RequestContext';
 
 /**
  * Interface que representa um usuário para fins de auditoria
@@ -33,6 +34,15 @@ export class AuditService {
   }
 
   /**
+   * Obtém o usuário atual para auditoria de forma dinâmica
+   * Prioridade: 1. Usuário definido explicitamente, 2. Usuário do RequestContext
+   * @returns Usuário atual ou undefined
+   */
+  private getCurrentUserForAudit(): AuditUser | undefined {
+    return this.currentUser || RequestContext.getCurrentUser();
+  }
+
+  /**
    * Registra a criação de um modelo
    * 
    * @param model Modelo criado
@@ -54,6 +64,8 @@ export class AuditService {
     }
 
     // Registrar cada propriedade auditável
+    const user = this.getCurrentUserForAudit();
+    
     for (const prop of auditableProps) {
       if (prop in model) {
         const value = (model as any)[prop];
@@ -65,8 +77,8 @@ export class AuditService {
           AuditActionType.CREATE,
           null,
           value,
-          this.currentUser?.id,
-          this.currentUser?.email
+          user?.id,
+          user?.email
         );
       }
     }
@@ -95,6 +107,8 @@ export class AuditService {
     }
 
     // Registrar cada propriedade alterada que é auditável
+    const user = this.getCurrentUserForAudit();
+    
     for (const prop of auditableProps) {
       // Verificar se a propriedade foi alterada
       if (prop in oldValues && prop in model) {
@@ -110,8 +124,8 @@ export class AuditService {
             AuditActionType.UPDATE,
             oldValue,
             newValue,
-            this.currentUser?.id,
-            this.currentUser?.email
+            user?.id,
+            user?.email
           );
         }
       }
@@ -140,6 +154,8 @@ export class AuditService {
     }
 
     // Registrar cada propriedade auditável
+    const user = this.getCurrentUserForAudit();
+    
     for (const prop of auditableProps) {
       if (prop in model) {
         const value = (model as any)[prop];
@@ -151,8 +167,8 @@ export class AuditService {
           AuditActionType.DELETE,
           value,
           null,
-          this.currentUser?.id,
-          this.currentUser?.email
+          user?.id,
+          user?.email
         );
       }
     }
