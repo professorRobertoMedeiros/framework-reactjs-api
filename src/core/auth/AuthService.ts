@@ -65,9 +65,9 @@ export class AuthService {
    * @returns Token JWT gerado
    */
   public generateToken(payload: TokenPayload, options: TokenOptions = {}): string {
-    // Opções padrão
+    // Opções padrão - usa JWT_EXPIRES_IN da variável de ambiente ou '24h' como fallback
     const defaultOptions = {
-      expiresIn: '24h' // Token expira em 24 horas por padrão
+      expiresIn: process.env.JWT_EXPIRES_IN || '24h'
     };
 
     // Mesclar opções padrão com opções fornecidas
