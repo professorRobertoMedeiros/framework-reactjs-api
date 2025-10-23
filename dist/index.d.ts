@@ -17,6 +17,8 @@ export { BaseBusiness } from './core/business/BaseBusiness';
 export { AuthMiddleware } from './core/auth/AuthMiddleware';
 export { AuthService } from './core/auth/AuthService';
 export { AuditService, AuditUser } from './core/auth/AuditService';
+export { RequestContext, AuthenticatedUser, RequestContextData } from './core/context/RequestContext';
+export { requestContextMiddleware, captureUserMiddleware, requestContextWithUserMiddleware } from './core/context/RequestContextMiddleware';
 export { TracingService } from './core/tracing/TracingService';
 export { TracingMiddleware } from './core/tracing/TracingMiddleware';
 export { LoggingService } from './core/tracing/LoggingService';

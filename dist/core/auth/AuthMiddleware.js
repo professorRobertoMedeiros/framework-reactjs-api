@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthMiddleware = void 0;
 const AuthService_1 = require("./AuthService");
+const RequestContext_1 = require("../context/RequestContext");
 /**
  * Middleware de autenticação para Express
  */
@@ -38,6 +39,10 @@ class AuthMiddleware {
             // Token é válido, adicionar informações do usuário ao request
             req.user = verification.payload;
             req.token = token;
+            // Popular o contexto da requisição com o usuário autenticado
+            if (verification.payload) {
+                RequestContext_1.RequestContext.setCurrentUser(verification.payload);
+            }
             // Continuar para o próximo middleware/controlador
             next();
         };

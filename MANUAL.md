@@ -730,6 +730,8 @@ export class ProdutoModel extends BaseModel {
 
 ## Habilitando Auditoria no Repositório
 
+### Forma Manual (passando currentUser)
+
 ```typescript
 import { BaseRepository, AuditUser } from 'framework-reactjs-api';
 import { ProdutoModel } from './ProdutoModel';
@@ -740,7 +742,88 @@ export class ProdutoRepository extends BaseRepository<ProdutoModel> {
     super(ProdutoModel, true, currentUser);
   }
 }
+
+// Uso:
+const userLogado = { id: 1, email: 'usuario@example.com' };
+const produtoRepo = new ProdutoRepository(userLogado);
 ```
+
+### Forma Automática (usando RequestContext) - RECOMENDADO ✨
+
+A forma mais simples é usar o **RequestContext** para propagação automática do usuário autenticado. Similar ao `SecurityContextHolder` do Spring Security (Java).
+
+**1. Configure os middlewares na ordem correta:**
+
+```typescript
+import { 
+  requestContextMiddleware, 
+  captureUserMiddleware,
+  AuthMiddleware 
+} from 'framework-reactjs-api';
+
+// ORDEM CRÍTICA:
+app.use(requestContextMiddleware);  // 1. Inicializa AsyncLocalStorage
+app.use(authMiddleware.authenticate()); // 2. Autentica e define req.user
+app.use(captureUserMiddleware);     // 3. Captura req.user para o contexto
+```
+
+**2. Repository simplificado (não precisa passar currentUser):**
+
+```typescript
+export class ProdutoRepository extends BaseRepository<ProdutoModel> {
+  constructor() {
+    // currentUser vem AUTOMATICAMENTE do RequestContext!
+    super(ProdutoModel, true);
+  }
+}
+
+// Uso (sem precisar passar currentUser):
+const produtoRepo = new ProdutoRepository();
+const produto = await produtoRepo.create({ nome: 'Teste', preco: 99.90 });
+// ✅ Auditoria criada automaticamente com userid e useremail do contexto!
+```
+
+**3. Middleware alternativo (tudo em um):**
+
+```typescript
+import { requestContextWithUserMiddleware } from 'framework-reactjs-api';
+
+// Substitui requestContextMiddleware + captureUserMiddleware
+app.use(authMiddleware.authenticate());
+app.use(requestContextWithUserMiddleware); // Contexto + Captura em um só
+```
+
+### Benefícios do RequestContext
+
+✅ **Menos Boilerplate**: Não precisa passar `currentUser` em cada camada  
+✅ **Type-Safe**: TypeScript garante tipos corretos  
+✅ **Isolado por Request**: AsyncLocalStorage garante isolamento entre requisições  
+✅ **Familiar**: Padrão similar ao Spring Security (Java)  
+✅ **Auditoria Automática**: Logs sem código extra  
+
+### Usando RequestContext Manualmente
+
+```typescript
+import { RequestContext } from 'framework-reactjs-api';
+
+// Obter usuário atual
+const user = RequestContext.getCurrentUser();
+
+// Definir usuário
+RequestContext.setCurrentUser({ id: 1, email: 'teste@example.com' });
+
+// Verificar se há usuário
+if (RequestContext.hasUser()) {
+  console.log('Usuário autenticado:', user);
+}
+
+// Obter ID da requisição
+const requestId = RequestContext.getRequestId();
+```
+
+### Exemplo Completo
+
+Veja o exemplo completo em `examples/context-example/`
 
 ## Definindo o Usuário Atual
 

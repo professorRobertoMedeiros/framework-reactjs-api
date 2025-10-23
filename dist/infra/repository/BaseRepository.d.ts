@@ -66,7 +66,7 @@ export declare abstract class BaseRepository<T extends BaseModel, ID = number> i
      * Cria uma nova instância do repositório base
      * @param modelClass Classe do modelo para o qual o repositório é usado
      * @param enableAudit Habilitar auditoria automática para este repositório
-     * @param currentUser Usuário atual para registro de auditoria
+     * @param currentUser Usuário atual para registro de auditoria (opcional, usa RequestContext se não fornecido)
      */
     constructor(modelClass: new () => T, enableAudit?: boolean, currentUser?: AuditUser);
     /**

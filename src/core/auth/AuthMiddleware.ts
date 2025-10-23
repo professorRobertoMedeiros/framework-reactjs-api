@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthService, TokenVerificationResult } from './AuthService';
+import { RequestContext } from '../context/RequestContext';
 
 // Extensão da interface Request para incluir o usuário autenticado
 declare global {
@@ -54,6 +55,11 @@ export class AuthMiddleware {
       // Token é válido, adicionar informações do usuário ao request
       req.user = verification.payload;
       req.token = token;
+
+      // Popular o contexto da requisição com o usuário autenticado
+      if (verification.payload) {
+        RequestContext.setCurrentUser(verification.payload as any);
+      }
 
       // Continuar para o próximo middleware/controlador
       next();

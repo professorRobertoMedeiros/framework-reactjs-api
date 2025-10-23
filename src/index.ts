@@ -59,6 +59,14 @@ export { AuthMiddleware } from './core/auth/AuthMiddleware';
 export { AuthService } from './core/auth/AuthService';
 export { AuditService, AuditUser } from './core/auth/AuditService';
 
+// Context (Request Context para propagação automática de usuário)
+export { RequestContext, AuthenticatedUser, RequestContextData } from './core/context/RequestContext';
+export { 
+  requestContextMiddleware, 
+  captureUserMiddleware,
+  requestContextWithUserMiddleware 
+} from './core/context/RequestContextMiddleware';
+
 // Sistema de Rastreamento
 export { TracingService } from './core/tracing/TracingService';
 export { TracingMiddleware } from './core/tracing/TracingMiddleware';

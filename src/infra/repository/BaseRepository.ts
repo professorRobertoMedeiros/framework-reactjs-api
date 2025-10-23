@@ -9,6 +9,7 @@ import {
 } from '../../core/domain/models/decorators/TimestampHelpers';
 import { AuditService, AuditUser } from '../../core/auth/AuditService';
 import { AuditableMetadata } from '../../core/domain/decorators/AuditableDecorator';
+import { RequestContext } from '../../core/context/RequestContext';
 
 /**
  * Interface para opções de paginação
@@ -79,7 +80,7 @@ export abstract class BaseRepository<T extends BaseModel, ID = number> implement
    * Cria uma nova instância do repositório base
    * @param modelClass Classe do modelo para o qual o repositório é usado
    * @param enableAudit Habilitar auditoria automática para este repositório
-   * @param currentUser Usuário atual para registro de auditoria
+   * @param currentUser Usuário atual para registro de auditoria (opcional, usa RequestContext se não fornecido)
    */
   constructor(
     protected modelClass: new () => T,
@@ -98,7 +99,9 @@ export abstract class BaseRepository<T extends BaseModel, ID = number> implement
     // Configurar auditoria se habilitada
     this.enableAudit = enableAudit;
     if (enableAudit) {
-      this.auditService = new AuditService(currentUser);
+      // Se currentUser não foi passado, tenta obter do RequestContext
+      const auditUser = currentUser || RequestContext.getCurrentUser();
+      this.auditService = new AuditService(auditUser);
     }
   }
   

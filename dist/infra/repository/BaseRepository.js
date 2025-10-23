@@ -4,6 +4,7 @@ exports.BaseRepository = void 0;
 const CustomORM_1 = require("../db/CustomORM");
 const TimestampHelpers_1 = require("../../core/domain/models/decorators/TimestampHelpers");
 const AuditService_1 = require("../../core/auth/AuditService");
+const RequestContext_1 = require("../../core/context/RequestContext");
 /**
  * Classe base para implementações de repositório
  * @template T Tipo do modelo associado ao repositório
@@ -14,7 +15,7 @@ class BaseRepository {
      * Cria uma nova instância do repositório base
      * @param modelClass Classe do modelo para o qual o repositório é usado
      * @param enableAudit Habilitar auditoria automática para este repositório
-     * @param currentUser Usuário atual para registro de auditoria
+     * @param currentUser Usuário atual para registro de auditoria (opcional, usa RequestContext se não fornecido)
      */
     constructor(modelClass, enableAudit = false, currentUser) {
         this.modelClass = modelClass;
@@ -28,7 +29,9 @@ class BaseRepository {
         // Configurar auditoria se habilitada
         this.enableAudit = enableAudit;
         if (enableAudit) {
-            this.auditService = new AuditService_1.AuditService(currentUser);
+            // Se currentUser não foi passado, tenta obter do RequestContext
+            const auditUser = currentUser || RequestContext_1.RequestContext.getCurrentUser();
+            this.auditService = new AuditService_1.AuditService(auditUser);
         }
     }
     /**
