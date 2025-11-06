@@ -3,11 +3,44 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateRoutesTemplate = generateRoutesTemplate;
 const utils_1 = require("./utils");
 /**
+ * Função auxiliar para gerar exemplo do modelo baseado nas propriedades
+ */
+function generateModelExample(properties) {
+    if (properties.length === 0) {
+        return '         field: value';
+    }
+    return properties
+        .filter(p => !p.isId && !p.isTimestamp) // Excluir id e campos de timestamp
+        .slice(0, 5) // Máximo de 5 campos no exemplo
+        .map(p => {
+        let exampleValue;
+        // Gerar valor de exemplo baseado no tipo
+        if (p.type === 'string') {
+            exampleValue = `"exemplo de ${p.name}"`;
+        }
+        else if (p.type === 'number') {
+            exampleValue = p.name.includes('price') || p.name.includes('preco') ? '99.90' : '1';
+        }
+        else if (p.type === 'boolean') {
+            exampleValue = 'true';
+        }
+        else if (p.type === 'Date') {
+            exampleValue = '"2025-11-05T12:00:00Z"';
+        }
+        else {
+            exampleValue = 'null';
+        }
+        return `         ${p.name}: ${exampleValue}`;
+    })
+        .join('\n');
+}
+/**
  * Função auxiliar para gerar o template de rotas
  * @param modelName Nome do modelo
+ * @param properties Propriedades do modelo (opcional)
  * @returns Template de arquivo de rotas
  */
-function generateRoutesTemplate(modelName) {
+function generateRoutesTemplate(modelName, properties = []) {
     const insideFramework = (0, utils_1.isInsideFramework)();
     // Determinar os caminhos de importação corretos baseado no contexto
     const authImport = insideFramework
@@ -16,6 +49,9 @@ function generateRoutesTemplate(modelName) {
         : "import { AuthMiddleware, TracingMiddleware, LoggingService } from 'framework-reactjs-api';";
     const lowerModelName = modelName.toLowerCase();
     const pluralLowerModelName = `${lowerModelName}s`;
+    // Gerar exemplos para os schemas
+    const createExample = generateModelExample(properties);
+    const updateExample = generateModelExample(properties);
     // Criar o template
     return `import { Router, Request, Response } from 'express';
 import { ${modelName}Service } from '../${modelName}Service';
@@ -44,12 +80,12 @@ router.use(TracingMiddleware.addRequestId());
  *       type: object
  *       description: Dados para criar um ${lowerModelName}
  *       example:
- *         field: value
+${createExample}
  *     ${modelName}UpdateRequest:
  *       type: object
  *       description: Dados para atualizar um ${lowerModelName}
  *       example:
- *         field: value
+${updateExample}
  */
 
 /**
@@ -127,21 +163,21 @@ router.get('/', authMiddleware.authenticate(), async (req: Request, res: Respons
     });
     
     // Extrair parâmetros de query
-    const { limit, offset, page, orderBy, includes, ...conditions } = req.query;
+    const { limit, offset, orderBy, includes, ...conditions } = req.query;
     
     // Montar opções de consulta - O BaseRepository trata tudo automaticamente
     const result = await service.findAll({
       conditions: Object.keys(conditions).length > 0 ? conditions as Record<string, any> : undefined,
       limit: limit ? Number(limit) : undefined,
       offset: offset ? Number(offset) : undefined,
-      page: page ? Number(page) : undefined,
       orderBy: orderBy as string,
       includes: includes ? String(includes).split(',') : undefined,
     });
     
     LoggingService.info('Registros encontrados', { 
       entity: '${modelName}',
-      count: result.data ? result.data.length : 0 
+      count: result.data ? result.data.length : 0,
+      status: result.status
     });
     
     return res.status(result.status).json(result);
@@ -219,7 +255,8 @@ router.get('/:id', authMiddleware.authenticate(), async (req: Request, res: Resp
     LoggingService.info('Resultado da busca por ID', { 
       entity: '${modelName}',
       id,
-      found: result.success
+      found: !!result.data,
+      status: result.status
     });
     
     return res.status(result.status).json(result);
@@ -295,7 +332,7 @@ router.post('/', authMiddleware.authenticate(), async (req: Request, res: Respon
     
     LoggingService.info('Registro criado', { 
       entity: '${modelName}',
-      success: result.success,
+      status: result.status,
       id: result.data?.id
     });
     
@@ -380,7 +417,7 @@ router.put('/:id', authMiddleware.authenticate(), async (req: Request, res: Resp
     LoggingService.info('Registro atualizado', { 
       entity: '${modelName}',
       id,
-      success: result.success
+      status: result.status
     });
     
     return res.status(result.status).json(result);
@@ -462,7 +499,7 @@ router.delete('/:id', authMiddleware.authenticate(), async (req: Request, res: R
     LoggingService.info('Registro excluído', { 
       entity: '${modelName}',
       id,
-      success: result.success
+      status: result.status
     });
     
     return res.status(result.status).json(result);

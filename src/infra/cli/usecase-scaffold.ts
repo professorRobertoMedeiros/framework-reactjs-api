@@ -427,13 +427,16 @@ function createScaffolding(modelName: string) {
     const domainPath = path.join(domainsDirPath, modelName + 'Dom.ts');
     const routesPath = path.join(routesDirPath, modelName + 'Routes.ts');
 
+    // Analisar modelo para obter propriedades
+    const properties = analyzeModelFile(modelName);
+
     // Verificar idempotência (não sobrescrever se já existir)
     const filesToCreate = [
       { path: repositoryPath, content: generateRepositoryTemplate(modelName), name: modelName + 'Repository.ts' },
       { path: businessPath, content: generateBusinessTemplate(modelName), name: modelName + 'Business.ts' },
       { path: servicePath, content: generateServiceTemplate(modelName), name: modelName + 'Service.ts' },
       { path: domainPath, content: generateDomainTemplate(modelName), name: modelName + 'Dom.ts' },
-      { path: routesPath, content: generateRoutesTemplate(modelName), name: modelName + 'Routes.ts' }
+      { path: routesPath, content: generateRoutesTemplate(modelName, properties), name: modelName + 'Routes.ts' }
     ];
 
     // Criar diretórios necessários
