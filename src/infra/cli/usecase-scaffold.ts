@@ -50,12 +50,17 @@ function analyzeModelFile(modelName: string): ModelProperty[] {
   // Terceira tentativa: buscar até qualquer método
   const classMatch3 = content.match(/export class \w+Model extends BaseModel \{([\s\S]*?)(?:\n\s*\w+\(\))/);
   
+  // Quarta tentativa: capturar todo o corpo da classe (modelos sem métodos)
+  const classMatch4 = content.match(/export class \w+Model extends BaseModel \{([\s\S]*)\n\}/);
+
   if (classMatch1) {
     classContent = classMatch1[1];
   } else if (classMatch2) {
     classContent = classMatch2[1];
   } else if (classMatch3) {
     classContent = classMatch3[1];
+  } else if (classMatch4) {
+    classContent = classMatch4[1];
   } else {
     console.log("⚠️  Aviso: Não foi possível analisar a estrutura da classe " + modelName + "Model.");
     console.log('Certifique-se de que a classe estende BaseModel e segue o padrão esperado.');
